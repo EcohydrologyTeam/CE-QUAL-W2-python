@@ -1,0 +1,91 @@
+-   item: MET_WB1
+    Filename: 2013_Met.npt
+    Columns: [Air Temperature, Dew Point Temperature, Wind Speed, Wind Direction, Cloudiness, Solar Radiation]
+    Labels: [Air Temperature ($^oC$), Dew Point Temperature ($^oC$), Wind Speed (m/s), Wind Direction (radians), Cloudiness (fraction), Solar Radiation ($W/m^2$)]
+    PlotType: multi
+-   item: MET_WB2
+    Filename: 2013_Met2.npt
+    Columns: [Air Temperature, Dew Point Temperature, Wind Speed, Wind Direction, Cloudiness, Solar Radiation]
+    Labels: [Air Temperature ($^oC$), Dew Point Temperature ($^oC$), Wind Speed (m/s), Wind Direction (radians), Cloudiness (fraction), Solar Radiation ($W/m^2$)]
+    PlotType: multi
+-   item: QIN_BR1
+    Filename: 2013_MosquitoDam_Qwo.npt
+    Columns: [Inflow 1, Inflow 2, Inflow 3, Inflow 4]
+    Labels: [Inflow (QIN, $m^3/s$)]
+    PlotType: single
+-   item: TIN_BR1
+    Filename: 2013_MosquitoDam_Two.npt
+    Columns: [Inflow Temp 1, Inflow Temp 2, Inflow Temp 3, Inflow Temp 4]
+    Labels: [Inflow Temperature (TIN, $^oC$)]
+    PlotType: single
+-   item: CIN_BR1
+    Filename: 2013_MosquitoDam_Cwo.npt
+    Columns: [TDS, SO4, Cl, ISS, PO4, NH4, NO3, FE, LDOM, RDOM, LPOM, RPOM, BG, DIAT, OTH, DO]
+    Labels: [TDS (mg/L), SO4 (mg/L), Cl (mg/L), ISS (mg/L), OP (mg/L), NH4 (mg/L), Nox (mg/L), Fe (mg/L), LDOM (mg/L), RDOM (mg/L), LPOM (mg/L), RPOM (mg/L), BG (mg/L), DIAT (mg/L), OTH (mg/L), DO (mg/L)]
+    PlotType: single
+    # NOTE: This file is specified but missing!!
+# -   item: QOT_BR1
+#     Filename: 2013_MosquitoDam.npt
+#     Columns: [Gate Values 1-2, Gates 1-4, Warren City PWS Withdrawal]
+#     Labels: [Dam Outflow (QOT, $m^3/s$)]
+#     PlotType: single
+-   item: QTR_TR1
+    Filename: 2013_TrumbullWwtp_Qtr.npt
+    Columns: [Tributary Inflow (QTR)]
+    Labels: [Tributary Inflow ($m^3/s$)]
+    PlotType: single
+-   item: TTR_TR1
+    Filename: 2013_TrumbullWwtp_Ttr.npt
+    Columns: [Tributary Inflow Temperature (QTR)]
+    Labels: [Tributary Inflow Temperature ($m^3/s$)]
+    PlotType: single
+-   item: CTR_TR1
+    Filename: 2013_TrumbullWwtp_Ctr.npt
+    Columns: [TDS, OP, NH3, NOx, LDOM, RDOM, LPOM, RPOM, DO]
+    Labels: [TDS (mg/L), OP (mg/L), NH3 (mg/L), NOx (mg/L), LDOM (mg/L), RDOM (mg/L), LPOM (mg/L), RPOM (mg/L), DO (mg/L)]
+    PlotType: multi
+-   item: QDT_BR1
+    Filename: 2013_Qdt.npt
+    Columns: [Distributed Tributary Inflows (QDT)]
+    Labels: [Distributed Tributary Inflows ($m^3/s$)]
+    PlotType: single
+-   item: TDT_BR1
+    Filename: 2013_Tdt.npt
+    Columns: [Distributed Tributary Inflow Temperature (TDT)]
+    Labels: [Distributed Tributary Inflow Temperature ($^oC$)]
+    PlotType: single
+-   item: CDT_BR1
+    Filename: 2013_SquawCrk_Ctr3.npt
+    Columns: [TDS, SO4, Cl, ISS, OP, NH4, NOx, Fe, LDOM, RDOM, LPOM, RPOM, BG, DIAT, OTH, DO]
+    Labels: [TDS (mg/L), SO4 (mg/L), Cl (mg/L), ISS (mg/L), OP (mg/L), NH4 (mg/L), NOx (mg/L), Fe (mg/L), LDOM (mg/L), RDOM (mg/L), LPOM (mg/L), RPOM (mg/L), BG (mg/L), DIAT (mg/L), OTH (mg/L), DO (mg/L)]
+    PlotType: multi
+-   item: PRE_BR1
+    Filename: 2013_Pre.npt
+    Columns: [Precipitation]
+    Labels: [Precipitation (mm)]
+    PlotType: single
+-   item: PRE_BR2
+    Filename: 2013_Pre2.npt
+    Columns: [Precipitation]
+    Labels: [Precipitation (mm)]
+    PlotType: single
+-   item: TPR_BR1
+    Filename: 2013_PreT_noneg.npt
+    Columns: [Precipitation]
+    Labels: [Precipitation (mm)]
+    PlotType: single
+-   item: TPR_BR2
+    Filename: 2013_PreT_noneg2.npt
+    Columns: [Precipitation]
+    Labels: [Precipitation (mm)]
+    PlotType: single
+-   item: CPR_BR1
+    Filename: 2013_Pre_DO.npt
+    Columns: [Precipitation DOSat]
+    Labels: [Precipitation DOSat (mg/L)]
+    PlotType: single
+-   item: CPR_BR2
+    Filename: 2013_Pre_DO1.npt
+    Columns: [Precipitation DOSat]
+    Labels: [Precipitation DOSat (mg/L)]
+    PlotType: single
