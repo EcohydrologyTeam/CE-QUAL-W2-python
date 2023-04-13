@@ -304,7 +304,7 @@ def write_hdf(df: pd.DataFrame, group: str, outfile: str, overwrite=True):
 
 def read_hdf(group: str, infile: str, variables: List[str]):
     '''
-    Read CE-QUAL-W2 timeseries dataframe to HDF5
+    Read CE-QUAL-W2 timeseries from HDF5 and create a dataframe
 
     This function assumes that a string-based datetime array named Date is present. This will be read and 
     assiened as the index column of the output pandas dataframe will be a datetime array. 
