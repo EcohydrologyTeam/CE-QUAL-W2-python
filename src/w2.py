@@ -1,16 +1,14 @@
-import numpy as np
+import datetime
+from typing import List
+import warnings
+import os
+import sqlite3
+from enum import Enum
 import seaborn as sns
 from matplotlib import pyplot as plt
 import pandas as pd
-import datetime
 import h5py
-import warnings
-from enum import Enum
 import yaml
-import os
-import glob
-import sqlite3
-from typing import List
 warnings.filterwarnings("ignore")
 
 plt.style.use('seaborn')
@@ -55,17 +53,17 @@ class FileType(Enum):
     csv = 2
 
 
-def round_time(dt: datetime.datetime = None, roundTo=60):
+def round_time(dt: datetime.datetime = None, round_to=60):
     '''
     Round a datetime object to any time in seconds
 
     dt : datetime.datetime object
-    roundTo : Closest number of seconds to round to. Default = 1 minute.
+    round_to : Closest number of seconds to round to. Default = 1 minute.
     '''
-    if dt == None:
+    if dt is None:
         dt = datetime.datetime.now()
     seconds = (dt.replace(tzinfo=None) - dt.min).seconds
-    rounding = (seconds+roundTo/2) // roundTo * roundTo
+    rounding = (seconds+round_to/2) // round_to * round_to
     return dt + datetime.timedelta(0, rounding-seconds, -dt.microsecond)
 
 
@@ -88,9 +86,26 @@ def day_of_year_to_datetime(year: int, day_of_year_list: list):
         except TypeError:
             print(f'Type Error! d = {d}, type(d) = {type(d)}')
         # Round the time
-        dx = round_time(dt=dx, roundTo=60*60)
+        dx = round_time(dt=dx, round_to=60*60)
         datetimes.append(dx)
     return datetimes
+
+
+def convert_to_datetime(year: int, days: List[int]) -> List[datetime]:
+    """
+    Convert a list of days of the year to datetime objects for a specific year.
+
+    Args:
+        year (int): The year for which to create the datetime objects.
+        days (List[int]): A list of days of the year (1-365 or 1-366 for leap years).
+
+    Returns:
+        List[datetime]: A list of `datetime` objects corresponding to the specified days and year.
+    """
+    # TODO: Note, this was written with ChatGPT to replace the above function. It needs testing.
+    start_date = datetime.datetime(year, 1, 1)
+    datetime_objects = [start_date + datetime.timedelta(days=day - 1) for day in days]
+    return datetime_objects
 
 
 def dataframe_to_date_format(year: int, data_frame: pd.DataFrame):
@@ -157,11 +172,24 @@ def read_csv(infile: str, year: int, data_columns: List[str], skiprows: int = 3)
 
 
 def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, file_type: FileType = None):
-    '''
-    Read CE-QUAL-W2 time series data (npt/opt and csv formats) and convert the Day of Year (Julian Day) to date-time format
-
+    """
+    Read CE-QUAL-W2 time series data (npt/opt and csv formats) and convert the Day of Year (Julian Day) to date-time format.
     This function automatically detects the file type, if the file is named with *.npt, *.opt, or *.csv extensions. 
-    '''
+
+    Args:
+        infile (str): Input time series file
+        year (int): Model start year
+        data_columns (List[str]): List of names of the data columns
+        skiprows (int, optional): Number of header rows to skip. Defaults to 3.
+        file_type (FileType, optional): File type (csv, npt, or opt). Defaults to None.
+
+    Raises:
+        Exception: File type was not specified
+        Exception: File type was not defined correctly
+
+    Returns:
+        pandas.DataFrame: Pandas Dataframe
+    """
 
     # If not defined, set the file type using the input filename
     if not file_type:
@@ -201,16 +229,41 @@ def read_met(infile: str, year: int, data_columns: List[str] = None, skiprows: i
     return read(infile, year, data_columns, skiprows=skiprows)
 
 
-def get_colors(df: pd.DataFrame, palette: str, min_colors=6):
-    '''Get list of colors from the specified Seaborn color palette'''
+def get_colors(df: pd.DataFrame, palette: str, min_colors: int = 6) -> List[str]:
+    """
+    Get a list of colors from Seaborn's color palette.
 
-    colors = sns.color_palette(palette, min(min_colors, len(df.columns)))
+    Args:
+        df (pd.DataFrame): The DataFrame used to determine the number of colors.
+        palette (str): The name of the color palette to use.
+        min_colors (int, optional): The minimum number of colors to select. Defaults to 6.
+
+    Returns:
+        List[str]: A list of colors selected from the color palette.
+    """
+    num_colors = min(len(df), min_colors)
+    colors = sns.color_palette(palette, num_colors)
     return colors
 
 
 def simple_plot(series: pd.Series, title: str = None, xlabel: str = None, ylabel: str = None, 
     colors: List[str] = None, figsize=(15, 9), style: str = '-', palette: str = 'colorblind', **kwargs):
-    '''Plot one time series'''
+    """
+    Plot one time series
+
+    Args:
+        series (pd.Series): Time series
+        title (str, optional): Plot title. Defaults to None.
+        xlabel (str, optional): x-axis label. Defaults to None.
+        ylabel (str, optional): y-axis label. Defaults to None.
+        colors (List[str], optional): List of colors. Defaults to None.
+        figsize (tuple, optional): Figure size. Defaults to (15, 9).
+        style (str, optional): Line style. Defaults to '-'.
+        palette (str, optional): Color palette. Defaults to 'colorblind'.
+
+    Returns:
+        object: Figure handle
+    """
 
     fig, axes = plt.subplots(figsize=figsize)
 
