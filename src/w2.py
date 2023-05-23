@@ -292,7 +292,7 @@ def read(*args, **kwargs):
     :rtype: pd.DataFrame
     """
 
-    # Assign positional arguments to variables
+    # Assign positional and keyword arguments to variables
     if len(args) != 3:
         raise ValueError("Exactly three arguments are required.")
 
@@ -325,21 +325,25 @@ def read(*args, **kwargs):
     return df
 
 
-
 def read_met(infile: str, year: int, *args, **kwargs) -> pd.DataFrame:
     """
     Read meteorology time series.
 
-    :param infile: Time series file.
-    :type infile: str
-    :param year: Start year of the simulation.
-    :type year: int
-    :param args: Additional positional arguments.
-    :param kwargs: Additional keyword arguments.
-
+    :param args: Any number of positional arguments. The first argument should be the path to the input time series file.
+                 The second argument should be the start year of the simulation.
+    :param kwargs: Any number of keyword arguments.
+                   - skiprows: The number of header rows to skip. Defaults to 3.
+                   - file_type: The file type (CSV, npt, or opt). If not specified, it is determined from the file extension.
     :return: Dataframe of the time series in the input file.
     :rtype: pd.DataFrame
     """
+
+    # Assign positional and keyword arguments to variables
+    if len(args) != 2:
+        raise ValueError("Exactly two arguments are required.")
+
+    infile, year = args
+
     if not kwargs.get('data_columns'):
         kwargs['data_columns'] = [
             'Air Temperature ($^oC$)',
@@ -350,7 +354,7 @@ def read_met(infile: str, year: int, *args, **kwargs) -> pd.DataFrame:
             'Solar Radiation ($W/m^2$)'
         ]
 
-    return read(infile, year, *args, **kwargs)
+    return read(infile, year, data_columns, **kwargs)
 
 
 def get_colors(df: pd.DataFrame, palette: str, min_colors: int = 6) -> List[str]:
