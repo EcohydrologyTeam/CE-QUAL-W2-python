@@ -164,7 +164,7 @@ def read_npt_opt(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.
     # If it is a CSV file, then call read_csv() instead.
     # TODO: Add support for tabs and other delimiters. (LOW PRIORITY)
     with open(infile, 'r', encoding='utf-8') as f:
-        for i in range(skiprows + 1):
+        for _ in range(skiprows + 1):
             line = f.readline()
         if ',' in line:
             return read_csv(infile, data_columns=data_columns, skiprows=skiprows)
@@ -689,7 +689,7 @@ def generate_plots_report(
     if not os.path.abspath(outfile):
         outfile = os.path.join(model_path, outfile)
 
-    with open(outfile, 'w') as f:
+    with open(outfile, 'w', encoding='utf-8') as f:
         if yaml:
             f.write(yaml + '\n')
         if title:
