@@ -212,7 +212,7 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
     return df
 
 
-def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, file_type: FileType = None):
+# def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, file_type: FileType = None):
     """
     Read CE-QUAL-W2 time series data in various formats and convert the Day of Year to date-time format.
 
@@ -234,6 +234,73 @@ def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, fil
     :return: A Pandas DataFrame containing the time series data.
     :rtype: pd.DataFrame
     """
+#     # Assign positional arguments to variables
+#     if len(args) >= 3:
+#         infile, year, data_columns = args[:3]
+#     elif len(args) == 2:
+#         infile, year = args[:2]
+#         data_columns = None
+#     elif len(args) == 1:
+#         infile = args[0]
+#         infile = data_columns = None
+#     else:
+#         infile = year = data_columns = None
+# 
+#     # Assign keywords to variables
+#     skiprows = kwargs.get('skiprows', 3)
+#     file_type = kwargs.get('file_type', None)
+# 
+#     # If not defined, set the file type using the input filename
+#     if not file_type:
+#         if infile.lower().endswith('.csv'):
+#             file_type = FileType.CSV
+#         elif infile.lower().endswith('.npt') or infile.lower().endswith('.opt'):
+#             file_type = FileType.FIXED_WIDTH
+#         else:
+#             raise ValueError('The file type was not specified, and it could not be determined from the filename.')
+# 
+#     # Read the data
+#     if file_type == FileType.FIXED_WIDTH:
+#         df = read_npt_opt(infile, data_columns, skiprows=skiprows)
+#     elif file_type == FileType.CSV:
+#         df = read_csv(infile, data_columns, skiprows=skiprows)
+#     else:
+#         raise ValueError('Unrecognized file type. Valid file types are CSV, npt, and opt.')
+# 
+#     # Convert day-of-year column of the data frames to date format
+#     df = dataframe_to_date_format(year, df)
+# 
+#     return df
+
+def read(*args, **kwargs):
+    """
+    Read CE-QUAL-W2 time series data in various formats and convert the Day of Year to date-time format.
+
+    This function supports reading data from CSV (Comma Separated Values) files and fixed-width format (npt/opt) files.
+    The file type can be explicitly specified using the `file_type` keyword argument, or it can be inferred from the file extension.
+    By default, the function assumes a skiprows value of 3 for header rows.
+
+    :param args: Any number of positional arguments. The first argument should be the path to the input time series file.
+                 The second argument should be the start year of the simulation.
+                 The third argument (optional) should be the list of names of the data columns.
+    :param kwargs: Any number of keyword arguments.
+                   - skiprows: The number of header rows to skip. Defaults to 3.
+                   - file_type: The file type (CSV, npt, or opt). If not specified, it is determined from the file extension.
+    :raises ValueError: If the file type was not specified and could not be determined from the filename.
+    :raises ValueError: If an unrecognized file type is encountered. Valid file types are CSV, npt, and opt.
+    :return: A Pandas DataFrame containing the time series data with the Day of Year converted to date format.
+    :rtype: pd.DataFrame
+    """
+
+    # Assign positional arguments to variables
+    if len(args) != 3:
+        raise ValueError("Exactly three arguments are required.")
+
+    infile, year, data_columns = args
+
+    # Assign keywords to variables
+    skiprows = kwargs.get('skiprows', 3)
+    file_type = kwargs.get('file_type', None)
 
     # If not defined, set the file type using the input filename
     if not file_type:
@@ -256,6 +323,8 @@ def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, fil
     df = dataframe_to_date_format(year, df)
 
     return df
+
+
 
 def read_met(infile: str, year: int, *args, **kwargs) -> pd.DataFrame:
     """
