@@ -56,83 +56,89 @@ class FileType(Enum(int)):
     Args:
         Enum (int): Enumeration
     """
+
     UNKNOWN = 0
     FIXED_WIDTH = 1
     CSV = 2
 
 
-def round_time(dt: datetime.datetime = None, round_to=60) -> datetime.datetime:
+def round_time(dt: datetime.datetime = None, round_to: int = 60) -> datetime.datetime:
     """
-    Round a datetime object to any time in seconds
+    Round a datetime object to the nearest specified time interval.
 
-    Args:
-        dt (datetime.datetime, optional): Input datetime. Defaults to None.
-        round_to (int, optional): Closest number of seconds to round to. Defaults to 60 seconds.
+    :param dt: The input datetime object. Defaults to the current datetime if not provided.
+    :type dt: datetime.datetime, optional
+    :param round_to: The closest number of seconds to round to. Defaults to 60 seconds.
+    :type round_to: int, optional
 
-    Returns:
-        datetime.datetime: Rounded datetime
+    :return: The rounded datetime object.
+    :rtype: datetime.datetime
     """
+
     if dt is None:
         dt = datetime.datetime.now()
+
     seconds = (dt.replace(tzinfo=None) - dt.min).seconds
-    rounding = (seconds+round_to/2) // round_to * round_to
-    return dt + datetime.timedelta(0, rounding-seconds, -dt.microsecond)
+    rounding = (seconds + round_to / 2) // round_to * round_to
+
+    return dt + datetime.timedelta(0, rounding - seconds)
 
 
-def day_of_year_to_datetime(year: int, day_of_year_list: list) -> List(datetime.datetime):
+def day_of_year_to_datetime(year: int, day_of_year_list: List[int]) -> List[datetime.datetime]:
     """
-    Convert a list of day-of-year values to datetime objects
+    Convert a list of day-of-year values to datetime objects.
 
-    Args:
-        year (int): Start year of the data
-        day_of_year_list (list): List of day-of-year values (e.g., from CE-QUAL-W2)
-
-    Returns:
-        List(datetime.datetime): List of datetime objects
+    :param year: The start year of the data.
+    :type year: int
+    :param day_of_year_list: A list of day-of-year values (e.g., from CE-QUAL-W2).
+    :type day_of_year_list: list
+    :return: A list of datetime objects corresponding to the day-of-year values.
+    :rtype: List[datetime.datetime]
     """
+
     day1 = datetime.datetime(year, 1, 1, 0, 0, 0)
     datetimes = []
     for d in day_of_year_list:
-        # Compute the difference, subtracting 1 from the day_of_year
         try:
             d = float(d)
-            dx = day1 + datetime.timedelta(days=(d-1))
+            dx = day1 + datetime.timedelta(days=(d - 1))
         except TypeError:
             print(f'Type Error! d = {d}, type(d) = {type(d)}')
-        # Round the time
-        dx = round_time(dt=dx, round_to=60*60)
+
+        dx = round_time(dt=dx, round_to=60 * 60)
         datetimes.append(dx)
     return datetimes
 
 
 def convert_to_datetime(year: int, days: List[int]) -> List[datetime]:
     """
-    Convert a list of days of the year to datetime objects for a specific year
+    Convert a list of days of the year to datetime objects for a specific year.
 
-    Args:
-        year (int): The year for which to create the datetime objects.
-        days (List[int]): A list of days of the year (1-365 or 1-366 for leap years).
-
-    Returns:
-        List[datetime]: A list of `datetime` objects corresponding to the specified days and year.
+    :param year: The year for which to create the datetime objects.
+    :type year: int
+    :param days: A list of days of the year (1-365 or 1-366 for leap years).
+    :type days: List[int]
+    :return: A list of datetime objects corresponding to the specified days and year.
+    :rtype: List[datetime.datetime]
     """
-    # TODO: Note, this was written with ChatGPT to replace the above function. It needs testing.
+
     start_date = datetime.datetime(year, 1, 1)
     datetime_objects = [start_date + datetime.timedelta(days=day - 1) for day in days]
     return datetime_objects
 
 
-def dataframe_to_date_format(year: int, data_frame: pd.DataFrame):
+def dataframe_to_date_format(year: int, data_frame: pd.DataFrame) -> pd.DataFrame:
     """
-    Convert the day-of-year column in a CE-QUAL-W2 data frame to datetime objects
+    Convert the day-of-year column in a CE-QUAL-W2 data frame to datetime objects.
 
-    Args:
-        year (int): Start year of the data
-        data_frame (pd.DataFrame): Data frame to convert
-
-    Returns:
-        pd.DataFrame: Dataframe of datetime objects
+    :param year: The start year of the data.
+    :type year: int
+    :param data_frame: The data frame to convert.
+    :type data_frame: pd.DataFrame
+    :return: The data frame with the day-of-year column converted to datetime objects.
+    :rtype: pd.DataFrame
     """
+
     datetimes = day_of_year_to_datetime(year, data_frame.index)
     data_frame.index = datetimes
     data_frame.index.name = 'Date'
@@ -141,16 +147,16 @@ def dataframe_to_date_format(year: int, data_frame: pd.DataFrame):
 
 def read_npt_opt(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.DataFrame:
     """
-    Read CE-QUAL-W2 time series (fixed-width format, *.npt files)
+    Read CE-QUAL-W2 time series (fixed-width format, *.npt files).
 
-    Args:
-        infile (str): Time series file (*.npt or *.opt)
-        year (int): Start year of the simulation
-        data_columns (List[str]): Names of the data columns
-        skiprows (int, optional): Number of header rows to skip. Defaults to 3.
-
-    Returns:
-        pd.DataFrame: Dataframe of time series data read from the input file
+    :param infile: The path to the time series file (*.npt or *.opt).
+    :type infile: str
+    :param data_columns: The names of the data columns.
+    :type data_columns: List[str]
+    :param skiprows: The number of header rows to skip. Defaults to 3.
+    :type skiprows: int, optional
+    :return: A DataFrame of the time series data read from the input file.
+    :rtype: pd.DataFrame
     """
 
     # This function cannot trust that the file is actually in fixed-width format.
@@ -176,15 +182,16 @@ def read_npt_opt(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.
 
 def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.DataFrame:
     """
-    Read CE-QUAL-W2 time series in CSV format
+    Read CE-QUAL-W2 time series in CSV format.
 
-    Args:
-        infile (str): Time series file (*.npt or *.opt)
-        data_columns (List[str]): Names of the data columns
-        skiprows (int, optional): Number of header rows to skip. Defaults to 3.
-
-    Returns:
-        pd.DataFrame: Dataframe of time series data read from the input file
+    :param infile: The path to the time series file (*.npt or *.opt).
+    :type infile: str
+    :param data_columns: The names of the data columns.
+    :type data_columns: List[str]
+    :param skiprows: The number of header rows to skip. Defaults to 3.
+    :type skiprows: int, optional
+    :return: A DataFrame of the time series data read from the input file.
+    :rtype: pd.DataFrame
     """
 
     try:
@@ -207,22 +214,25 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
 
 def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, file_type: FileType = None):
     """
-    Read CE-QUAL-W2 time series data (npt/opt and csv formats) and convert the Day of Year (Julian Day) to date-time format.
-    This function automatically detects the file type, if the file is named with *.npt, *.opt, or *.csv extensions. 
+    Read CE-QUAL-W2 time series data in various formats and convert the Day of Year to date-time format.
 
-    Args:
-        infile (str): Input time series file
-        year (int): Start year of the simulation
-        data_columns (List[str]): List of names of the data columns
-        skiprows (int, optional): Number of header rows to skip. Defaults to 3.
-        file_type (FileType, optional): File type (csv, npt, or opt). Defaults to None.
+    This function automatically detects the file type based on the file extension (*.npt, *.opt, or *.csv).
+    The supported file types are CSV (Comma Separated Values) and fixed-width format (npt/opt).
 
-    Raises:
-        Exception: File type was not specified
-        Exception: File type was not defined correctly
-
-    Returns:
-        pd.DataFrame: Pandas Dataframe
+    :param infile: The path to the input time series file.
+    :type infile: str
+    :param year: The start year of the simulation.
+    :type year: int
+    :param data_columns: The list of names of the data columns.
+    :type data_columns: List[str]
+    :param skiprows: The number of header rows to skip. Defaults to 3.
+    :type skiprows: int, optional
+    :param file_type: The file type (CSV, npt, or opt). Defaults to None.
+    :type file_type: FileType, optional
+    :raises ValueError: If the file type was not specified.
+    :raises ValueError: If the file type was not recognized based on the file extension.
+    :return: A Pandas DataFrame containing the time series data.
+    :rtype: pd.DataFrame
     """
 
     # If not defined, set the file type using the input filename
@@ -232,7 +242,7 @@ def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, fil
         elif infile.lower().endswith('.npt') or infile.lower().endswith('.opt'):
             file_type = FileType.FIXED_WIDTH
         else:
-            raise Exception('The file type was not specified, and it could not be determined from the filename.')
+            raise ValueError('The file type was not specified, and it could not be determined from the filename.')
 
     # Read the data
     if file_type == FileType.FIXED_WIDTH:
@@ -240,7 +250,7 @@ def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, fil
     elif file_type == FileType.CSV:
         df = read_csv(infile, data_columns, skiprows=skiprows)
     else:
-        raise Exception('Error: file_type is not defined correctly.')
+        raise ValueError('Unrecognized file type. Valid file types are CSV, npt, and opt.')
 
     # Convert day-of-year column of the data frames to date format
     df = dataframe_to_date_format(year, df)
@@ -248,18 +258,21 @@ def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, fil
     return df
 
 
-def read_met(infile: str, year: int, data_columns: List[str] = None, skiprows: int = 3):
+def read_met(infile: str, year: int, data_columns: List[str] = None, skiprows: int = 3) -> pd.DataFrame:
     """
-    Read meteorology time series
+    Read meteorology time series.
 
-    Args:
-        infile (str): Time series file
-        year (int): Start year of the simualtion
-        data_columns (List[str], optional): Names of the data columns. Defaults to None.
-        skiprows (int, optional): Number of header rows to skip. Defaults to 3.
+    :param infile: Time series file.
+    :type infile: str
+    :param year: Start year of the simulation.
+    :type year: int
+    :param data_columns: Names of the data columns. (Default: None)
+    :type data_columns: List[str], optional
+    :param skiprows: Number of header rows to skip. (Default: 3)
+    :type skiprows: int, optional
 
-    Returns:
-        pd.DataFrame: Dataframe of the time series in the input file
+    :return: Dataframe of the time series in the input file.
+    :rtype: pd.DataFrame
     """
     if not data_columns:
         data_columns = [
@@ -278,36 +291,47 @@ def get_colors(df: pd.DataFrame, palette: str, min_colors: int = 6) -> List[str]
     """
     Get a list of colors from Seaborn's color palette.
 
-    Args:
-        df (pd.DataFrame): The DataFrame used to determine the number of colors.
-        palette (str): The name of the color palette to use.
-        min_colors (int, optional): The minimum number of colors to select. Defaults to 6.
+    :param df: The DataFrame used to determine the number of colors.
+    :type df: pd.DataFrame
+    :param palette: The name of the color palette to use.
+    :type palette: str
+    :param min_colors: The minimum number of colors to select. (Default: 6)
+    :type min_colors: int, optional
 
-    Returns:
-        List[str]: A list of colors selected from the color palette.
+    :return: A list of colors selected from the color palette.
+    :rtype: List[str]
     """
     num_colors = min(len(df), min_colors)
     colors = sns.color_palette(palette, num_colors)
     return colors
 
 
-def simple_plot(series: pd.Series, title: str = None, xlabel: str = None, ylabel: str = None, 
-    colors: List[str] = None, figsize=(15, 9), style: str = '-', palette: str = 'colorblind', **kwargs) -> plt.Figure:
+def simple_plot(
+    series: pd.Series, title: str = None, xlabel: str = None, ylabel: str = None, colors: List[str] = None,
+    figsize=(15, 9), style: str = '-', palette: str = 'colorblind', **kwargs) -> plt.Figure:
     """
-    Plot one time series
+    Create a simple line plot from a pandas Series.
 
-    Args:
-        series (pd.Series): Time series.
-        title (str, optional): Plot title. Defaults to None.
-        xlabel (str, optional): x-axis label. Defaults to None.
-        ylabel (str, optional): y-axis label. Defaults to None.
-        colors (List[str], optional): List of colors. Defaults to None.
-        figsize (tuple, optional): Figure size. Defaults to (15, 9).
-        style (str, optional): Line style. Defaults to '-'.
-        palette (str, optional): Color palette. Defaults to 'colorblind'.
+    :param series: The Series containing the data to be plotted.
+    :type series: pd.Series
+    :param title: The title of the plot.
+    :type title: str, optional
+    :param xlabel: The label for the x-axis.
+    :type xlabel: str, optional
+    :param ylabel: The label for the y-axis.
+    :type ylabel: str, optional
+    :param colors: The colors to be used for the line.
+    :type colors: List[str], optional
+    :param figsize: The size of the figure in inches (width, height).
+    :type figsize: tuple, optional
+    :param style: The line style for the plot.
+    :type style: str, optional
+    :param palette: The color palette to use for the line.
+    :type palette: str, optional
+    :param **kwargs: Additional keyword arguments to be passed to the underlying plotting function.
 
-    Returns:
-        plt.Figure: Figure handle of the generated plot.
+    :return: The matplotlib Figure object representing the plot.
+    :rtype: plt.Figure
     """
 
     fig, axes = plt.subplots(figsize=figsize)
@@ -325,31 +349,35 @@ def simple_plot(series: pd.Series, title: str = None, xlabel: str = None, ylabel
 
 
 def plot(df: pd.DataFrame, title: str = None, legend_values: List[str] = None,
-         x_label: str = None, y_label: str = None, colors: List[str] = None,
-         fig_size=(15, 9), line_style: str = '-', palette: str = 'colorblind', **kwargs) -> plt.Figure:
+         x_label: str = None, y_label: str = None, fig_size=(15, 9),
+         line_style: str = '-', palette: str = 'colorblind', colors=k2) -> plt.Figure:
     """
-    Plot entire data frame in on one axis
+    Plot a DataFrame as a line plot.
 
-    Args:
-        df (pd.DataFrame): The dataframe to plot.
-        title (str): The title of the plot.
-        legend_values (list): List of legend values corresponding to each column in the dataframe.
-        x_label (str): Label for the x-axis.
-        y_label (str): Label for the y-axis.
-        colors (list): List of colors for each column in the dataframe.
-        fig_size (tuple): Figure size (width, height) in inches.
-        line_style (str): Line style for the plot.
-        color_palette (str): Color palette name for generating colors.
+    :param df: The DataFrame containing the data to be plotted.
+    :type df: pd.DataFrame
+    :param title: The title of the plot.
+    :type title: str, optional
+    :param legend_values: The values to be displayed in the legend.
+    :type legend_values: List[str], optional
+    :param x_label: The label for the x-axis.
+    :type x_label: str, optional
+    :param y_label: The label for the y-axis.
+    :type y_label: str, optional
+    :param fig_size: The size of the figure in inches (width, height).
+    :type fig_size: tuple, optional
+    :param line_style: The line style for the plot.
+    :type line_style: str, optional
+    :param palette: The color palette to use for the lines.
+    :type palette: str, optional
 
-    Returns:
-        plt.Figure: Figure handle
+    :return: The matplotlib Figure object representing the plot.
+    :rtype: plt.Figure
     """
 
     fig, axes = plt.subplots(figsize=fig_size)
 
-    if not colors:
-        colors = get_colors(df, palette, min_colors=6)
-
+    # colors = get_colors(df, palette, min_colors=6)
     axes.set_prop_cycle("color", colors)
 
     df.plot(ax=axes, title=title, ylabel=y_label, style=line_style)
@@ -362,24 +390,31 @@ def plot(df: pd.DataFrame, title: str = None, legend_values: List[str] = None,
 
 
 def plot_dataframe(df: pd.DataFrame, title: str, legend_values: list, x_label: str, y_label: str,
-                   colors: list, fig_size: tuple, line_style: str, color_palette: str) -> hv.core.overlay.Overlay:
+                   fig_size: tuple, line_style: str, color_palette: str) -> hv.core.overlay.Overlay:
     """
-    Plot an entire dataframe using Holoviews. (Written using ChatGPT. Needs testing.)
+    Plot a DataFrame as an overlay of multiple time series.
 
-    Args:
-        df (pd.DataFrame): The dataframe to plot.
-        title (str): The title of the plot.
-        legend_values (list): List of legend values corresponding to each column in the dataframe.
-        x_label (str): Label for the x-axis.
-        y_label (str): Label for the y-axis.
-        colors (list): List of colors for each column in the dataframe.
-        fig_size (tuple): Figure size (width, height) in inches.
-        line_style (str): Line style for the plot.
-        color_palette (str): Color palette name for generating colors.
+    :param df: The DataFrame containing the time series data.
+    :type df: pd.DataFrame
+    :param title: The title of the plot.
+    :type title: str
+    :param legend_values: The values to be displayed in the legend.
+    :type legend_values: list
+    :param x_label: The label for the x-axis.
+    :type x_label: str
+    :param y_label: The label for the y-axis.
+    :type y_label: str
+    :param fig_size: The size of the figure in inches.
+    :type fig_size: tuple
+    :param line_style: The line style for the time series.
+    :type line_style: str
+    :param color_palette: The color palette to use for the time series.
+    :type color_palette: str
 
-    Returns:
-        hv.core.overlay.Overlay: The Holoviews overlay object representing the plot.
+    :return: The overlay of the time series plot.
+    :rtype: hv.core.overlay.Overlay
     """
+
     # Convert the dataframe to a Holoviews Dataset
     dataset = hv.Dataset(df, kdims=[x_label], vdims=list(df.columns))
 
@@ -391,33 +426,41 @@ def plot_dataframe(df: pd.DataFrame, title: str, legend_values: list, x_label: s
     color_cycle = color_palette[0:len(df.columns)]
 
     # Create the plot
-    plot = dataset.to(hv.Curve, x_label, list(df.columns), label=legend_values).opts(
+    myplot = dataset.to(hv.Curve, x_label, list(df.columns), label=legend_values).opts(
         opts.Curve(color=color_cycle, **style_opts), opts.Overlay(legend_position='right'),
         opts.Curve(width=fig_size[0], height=fig_size[1]), title=title, xlabel=x_label, ylabel=y_label
     )
 
-    return plot
+    return myplot
 
 
 def multi_plot(df, title: str = None, legend_list: List[str] = None, xlabel: str = None,
-              ylabels: List[str] = None, colors: List[str] = None, figsize=(15, 21),
-              style: str = '-', palette: str = 'colorblind', **kwargs):
+               ylabels: List[str] = None, colors: List[str] = None, figsize=(15, 21),
+               style: str = '-', palette: str = 'colorblind', **kwargs):
     """
-    Plot each column as a separate subplot
+    Plot multiple time series from a DataFrame on a single figure.
 
-    Args:
-        df (_type_): _description_
-        title (str, optional): _description_. Defaults to None.
-        legend_list (List[str], optional): _description_. Defaults to None.
-        xlabel (str, optional): _description_. Defaults to None.
-        ylabels (List[str], optional): _description_. Defaults to None.
-        colors (List[str], optional): _description_. Defaults to None.
-        figsize (tuple, optional): _description_. Defaults to (15, 21).
-        style (str, optional): _description_. Defaults to '-'.
-        palette (str, optional): _description_. Defaults to 'colorblind'.
+    :param df: DataFrame containing the time series data.
+    :type df: pd.DataFrame
+    :param title: Title of the plot. Defaults to None.
+    :type title: str
+    :param legend_list: List of labels for the legend. Defaults to None.
+    :type legend_list: List[str]
+    :param xlabel: Label for the x-axis. Defaults to None.
+    :type xlabel: str
+    :param ylabels: List of labels for the y-axes. Defaults to None.
+    :type ylabels: List[str]
+    :param colors: List of colors for each time series. Defaults to None.
+    :type colors: List[str]
+    :param figsize: Figure size in inches. Defaults to (15, 21).
+    :type figsize: tuple
+    :param style: Line style for the time series. Defaults to '-'.
+    :type style: str
+    :param palette: Color palette to use for the time series. Defaults to 'colorblind'.
+    :type palette: str
+    :param **kwargs: Additional keyword arguments to be passed to the plot function.
 
-    Returns:
-        _type_: _description_
+    :return: None
     """
 
     fig, axes = plt.subplots(figsize=figsize)
@@ -451,14 +494,17 @@ def write_hdf(df: pd.DataFrame, group: str, outfile: str, overwrite=True):
     """
     Write CE-QUAL-W2 timeseries dataframe to HDF5
 
-    The index column must be a datetime array. This columns will be written to HDF5 as a string array. 
+    The index column must be a datetime array. This column will be written to HDF5 as a string array.
     Each data column will be written using its data type.
 
-    Args:
-        df (pd.DataFrame): _description_
-        group (str): _description_
-        outfile (str): _description_
-        overwrite (bool, optional): _description_. Defaults to True.
+    :param df: The DataFrame containing the timeseries data.
+    :type df: pd.DataFrame
+    :param group: The HDF5 group where the data will be stored.
+    :type group: str
+    :param outfile: The output HDF5 file path.
+    :type outfile: str
+    :param overwrite: Whether to overwrite existing data in HDF5. Defaults to True.
+    :type overwrite: bool, optional
     """
     with h5py.File(outfile, 'a') as f:
         index = df.index.astype('str')
@@ -475,14 +521,23 @@ def write_hdf(df: pd.DataFrame, group: str, outfile: str, overwrite=True):
             f.create_dataset(ts_path, data=df[col])
 
 
-def read_hdf(group: str, infile: str, variables: List[str]):
-    '''
-    Read CE-QUAL-W2 timeseries from HDF5 and create a dataframe
+def read_hdf(group: str, infile: str, variables: List[str]) -> pd.DataFrame:
+    """
+    Read CE-QUAL-W2 timeseries from HDF5 and create a dataframe.
 
-    This function assumes that a string-based datetime array named Date is present. This will be read and 
-    assiened as the index column of the output pandas dataframe will be a datetime array. 
-    '''
+    This function assumes that a string-based datetime array named Date is present.
+    This will be read and assigned as the index column of the output pandas dataframe, which will be a datetime array.
 
+    :param group: The group within the HDF5 file containing the time series data.
+    :type group: str
+    :param infile: The path to the HDF5 file.
+    :type infile: str
+    :param variables: A list of variable names to read from the HDF5 file.
+    :type variables: List[str]
+
+    :return: Dataframe containing the time series data.
+    :rtype: pd.DataFrame
+    """
     with h5py.File(infile, 'r') as f:
         # Read dates
         date_path = group + '/' + 'Date'
@@ -503,10 +558,20 @@ def read_hdf(group: str, infile: str, variables: List[str]):
         df = pd.DataFrame(ts, index=dates)
         return df
 
+def read_plot_control(yaml_infile: str, index_name: str = 'item') -> pd.DataFrame:
+    """
+    Read CE-QUAL-W2 plot control file in YAML format.
 
-def read_plot_control(yaml_infile: str, index_name='item') -> pd.DataFrame:
-    '''Read CE-QUAL-W2 plot control file (YAML format)'''
-    with open(yaml_infile) as yaml_file:
+    :param yaml_infile: Path to the YAML file.
+    :type yaml_infile: str
+    :param index_name: Name of the column to be set as the index in the resulting DataFrame.
+                       Defaults to 'item'.
+    :type index_name: str
+
+    :return: DataFrame containing the contents of the plot control file.
+    :rtype: pd.DataFrame
+    """
+    with open(yaml_infile, encoding='utf-8') as yaml_file:
         yaml_contents = yaml.load(yaml_file, Loader=yaml.SafeLoader)
         control_df = pd.json_normalize(yaml_contents)
         control_df.set_index(control_df[index_name], inplace=True)
@@ -514,16 +579,37 @@ def read_plot_control(yaml_infile: str, index_name='item') -> pd.DataFrame:
     return control_df
 
 
-def write_plot_control(control_df: pd.DataFrame, yaml_outfile: str, index_name: str = 'item'):
-    '''Write CE-QUAL-W2 plot control file (YAML format)'''
+def write_plot_control(control_df: pd.DataFrame, yaml_outfile: str):
+    """
+    Write CE-QUAL-W2 plot control file in YAML format.
+
+    :param control_df: DataFrame containing the plot control data.
+    :type control_df: pd.DataFrame
+    :param yaml_outfile: Path to the output YAML file.
+    :type yaml_outfile: str
+    """
     text = yaml.dump(control_df.reset_index().to_dict(orient='records'),
                      sort_keys=False, width=200, indent=4, default_flow_style=None)
-    with open(yaml_outfile, 'w') as f:
+    with open(yaml_outfile, 'w', encoding='utf-8') as f:
         f.write(text)
 
 
-def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype='png', VERBOSE=False):
-    '''Plot all files in a model using the plot configuration file (YAML format)'''
+def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype: str = 'png', VERBOSE: bool = False):
+    """
+    Plot all files specified in the plot control YAML file.
+
+    :param plot_control_yaml: Path to the plot control YAML file.
+    :type plot_control_yaml: str
+    :param model_path: Path to the model files directory.
+    :type model_path: str
+    :param year: Start year of the simulation.
+    :type year: int
+    :param filetype: Filetype for saving the plots (e.g., 'png', 'pdf', 'svg'). Defaults to 'png'.
+    :type filetype: str
+    :param VERBOSE: Flag indicating verbose output. Defaults to False.
+    :type VERBOSE: bool
+    """
+
     # Read the plot control file
     control_df = read_plot_control(plot_control_yaml)
 
@@ -546,7 +632,7 @@ def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype=
         # Plot the data
         plots = []
         if plot_type == 'combined':
-            ts_plot = plot(df, ylabel=ylabels[0], colors=k2)
+            ts_plot = plot(df, y_label=ylabels[0], colors=k2)
             ts_plot.plot_type = plot_type
             plots.append(ts_plot)
         elif plot_type == 'subplots':
@@ -574,15 +660,17 @@ def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype=
                         outpath = f'{inpath}.{ft}'
                         ts_plot.get_figure().savefig(outpath)
             if isinstance(filetype, str):
-                    if ts_plot.plot_type == 'separate':
-                        outpath = f'{inpath}_{ts_plot.variable_name}.{filetype}'
-                        ts_plot.get_figure().savefig(outpath)
-                    else:
-                        outpath = f'{inpath}_{ts_plot.variable_name}.{filetype}'
-                        ts_plot.get_figure().savefig(outpath)
+                if ts_plot.plot_type == 'separate':
+                    outpath = f'{inpath}_{ts_plot.variable_name}.{filetype}'
+                    ts_plot.get_figure().savefig(outpath)
+                else:
+                    outpath = f'{inpath}_{ts_plot.variable_name}.{filetype}'
+                    ts_plot.get_figure().savefig(outpath)
 
 
-def generate_plots_report(control_df: pd.DataFrame, model_path: str, outfile: str, title: str = None, subtitle: str = None, file_type: str = 'png', yaml: str = None, pdf_report = False):
+def generate_plots_report(
+        control_df: pd.DataFrame, model_path: str, outfile: str, title: str = None, subtitle: str = None,
+        file_type: str = 'png', yaml: str = None, pdf_report=False):
     '''
     Generate a report of all the plots in the specified plot control dataframe
 
@@ -630,12 +718,22 @@ def generate_plots_report(control_df: pd.DataFrame, model_path: str, outfile: st
     basefile = os.path.splitext(outfile)[0]
 
     if pdf_report:
-        os.system(f'pandoc {basefile}.md -o {basefile}.pdf --from markdown --template todd.latex --top-level-division="chapter"')
+        os.system(
+            f'pandoc {basefile}.md -o {basefile}.pdf --from markdown --template todd.latex --top-level-division="chapter"')
 
 
 def sql_query(database_name: str, query: str):
-    '''Read time series data from a SQLite database using an SQL query'''
-    with sqlite3.connect('w2_data.db') as db:
+    """
+    Read time series data from a SQLite database using an SQL query.
+
+    :param database_name: The name of the SQLite database file.
+    :type database_name: str
+    :param query: The SQL query to execute for retrieving the data.
+    :type query: str
+    :return: A Pandas DataFrame containing the queried time series data.
+    :rtype: pandas.DataFrame
+    """
+    with sqlite3.connect(database_name) as db:
         df = pd.read_sql(query, db)
         df.index = df['Date']
         df.index = pd.to_datetime(df.index)
@@ -643,8 +741,20 @@ def sql_query(database_name: str, query: str):
         return df
 
 
-def read_sql(database: str, table: str, index_is_datetime = True):
-    '''Read a table in a SQLite database'''
+def read_sql(database: str, table: str, index_is_datetime=True):
+    """
+    Read data from a SQLite database using an SQL query.
+
+    :param database: The name of the SQLite database.
+    :type database: str
+    :param table: The name of the table from which to retrieve the data.
+    :type table: str
+    :param index_is_datetime: Flag indicating whether to convert the index to datetime.
+                              Defaults to True.
+    :type index_is_datetime: bool
+    :return: A Pandas DataFrame containing the queried data.
+    :rtype: pandas.DataFrame
+    """
     connection = sqlite3.connect(database)
     df = pd.read_sql_query(f'select * from {table}', connection)
     connection.close()
@@ -653,16 +763,31 @@ def read_sql(database: str, table: str, index_is_datetime = True):
 
 
 def write_csv(df: pd.DataFrame, outfile: str, year: int, header: str = None, float_format='%.3f'):
-    ''' Write data frame to CE-QUAL-W2 CSV format'''
+    """
+    Write a Pandas DataFrame to a CSV file with additional formatting options.
+
+    :param df: The DataFrame to be written to the CSV file.
+    :type df: pandas.DataFrame
+    :param outfile: The path to the output CSV file.
+    :type outfile: str
+    :param year: The year used for calculating Julian days.
+    :type year: int
+    :param header: Optional header string to be written at the beginning of the CSV file.
+                   Defaults to None.
+    :type header: str, optional
+    :param float_format: Format specifier for floating-point values in the CSV file.
+                         Defaults to '%.3f'.
+    :type float_format: str
+    """
     # Convert date to Julian days (day of year)
-    diff = df.index - datetime.datetime(year,1,1) + datetime.timedelta(days=1)
+    diff = df.index - datetime.datetime(year, 1, 1) + datetime.timedelta(days=1)
     jday = diff.days + diff.seconds / 3600.0 / 24.0
-    columns = ['JDAY'] + df.columns.to_list() # This needs to be done before assigning jday
+    columns = ['JDAY'] + df.columns.to_list()  # This needs to be done before assigning jday
     df['JDAY'] = jday
     df = df[columns]
 
     if not header:
         header = '$\n\n'
-    with open(outfile, 'w') as f:
+    with open(outfile, 'w', encoding="utf-8") as f:
         f.write(header)
         df.to_csv(f, header=True, index=False, float_format=float_format)
