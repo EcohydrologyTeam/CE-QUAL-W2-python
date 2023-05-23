@@ -257,8 +257,7 @@ def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, fil
 
     return df
 
-
-def read_met(infile: str, year: int, data_columns: List[str] = None, skiprows: int = 3) -> pd.DataFrame:
+def read_met(infile: str, year: int, *args, **kwargs) -> pd.DataFrame:
     """
     Read meteorology time series.
 
@@ -266,16 +265,14 @@ def read_met(infile: str, year: int, data_columns: List[str] = None, skiprows: i
     :type infile: str
     :param year: Start year of the simulation.
     :type year: int
-    :param data_columns: Names of the data columns. (Default: None)
-    :type data_columns: List[str], optional
-    :param skiprows: Number of header rows to skip. (Default: 3)
-    :type skiprows: int, optional
+    :param args: Additional positional arguments.
+    :param kwargs: Additional keyword arguments.
 
     :return: Dataframe of the time series in the input file.
     :rtype: pd.DataFrame
     """
-    if not data_columns:
-        data_columns = [
+    if not kwargs.get('data_columns'):
+        kwargs['data_columns'] = [
             'Air Temperature ($^oC$)',
             'Dew Point Temperature ($^oC$)',
             'Wind Speed (m/s)',
@@ -284,7 +281,7 @@ def read_met(infile: str, year: int, data_columns: List[str] = None, skiprows: i
             'Solar Radiation ($W/m^2$)'
         ]
 
-    return read(infile, year, data_columns, skiprows=skiprows)
+    return read(infile, year, *args, **kwargs)
 
 
 def get_colors(df: pd.DataFrame, palette: str, min_colors: int = 6) -> List[str]:
@@ -307,8 +304,8 @@ def get_colors(df: pd.DataFrame, palette: str, min_colors: int = 6) -> List[str]
 
 
 def simple_plot(
-    series: pd.Series, title: str = None, xlabel: str = None, ylabel: str = None, colors: List[str] = None,
-    figsize=(15, 9), style: str = '-', palette: str = 'colorblind', **kwargs) -> plt.Figure:
+        series: pd.Series, title: str = None, xlabel: str = None, ylabel: str = None, colors: List[str] = None,
+        figsize=(15, 9), style: str = '-', palette: str = 'colorblind', **kwargs) -> plt.Figure:
     """
     Create a simple line plot from a pandas Series.
 
@@ -392,7 +389,7 @@ def plot(df: pd.DataFrame, title: str = None, legend_values: List[str] = None,
 def plot_dataframe(df: pd.DataFrame, title: str, legend_values: list, x_label: str, y_label: str,
                    fig_size: tuple, line_style: str, color_palette: str) -> hv.core.overlay.Overlay:
     """
-    Plot a DataFrame as an overlay of multiple time series.
+    Plot a DataFrame as an overlay of multiple time series using holoviews.
 
     :param df: The DataFrame containing the time series data.
     :type df: pd.DataFrame
@@ -557,6 +554,7 @@ def read_hdf(group: str, infile: str, variables: List[str]) -> pd.DataFrame:
 
         df = pd.DataFrame(ts, index=dates)
         return df
+
 
 def read_plot_control(yaml_infile: str, index_name: str = 'item') -> pd.DataFrame:
     """
