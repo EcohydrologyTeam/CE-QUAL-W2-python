@@ -325,7 +325,7 @@ def read(*args, **kwargs):
     return df
 
 
-def read_met(infile: str, year: int, *args, **kwargs) -> pd.DataFrame:
+def read_met(*args, **kwargs) -> pd.DataFrame:
     """
     Read meteorology time series.
 
@@ -353,6 +353,7 @@ def read_met(infile: str, year: int, *args, **kwargs) -> pd.DataFrame:
             'Cloudiness (fraction)',
             'Solar Radiation ($W/m^2$)'
         ]
+    data_columns = kwargs.get('data_columns')
 
     return read(infile, year, data_columns, **kwargs)
 
@@ -417,37 +418,83 @@ def simple_plot(
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
 
+#     """
+#     Plot a DataFrame as a line plot.
+# 
+#     :param df: The DataFrame containing the data to be plotted.
+#     :type df: pd.DataFrame
+#     :param title: The title of the plot.
+#     :type title: str, optional
+#     :param legend_values: The values to be displayed in the legend.
+#     :type legend_values: List[str], optional
+#     :param x_label: The label for the x-axis.
+#     :type x_label: str, optional
+#     :param y_label: The label for the y-axis.
+#     :type y_label: str, optional
+#     :param fig_size: The size of the figure in inches (width, height).
+#     :type fig_size: tuple, optional
+#     :param line_style: The line style for the plot.
+#     :type line_style: str, optional
+#     :param palette: The color palette to use for the lines.
+#     :type palette: str, optional
+# 
+#     :return: The matplotlib Figure object representing the plot.
+#     :rtype: plt.Figure
+#     """
+# 
+# def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
+# 
+#     # Assign keyword arguments to variables
+#     title = kwargs.get('title', None)
+#     legend_values = kwargs.get('legend_values', None)
+#     # x_label = kwargs.get('x_label', None)
+#     y_label = kwargs.get('y_label', None)
+#     fig_size = kwargs.get('fig_size', (15, 9))
+#     line_style = kwargs.get('line_style', '-')
+#     # palette = kwargs.get('palette', 'colorblind')
+#     colors = kwargs.get('colors', k2)
+# 
+#     fig, axes = plt.subplots(figsize=fig_size)
+# 
+#     # colors = get_colors(df, palette, min_colors=6)
+#     axes.set_prop_cycle("color", colors)
+# 
+#     df.plot(ax=axes, title=title, ylabel=y_label, style=line_style)
+# 
+#     if legend_values:
+#         axes.legend(legend_values)
+# 
+#     fig.tight_layout()  # This resolves a lot of layout issues
+#     return fig
 
-def plot(df: pd.DataFrame, title: str = None, legend_values: List[str] = None,
-         x_label: str = None, y_label: str = None, fig_size=(15, 9),
-         line_style: str = '-', palette: str = 'colorblind', colors=k2) -> plt.Figure:
+
+def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     """
     Plot a DataFrame as a line plot.
 
     :param df: The DataFrame containing the data to be plotted.
     :type df: pd.DataFrame
-    :param title: The title of the plot.
-    :type title: str, optional
-    :param legend_values: The values to be displayed in the legend.
-    :type legend_values: List[str], optional
-    :param x_label: The label for the x-axis.
-    :type x_label: str, optional
-    :param y_label: The label for the y-axis.
-    :type y_label: str, optional
-    :param fig_size: The size of the figure in inches (width, height).
-    :type fig_size: tuple, optional
-    :param line_style: The line style for the plot.
-    :type line_style: str, optional
-    :param palette: The color palette to use for the lines.
-    :type palette: str, optional
-
+    :param kwargs: Additional keyword arguments to customize the plot.
+                   - title: The title of the plot. (Default: None)
+                   - legend_values: The values to be displayed in the legend. (Default: None)
+                   - y_label: The label for the y-axis. (Default: None)
+                   - fig_size: The size of the figure in inches (width, height). (Default: (15, 9))
+                   - line_style: The line style for the plot. (Default: '-')
+                   - colors: The colors to be used for each line in the plot. (Default: k2)
     :return: The matplotlib Figure object representing the plot.
     :rtype: plt.Figure
     """
 
+    # Assign keyword arguments to variables
+    title = kwargs.get('title', None)
+    legend_values = kwargs.get('legend_values', None)
+    y_label = kwargs.get('y_label', None)
+    fig_size = kwargs.get('fig_size', (15, 9))
+    line_style = kwargs.get('line_style', '-')
+    colors = kwargs.get('colors', k2)
+
     fig, axes = plt.subplots(figsize=fig_size)
 
-    # colors = get_colors(df, palette, min_colors=6)
     axes.set_prop_cycle("color", colors)
 
     df.plot(ax=axes, title=title, ylabel=y_label, style=line_style)
