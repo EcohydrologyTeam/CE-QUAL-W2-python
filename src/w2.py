@@ -245,11 +245,11 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
 #         infile = data_columns = None
 #     else:
 #         infile = year = data_columns = None
-# 
+#
 #     # Assign keywords to variables
 #     skiprows = kwargs.get('skiprows', 3)
 #     file_type = kwargs.get('file_type', None)
-# 
+#
 #     # If not defined, set the file type using the input filename
 #     if not file_type:
 #         if infile.lower().endswith('.csv'):
@@ -258,7 +258,7 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
 #             file_type = FileType.FIXED_WIDTH
 #         else:
 #             raise ValueError('The file type was not specified, and it could not be determined from the filename.')
-# 
+#
 #     # Read the data
 #     if file_type == FileType.FIXED_WIDTH:
 #         df = read_npt_opt(infile, data_columns, skiprows=skiprows)
@@ -266,11 +266,12 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
 #         df = read_csv(infile, data_columns, skiprows=skiprows)
 #     else:
 #         raise ValueError('Unrecognized file type. Valid file types are CSV, npt, and opt.')
-# 
+#
 #     # Convert day-of-year column of the data frames to date format
 #     df = dataframe_to_date_format(year, df)
-# 
+#
 #     return df
+
 
 def read(*args, **kwargs):
     """
@@ -420,7 +421,7 @@ def simple_plot(
 
 #     """
 #     Plot a DataFrame as a line plot.
-# 
+#
 #     :param df: The DataFrame containing the data to be plotted.
 #     :type df: pd.DataFrame
 #     :param title: The title of the plot.
@@ -437,13 +438,13 @@ def simple_plot(
 #     :type line_style: str, optional
 #     :param palette: The color palette to use for the lines.
 #     :type palette: str, optional
-# 
+#
 #     :return: The matplotlib Figure object representing the plot.
 #     :rtype: plt.Figure
 #     """
-# 
+#
 # def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
-# 
+#
 #     # Assign keyword arguments to variables
 #     title = kwargs.get('title', None)
 #     legend_values = kwargs.get('legend_values', None)
@@ -453,17 +454,17 @@ def simple_plot(
 #     line_style = kwargs.get('line_style', '-')
 #     # palette = kwargs.get('palette', 'colorblind')
 #     colors = kwargs.get('colors', k2)
-# 
+#
 #     fig, axes = plt.subplots(figsize=fig_size)
-# 
+#
 #     # colors = get_colors(df, palette, min_colors=6)
 #     axes.set_prop_cycle("color", colors)
-# 
+#
 #     df.plot(ax=axes, title=title, ylabel=y_label, style=line_style)
-# 
+#
 #     if legend_values:
 #         axes.legend(legend_values)
-# 
+#
 #     fig.tight_layout()  # This resolves a lot of layout issues
 #     return fig
 
@@ -506,8 +507,9 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     return fig
 
 
-def plot_dataframe(df: pd.DataFrame, title: str, legend_values: list, x_label: str, y_label: str,
-                   fig_size: tuple, line_style: str, color_palette: str) -> hv.core.overlay.Overlay:
+def plot_dataframe(
+        df: pd.DataFrame, title: str, legend_values: list, x_label: str, y_label: str, fig_size: tuple, line_style: str,
+        color_palette: str) -> hv.core.overlay.Overlay:
     """
     Plot a DataFrame as an overlay of multiple time series using holoviews.
 
