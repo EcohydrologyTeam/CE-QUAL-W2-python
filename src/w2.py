@@ -26,7 +26,8 @@ plt.rcParams['figure.subplot.hspace'] = 0.05  # Shrink the horizontal space
 
 # Custom curve colors
 # Using mountain and lake names for new color palettes
-rainbow = ['#3366CC', '#0099C6', '#109618', '#FCE030', '#FF9900', '#DC3912']  # (blue, teal, green, yellow, orange, red)
+rainbow = ['#3366CC', '#0099C6', '#109618', '#FCE030', '#FF9900',
+           '#DC3912']  # (blue, teal, green, yellow, orange, red)
 everest = ['#3366CC', '#DC4020', '#10AA18', '#0099C6', '#FCE030',
            '#FF9900', ]  # (blue, red, green, teal, yellow, orange)
 
@@ -43,7 +44,7 @@ k2 = (
 
 
 # Define string formatting constants, which work in string format statements
-DEG_C_ALT = u'\N{DEGREE SIGN}C'
+DEG_C_ALT = '\N{DEGREE SIGN}C'
 
 # Define default line color
 DEFAULT_COLOR = '#4488ee'
@@ -210,67 +211,6 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
         print('Error reading ' + infile)
         raise
     return df
-
-
-# def read(infile: str, year: int, data_columns: List[str], skiprows: int = 3, file_type: FileType = None):
-    """
-    Read CE-QUAL-W2 time series data in various formats and convert the Day of Year to date-time format.
-
-    This function automatically detects the file type based on the file extension (*.npt, *.opt, or *.csv).
-    The supported file types are CSV (Comma Separated Values) and fixed-width format (npt/opt).
-
-    :param infile: The path to the input time series file.
-    :type infile: str
-    :param year: The start year of the simulation.
-    :type year: int
-    :param data_columns: The list of names of the data columns.
-    :type data_columns: List[str]
-    :param skiprows: The number of header rows to skip. Defaults to 3.
-    :type skiprows: int, optional
-    :param file_type: The file type (CSV, npt, or opt). Defaults to None.
-    :type file_type: FileType, optional
-    :raises ValueError: If the file type was not specified.
-    :raises ValueError: If the file type was not recognized based on the file extension.
-    :return: A Pandas DataFrame containing the time series data.
-    :rtype: pd.DataFrame
-    """
-#     # Assign positional arguments to variables
-#     if len(args) >= 3:
-#         infile, year, data_columns = args[:3]
-#     elif len(args) == 2:
-#         infile, year = args[:2]
-#         data_columns = None
-#     elif len(args) == 1:
-#         infile = args[0]
-#         infile = data_columns = None
-#     else:
-#         infile = year = data_columns = None
-#
-#     # Assign keywords to variables
-#     skiprows = kwargs.get('skiprows', 3)
-#     file_type = kwargs.get('file_type', None)
-#
-#     # If not defined, set the file type using the input filename
-#     if not file_type:
-#         if infile.lower().endswith('.csv'):
-#             file_type = FileType.CSV
-#         elif infile.lower().endswith('.npt') or infile.lower().endswith('.opt'):
-#             file_type = FileType.FIXED_WIDTH
-#         else:
-#             raise ValueError('The file type was not specified, and it could not be determined from the filename.')
-#
-#     # Read the data
-#     if file_type == FileType.FIXED_WIDTH:
-#         df = read_npt_opt(infile, data_columns, skiprows=skiprows)
-#     elif file_type == FileType.CSV:
-#         df = read_csv(infile, data_columns, skiprows=skiprows)
-#     else:
-#         raise ValueError('Unrecognized file type. Valid file types are CSV, npt, and opt.')
-#
-#     # Convert day-of-year column of the data frames to date format
-#     df = dataframe_to_date_format(year, df)
-#
-#     return df
 
 
 def read(*args, **kwargs):
@@ -590,7 +530,8 @@ def multi_plot(df, title: str = None, legend_list: List[str] = None, xlabel: str
 
     axes.set_prop_cycle("color", colors)
 
-    subplot_axes = df.plot(subplots=True, ax=axes, sharex=True, legend=False, title=title, style=style, color=colors)
+    subplot_axes = df.plot(subplots=True, ax=axes, sharex=True, legend=False, title=title,
+        style=style, color=colors)
 
     if title:
         axes.set_title(title)
