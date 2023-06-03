@@ -288,11 +288,13 @@ def read_met(*args, **kwargs) -> pd.DataFrame:
     """
     Read meteorology time series.
 
-    :param args: Any number of positional arguments. The first argument should be the path to the input time series file.
+    :param args: Any number of positional arguments. The first argument should be the path to the
+                 input time series file.
                  The second argument should be the start year of the simulation.
     :param kwargs: Any number of keyword arguments.
                    - skiprows: The number of header rows to skip. Defaults to 3.
-                   - file_type: The file type (CSV, npt, or opt). If not specified, it is determined from the file extension.
+                   - file_type: The file type (CSV, npt, or opt). If not specified, it is
+                                determined from the file extension.
     :return: Dataframe of the time series in the input file.
     :rtype: pd.DataFrame
     """
@@ -345,12 +347,12 @@ def simple_plot(series: pd.Series, **kwargs) -> plt.Figure:
     :type **kwargs: keyword arguments
 
     :Keyword Arguments:
-       * **title** (*str*) -- The title of the plot.
-       * **ylabel** (*str*) -- The label for the y-axis.
-       * **colors** (*List[str]*) -- A list of colors for the plot.
-       * **figsize** (*tuple*) -- The figure size as a tuple of width and height.
-       * **style** (*str*) -- The line style for the plot.
-       * **palette** (*str*) -- The color palette to use.
+       - `title` (str) -- The title of the plot.
+       - `ylabel` (str) -- The label for the y-axis.
+       - `colors` (List[str]) -- A list of colors for the plot.
+       - `figsize` (tuple) -- The figure size as a tuple of width and height.
+       - `style` (str) -- The line style for the plot.
+       - `palette` (str) -- The color palette to use.
 
     :returns: A Matplotlib Figure object representing the plot.
     """
@@ -385,12 +387,12 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     :type **kwargs: keyword arguments
 
     :Keyword Arguments:
-        * **title** (*str*) -- The title of the plot.
-        * **legend_values** (*List[str]*) -- The values for the legend.
-        * **ylabel** (*str*) -- The label for the y-axis.
-        * **fig_size** (*tuple*) -- The figure size as a tuple of width and height.
-        * **line_style** (*str*) -- The line style for the plot.
-        * **colors** (*str* or *List[str]*) -- The color(s) to use for the plot.
+        - `title` (str) -- The title of the plot.
+        - `legend_values` (List[str]) -- The values for the legend.
+        - `ylabel` (str) -- The label for the y-axis.
+        - `fig_size` (tuple) -- The figure size as a tuple of width and height.
+        - `line_style` (str) -- The line style for the plot.
+        - `colors` (str or List[str]) -- The color(s) to use for the plot.
 
     :returns: A Matplotlib Figure object representing the plot.
     """
@@ -419,7 +421,8 @@ def plot_dataframe(*args) -> hv.core.overlay.Overlay:
     """
     This function creates a plot using Holoviews and Pandas DataFrame.
 
-    :param *args: Positional arguments required for the function. The arguments must be provided in the following order:
+    :param *args: Positional arguments required for the function.
+                  The arguments must be provided in the following order:
         1. df (pd.DataFrame): The DataFrame containing the data to be plotted.
         2. title (str): The title of the plot.
         3. legend_values (list): The values for the legend.
@@ -533,7 +536,8 @@ def write_hdf(df: pd.DataFrame, group: str, outfile: str, overwrite=True):
     """
     Write CE-QUAL-W2 timeseries dataframe to HDF5
 
-    The index column must be a datetime array. This column will be written to HDF5 as a string array.
+    The index column must be a datetime array.
+    This column will be written to HDF5 as a string array.
     Each data column will be written using its data type.
 
     :param df: The DataFrame containing the timeseries data.
@@ -565,7 +569,8 @@ def read_hdf(group: str, infile: str, variables: List[str]) -> pd.DataFrame:
     Read CE-QUAL-W2 timeseries from HDF5 and create a dataframe.
 
     This function assumes that a string-based datetime array named Date is present.
-    This will be read and assigned as the index column of the output pandas dataframe, which will be a datetime array.
+    This will be read and assigned as the index column of the output pandas dataframe,
+    which will be a datetime array.
 
     :param group: The group within the HDF5 file containing the time series data.
     :type group: str
@@ -709,21 +714,49 @@ def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype:
                     ts_plot.get_figure().savefig(outpath)
 
 
-def generate_plots_report(
-        control_df: pd.DataFrame, model_path: str, outfile: str, title: str = None, subtitle: str = None,
-        file_type: str = 'png', yaml: str = None, pdf_report=False):
-    '''
-    Generate a report of all the plots in the specified plot control dataframe
+def generate_plots_report(*args, **kwargs) -> None:
+    """
+    Generate a report of all the plots in the specified plot control dataframe.
 
-    If outfile is not an absolute path, the file will be written to the
-    model folder.
+    If `outfile` is not an absolute path, the file will be written to the model folder.
 
-    This function uses the "item" key for the plot captions. The form of the 
-    key in the plot control YAML file should be the inflow/outflow variable name
+    This function uses the "item" key for the plot captions. The form of the key in the plot
+    control YAML file should be the inflow/outflow variable name
     and the location, separated by an underscore, e.g., QIN_BR1 and TTR_TR5.
-    An exception to the is the QGT file, which doesn't have separate location
-    indicators (WB, TR, or BR).
-    '''
+    An exception to this is the QGT file, which doesn't have separate location indicators
+    (WB, TR, or BR).
+
+    :param args: Any number of positional arguments. The following three arguments must be
+                 specified:
+                 - `control_df` (pd.DataFrame): The plot control dataframe.
+                 - `model_path` (str): The path to the model.
+                 - `outfile` (str): The output file path for the report.
+    :param kwargs: Any number of keyword arguments.
+                   - `title` (str, optional): The title for the report.
+                   - `subtitle` (str, optional): The subtitle for the report.
+                   - `file_type` (str, optional): The file type for the plots. Defaults to 'png'.
+                   - `yaml` (str, optional): Additional YAML content to be included in the report.
+                   - `pdf_report` (bool, optional): Whether to generate a PDF report using Pandoc.
+                                                    Defaults to False.
+    :raises ValueError: If the number of positional arguments is not equal to 3.
+    """
+
+    # Assign the positional and keyword arguments to variables
+    if len(args) != 3:
+        raise ValueError("The following three arguments must be specified: control_df, "
+                         "model_path, and outfile")
+
+    control_df: pd.DataFrame
+    model_path: str
+    outfile: str
+    control_df, model_path, outfile = args
+
+    title: str = kwargs.get('title', None)
+    subtitle: str = kwargs.get('subtitle', None)
+    file_type: str = kwargs.get('file_type', 'png')
+    yaml: str = kwargs.get('yaml', None)
+    yaml: bool = kwargs.get('pdf_report', False)
+
     files = control_df['Filename']
     keys = control_df.index
 
@@ -748,7 +781,8 @@ def generate_plots_report(
             # Create the figure caption
             if '_' in key:
                 variable, location = key.split('_')
-                caption = f'Figure {i + 1}. Time series of {variable}, {location}, in file {model_file}'
+                caption = f'Figure {i + 1}. Time series of {variable}, {location}, ' + \
+                    f'in file {model_file}'
             else:
                 caption = f'Figure {i + 1}. Time series of {key}, in file {model_file}'
             # Write the image within a table
@@ -760,7 +794,9 @@ def generate_plots_report(
 
     if pdf_report:
         os.system(
-            f'pandoc {basefile}.md -o {basefile}.pdf --from markdown --template todd.latex --top-level-division="chapter"')
+            f'pandoc {basefile}.md -o {basefile}.pdf '
+            '--from markdown --template todd.latex '
+            '--top-level-division="chapter"')
 
 
 def sql_query(database_name: str, query: str):
