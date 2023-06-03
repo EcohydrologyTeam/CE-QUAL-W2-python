@@ -534,7 +534,7 @@ def multi_plot(df, title: str = None, legend_list: List[str] = None, xlabel: str
     axes.set_prop_cycle("color", colors)
 
     subplot_axes = df.plot(subplots=True, ax=axes, sharex=True, legend=False, title=title,
-                           style=style, color=colors)
+                           style=style, color=colors, **kwargs)
 
     if title:
         axes.set_title(title)
