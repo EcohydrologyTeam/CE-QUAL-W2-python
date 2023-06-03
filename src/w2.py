@@ -321,33 +321,30 @@ def get_colors(df: pd.DataFrame, palette: str, min_colors: int = 6) -> List[str]
     return colors
 
 
-def simple_plot(
-        series: pd.Series, title: str = None, xlabel: str = None, ylabel: str = None, colors: List[str] = None,
-        figsize=(15, 9), style: str = '-', palette: str = 'colorblind', **kwargs) -> plt.Figure:
+def simple_plot(series: pd.Series, **kwargs) -> plt.Figure:
     """
-    Create a simple line plot from a pandas Series.
+    This function creates a simple plot using Matplotlib and Pandas.
 
-    :param series: The Series containing the data to be plotted.
-    :type series: pd.Series
-    :param title: The title of the plot.
-    :type title: str, optional
-    :param xlabel: The label for the x-axis.
-    :type xlabel: str, optional
-    :param ylabel: The label for the y-axis.
-    :type ylabel: str, optional
-    :param colors: The colors to be used for the line.
-    :type colors: List[str], optional
-    :param figsize: The size of the figure in inches (width, height).
-    :type figsize: tuple, optional
-    :param style: The line style for the plot.
-    :type style: str, optional
-    :param palette: The color palette to use for the line.
-    :type palette: str, optional
-    :param **kwargs: Additional keyword arguments to be passed to the underlying plotting function.
+    :param series: A Pandas Series object containing the data to be plotted.
+    :param **kwargs: Additional keyword arguments to customize the plot.
+    :type **kwargs: keyword arguments
 
-    :return: The matplotlib Figure object representing the plot.
-    :rtype: plt.Figure
+    :Keyword Arguments:
+       * title (str) -- The title of the plot.
+       * ylabel (str) -- The label for the y-axis.
+       * colors (List[str]) -- A list of colors for the plot.
+       * figsize (tuple) -- The figure size as a tuple of width and height.
+       * style (str) -- The line style for the plot.
+       * palette (str) -- The color palette to use.
+
+    :returns: A Matplotlib Figure object representing the plot.
     """
+    title: str = kwargs.get('title', None)
+    ylabel: str = kwargs.get('ylabel', None)
+    colors: List[str] = kwargs.get('colors', None)
+    figsize: tuple = kwargs.get('figsize', (15, 9))
+    style: str = kwargs.get('style', '-')
+    palette: str = kwargs.get('palette', 'colorblind')
 
     fig, axes = plt.subplots(figsize=figsize)
 
@@ -361,55 +358,6 @@ def simple_plot(
 
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
-
-#     """
-#     Plot a DataFrame as a line plot.
-#
-#     :param df: The DataFrame containing the data to be plotted.
-#     :type df: pd.DataFrame
-#     :param title: The title of the plot.
-#     :type title: str, optional
-#     :param legend_values: The values to be displayed in the legend.
-#     :type legend_values: List[str], optional
-#     :param x_label: The label for the x-axis.
-#     :type x_label: str, optional
-#     :param y_label: The label for the y-axis.
-#     :type y_label: str, optional
-#     :param fig_size: The size of the figure in inches (width, height).
-#     :type fig_size: tuple, optional
-#     :param line_style: The line style for the plot.
-#     :type line_style: str, optional
-#     :param palette: The color palette to use for the lines.
-#     :type palette: str, optional
-#
-#     :return: The matplotlib Figure object representing the plot.
-#     :rtype: plt.Figure
-#     """
-#
-# def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
-#
-#     # Assign keyword arguments to variables
-#     title = kwargs.get('title', None)
-#     legend_values = kwargs.get('legend_values', None)
-#     # x_label = kwargs.get('x_label', None)
-#     y_label = kwargs.get('y_label', None)
-#     fig_size = kwargs.get('fig_size', (15, 9))
-#     line_style = kwargs.get('line_style', '-')
-#     # palette = kwargs.get('palette', 'colorblind')
-#     colors = kwargs.get('colors', k2)
-#
-#     fig, axes = plt.subplots(figsize=fig_size)
-#
-#     # colors = get_colors(df, palette, min_colors=6)
-#     axes.set_prop_cycle("color", colors)
-#
-#     df.plot(ax=axes, title=title, ylabel=y_label, style=line_style)
-#
-#     if legend_values:
-#         axes.legend(legend_values)
-#
-#     fig.tight_layout()  # This resolves a lot of layout issues
-#     return fig
 
 
 def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
