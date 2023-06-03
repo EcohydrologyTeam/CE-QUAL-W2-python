@@ -66,12 +66,12 @@ class FileType(Enum(int)):
     CSV = 2
 
 
-def round_time(dt: datetime.datetime = None, round_to: int = 60) -> datetime.datetime:
+def round_time(date_time: datetime.datetime = None, round_to: int = 60) -> datetime.datetime:
     """
     Round a datetime object to the nearest specified time interval.
 
-    :param dt: The input datetime object. Defaults to the current datetime if not provided.
-    :type dt: datetime.datetime, optional
+    :param date_time: The input datetime object. Defaults to the current datetime if not provided.
+    :type date_time: datetime.datetime, optional
     :param round_to: The closest number of seconds to round to. Defaults to 60 seconds.
     :type round_to: int, optional
 
@@ -79,13 +79,13 @@ def round_time(dt: datetime.datetime = None, round_to: int = 60) -> datetime.dat
     :rtype: datetime.datetime
     """
 
-    if dt is None:
-        dt = datetime.datetime.now()
+    if date_time is None:
+        date_time = datetime.datetime.now()
 
-    seconds = (dt.replace(tzinfo=None) - dt.min).seconds
+    seconds = (date_time.replace(tzinfo=None) - date_time.min).seconds
     rounding = (seconds + round_to / 2) // round_to * round_to
 
-    return dt + datetime.timedelta(0, rounding - seconds)
+    return date_time + datetime.timedelta(0, rounding - seconds)
 
 
 def day_of_year_to_datetime(year: int, day_of_year_list: List[int]) -> List[datetime.datetime]:
@@ -379,6 +379,7 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
 
     :returns: A Matplotlib Figure object representing the plot.
     """
+
     title: str = kwargs.get('title', None)
     legend_values: List[str] = kwargs.get('legend_values', None)
     ylabel: str = kwargs.get('ylabel', None)
@@ -399,35 +400,46 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     return fig
 
 
-def plot_dataframe(
-        df: pd.DataFrame, title: str, legend_values: list, x_label: str, y_label: str, fig_size: tuple, line_style: str,
-        color_palette: str) -> hv.core.overlay.Overlay:
+def plot_dataframe(*args) -> hv.core.overlay.Overlay:
     """
-    Plot a DataFrame as an overlay of multiple time series using holoviews.
+    This function creates a plot using Holoviews and Pandas DataFrame.
 
-    :param df: The DataFrame containing the time series data.
-    :type df: pd.DataFrame
-    :param title: The title of the plot.
-    :type title: str
-    :param legend_values: The values to be displayed in the legend.
-    :type legend_values: list
-    :param x_label: The label for the x-axis.
-    :type x_label: str
-    :param y_label: The label for the y-axis.
-    :type y_label: str
-    :param fig_size: The size of the figure in inches.
-    :type fig_size: tuple
-    :param line_style: The line style for the time series.
-    :type line_style: str
-    :param color_palette: The color palette to use for the time series.
-    :type color_palette: str
+    :param *args: Positional arguments required for the function. The arguments must be provided in the following order:
+        1. df (pd.DataFrame): The DataFrame containing the data to be plotted.
+        2. title (str): The title of the plot.
+        3. legend_values (list): The values for the legend.
+        4. xlabel (str): The label for the x-axis.
+        5. ylabel (str): The label for the y-axis.
+        6. figsize (tuple): The figure size as a tuple of width and height.
+        7. line_style (str): The line style for the plot.
+        8. color_palette (str): The color palette to use.
 
-    :return: The overlay of the time series plot.
-    :rtype: hv.core.overlay.Overlay
+    :type *args: variable arguments
+
+    :raises ValueError: If the number of arguments is not equal to 8.
+
+    :returns: A Holoviews Overlay object representing the plot.
     """
+
+    # Assign positional arguments to variables
+    if len(args) != 8:
+        raise ValueError(
+            "The following eight arguments are required: df, title, legend_values, xlabel, "
+            "ylabel, figsize, line_style, color_palette")
+
+    df: pd.DataFrame
+    title: str
+    legend_values: list
+    xlabel: str
+    ylabel: str
+    figsize: tuple
+    line_style: str
+    color_palette: str
+
+    df, title, legend_values, xlabel, ylabel, figsize, line_style, color_palette = args
 
     # Convert the dataframe to a Holoviews Dataset
-    dataset = hv.Dataset(df, kdims=[x_label], vdims=list(df.columns))
+    dataset = hv.Dataset(df, kdims=[xlabel], vdims=list(df.columns))
 
     # Define the style options
     style_opts = opts.Curve(line_width=2, line_style=line_style)
@@ -437,9 +449,9 @@ def plot_dataframe(
     color_cycle = color_palette[0:len(df.columns)]
 
     # Create the plot
-    myplot = dataset.to(hv.Curve, x_label, list(df.columns), label=legend_values).opts(
+    myplot = dataset.to(hv.Curve, xlabel, list(df.columns), label=legend_values).opts(
         opts.Curve(color=color_cycle, **style_opts), opts.Overlay(legend_position='right'),
-        opts.Curve(width=fig_size[0], height=fig_size[1]), title=title, xlabel=x_label, ylabel=y_label
+        opts.Curve(width=figsize[0], height=figsize[1]), title=title, xlabel=xlabel, ylabel=ylabel
     )
 
     return myplot
