@@ -333,6 +333,7 @@ def get_colors(df: pd.DataFrame, palette: str, min_colors: int = 6) -> List[str]
     :return: A list of colors selected from the color palette.
     :rtype: List[str]
     """
+
     num_colors = min(len(df), min_colors)
     colors = sns.color_palette(palette, num_colors)
     return colors
@@ -549,6 +550,7 @@ def write_hdf(df: pd.DataFrame, group: str, outfile: str, overwrite=True):
     :param overwrite: Whether to overwrite existing data in HDF5. Defaults to True.
     :type overwrite: bool, optional
     """
+
     with h5py.File(outfile, 'a') as f:
         index = df.index.astype('str')
         string_dt = h5py.special_dtype(vlen=str)
@@ -582,6 +584,7 @@ def read_hdf(group: str, infile: str, variables: List[str]) -> pd.DataFrame:
     :return: Dataframe containing the time series data.
     :rtype: pd.DataFrame
     """
+
     with h5py.File(infile, 'r') as f:
         # Read dates
         date_path = f'{group}/Date'
@@ -810,6 +813,7 @@ def sql_query(database_name: str, query: str):
     :return: A Pandas DataFrame containing the queried time series data.
     :rtype: pandas.DataFrame
     """
+
     with sqlite3.connect(database_name) as db:
         df = pd.read_sql(query, db)
         df.index = df['Date']
@@ -832,6 +836,7 @@ def read_sql(database: str, table: str, index_is_datetime=True):
     :return: A Pandas DataFrame containing the queried data.
     :rtype: pandas.DataFrame
     """
+
     connection = sqlite3.connect(database)
     df = pd.read_sql_query(f'select * from {table}', connection)
     connection.close()
@@ -856,6 +861,7 @@ def write_csv(df: pd.DataFrame, outfile: str, year: int, header: str = None, flo
                          Defaults to '%.3f'.
     :type float_format: str
     """
+
     # Convert date to Julian days (day of year)
     diff = df.index - datetime.datetime(year, 1, 1) + datetime.timedelta(days=1)
     jday = diff.days + diff.seconds / 3600.0 / 24.0
