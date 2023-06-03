@@ -1,3 +1,7 @@
+"""
+CE-QUAL-W2 Input/Output and Visualization
+"""
+
 import datetime
 from typing import List
 import warnings
@@ -41,7 +45,6 @@ k2 = (
     sns.color_palette('colorblind')[0],  # deep blue
     sns.color_palette('husl')[0],  # light red
 )
-
 
 # Define string formatting constants, which work in string format statements
 DEG_C_ALT = '\N{DEGREE SIGN}C'
@@ -531,7 +534,7 @@ def multi_plot(df, title: str = None, legend_list: List[str] = None, xlabel: str
     axes.set_prop_cycle("color", colors)
 
     subplot_axes = df.plot(subplots=True, ax=axes, sharex=True, legend=False, title=title,
-        style=style, color=colors)
+                           style=style, color=colors)
 
     if title:
         axes.set_title(title)
