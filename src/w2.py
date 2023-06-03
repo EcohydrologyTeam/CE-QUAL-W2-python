@@ -105,12 +105,12 @@ def day_of_year_to_datetime(year: int, day_of_year_list: List[int]) -> List[date
     for d in day_of_year_list:
         try:
             d = float(d)
-            dx = day1 + datetime.timedelta(days=(d - 1))
+            time_diff = day1 + datetime.timedelta(days=d - 1)
         except TypeError:
             print(f'Type Error! d = {d}, type(d) = {type(d)}')
 
-        dx = round_time(dt=dx, round_to=60 * 60)
-        datetimes.append(dx)
+        time_diff = round_time(date_time=time_diff, round_to=60 * 60)
+        datetimes.append(time_diff)
     return datetimes
 
 
