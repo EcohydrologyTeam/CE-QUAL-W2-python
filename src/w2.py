@@ -552,13 +552,13 @@ def write_hdf(df: pd.DataFrame, group: str, outfile: str, overwrite=True):
     with h5py.File(outfile, 'a') as f:
         index = df.index.astype('str')
         string_dt = h5py.special_dtype(vlen=str)
-        date_path = group + '/' + df.index.name
+        date_path = f'{group}/{df.index.name}'
         if overwrite and (date_path in f):
             del f[date_path]
         f.create_dataset(date_path, data=index, dtype=string_dt)
 
         for col in df.columns:
-            ts_path = group + '/' + col
+            ts_path = f'{group}/{col}'
             if overwrite and (ts_path in f):
                 del f[ts_path]
             f.create_dataset(ts_path, data=df[col])
@@ -584,13 +584,13 @@ def read_hdf(group: str, infile: str, variables: List[str]) -> pd.DataFrame:
     """
     with h5py.File(infile, 'r') as f:
         # Read dates
-        date_path = group + '/' + 'Date'
+        date_path = f'{group}/Date'
         dates_str = f.get(date_path)
 
         # Read time series data
         ts = {}
-        for v in variables:
-            ts_path = group + '/' + v
+        for variable in variables:
+            ts_path = f'{group}/{variable}'
             ts[v] = f.get(ts_path)
 
         dates = []
