@@ -166,7 +166,9 @@ def read_npt_opt(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.
     # This function cannot trust that the file is actually in fixed-width format.
     # Check if the first line after the header contains commas.
     # If it is a CSV file, then call read_csv() instead.
+
     # TODO: Add support for tabs and other delimiters. (LOW PRIORITY)
+
     with open(infile, 'r', encoding='utf-8') as f:
         for _ in range(skiprows + 1):
             line = f.readline()
@@ -174,10 +176,14 @@ def read_npt_opt(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.
             return read_csv(infile, data_columns=data_columns, skiprows=skiprows)
 
     # Parse the fixed-width file
-    ncols_to_read = len(data_columns) + 1  # number of columns to read, including the date/day column
+
+    # Number of columns to read, including the date/day column
+    ncols_to_read = len(data_columns) + 1
+
     columns_to_read = ['DoY', *data_columns]
     try:
-        df = pd.read_fwf(infile, skiprows=skiprows, widths=ncols_to_read*[8], names=columns_to_read, index_col=0)
+        df = pd.read_fwf(infile, skiprows=skiprows, widths=ncols_to_read*[8],
+                         names=columns_to_read, index_col=0)
     except:
         print('Error reading ' + infile)
         raise
@@ -208,7 +214,8 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
         except IndexError:
             print('Error reading ' + infile)
             print('Trying again with an additional column')
-            df = pd.read_csv(infile, skiprows=skiprows, names=[*data_columns, 'JUNK1', 'JUNK2'], index_col=0)
+            df = pd.read_csv(infile, skiprows=skiprows, names=[*data_columns, 'JUNK1', 'JUNK2'],
+                             index_col=0)
             df = df.drop(axis=1, labels=['JUNK1', 'JUNK2'])
     except:
         print('Error reading ' + infile)
@@ -218,21 +225,28 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
 
 def read(*args, **kwargs):
     """
-    Read CE-QUAL-W2 time series data in various formats and convert the Day of Year to date-time format.
+    Read CE-QUAL-W2 time series data in various formats and convert the Day of Year to date-time
+    format.
 
-    This function supports reading data from CSV (Comma Separated Values) files and fixed-width format (npt/opt) files.
-    The file type can be explicitly specified using the `file_type` keyword argument, or it can be inferred from the file extension.
-    By default, the function assumes a skiprows value of 3 for header rows.
+    This function supports reading data from CSV (Comma Separated Values) files and fixed-width
+    format (npt/opt) files.  The file type can be explicitly specified using the `file_type`
+    keyword argument, or it can be inferred from the file extension. By default, the function
+    assumes a skiprows value of 3 for header rows.
 
-    :param args: Any number of positional arguments. The first argument should be the path to the input time series file.
-                 The second argument should be the start year of the simulation.
-                 The third argument (optional) should be the list of names of the data columns.
+    :param args: Any number of positional arguments. The first argument should be the path to the
+                 input time series file. The second argument should be the start year of the
+                 simulation. The third argument (optional) should be the list of names of the data
+                 columns.
     :param kwargs: Any number of keyword arguments.
                    - skiprows: The number of header rows to skip. Defaults to 3.
-                   - file_type: The file type (CSV, npt, or opt). If not specified, it is determined from the file extension.
-    :raises ValueError: If the file type was not specified and could not be determined from the filename.
-    :raises ValueError: If an unrecognized file type is encountered. Valid file types are CSV, npt, and opt.
-    :return: A Pandas DataFrame containing the time series data with the Day of Year converted to date format.
+                   - file_type: The file type (CSV, npt, or opt). If not specified, it is
+                                determined from the file extension.
+    :raises ValueError: If the file type was not specified and could not be determined from the
+                        filename.
+    :raises ValueError: If an unrecognized file type is encountered. Valid file types are CSV, npt,
+                        and opt.
+    :return: A Pandas DataFrame containing the time series data with the Day of Year converted to
+             date format.
     :rtype: pd.DataFrame
     """
 
@@ -253,7 +267,8 @@ def read(*args, **kwargs):
         elif infile.lower().endswith('.npt') or infile.lower().endswith('.opt'):
             file_type = FileType.FIXED_WIDTH
         else:
-            raise ValueError('The file type was not specified, and it could not be determined from the filename.')
+            raise ValueError(
+                'The file type was not specified, and it could not be determined from the filename.')
 
     # Read the data
     if file_type == FileType.FIXED_WIDTH:
@@ -619,7 +634,8 @@ def write_plot_control(control_df: pd.DataFrame, yaml_outfile: str):
         f.write(text)
 
 
-def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype: str = 'png', VERBOSE: bool = False):
+def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype: str = 'png',
+                   VERBOSE: bool = False):
     """
     Plot all files specified in the plot control YAML file.
 
