@@ -50,6 +50,7 @@ def format_cell(cell, **kwargs):
 
     :raises ValueError: If the provided `cell_alignment` is not one of 'left', 'center', or 'right'.
     """
+
     # Parse keyword arguments
     bold = kwargs.get('bold', None)
     paragraph_font_size = kwargs.get('paragraph_font_size', 11)
@@ -85,6 +86,7 @@ def set_col_widths(table, widths):
     :param widths: A list of column widths.
     :type widths: list
     """
+
     for row in table.rows:
         for idx, width in enumerate(widths):
             row.cells[idx].width = width
@@ -162,12 +164,12 @@ def generate_report(data_frames: List[pd.DataFrame], **kwargs) -> docx.Document:
             row = table.add_row().cells
             cell = row[0]
             cell.text = key
-            format_cell(cell, table_font_size=table_font_size, bold=False, alignment='left')
+            format_cell(cell, table_font_size=table_font_size, bold=False, alignment='right')
             for j, col in enumerate(df.columns):
                 d = summary_statistics[col][key]
                 cell = row[j + 1]
                 cell.text = f'{d:.1f}'
-                format_cell(cell, table_font_size=table_font_size, bold=False, alignment='left')
+                format_cell(cell, table_font_size=table_font_size, bold=False, alignment='right')
 
         widths = [Inches(0.1)]
         for col in df.columns:
