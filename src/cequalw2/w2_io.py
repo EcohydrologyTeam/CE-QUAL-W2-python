@@ -2,9 +2,10 @@ import pandas as pd
 from typing import List
 from enum import Enum
 import h5py
+from . import w2_datetime
 
 
-class FileType(Enum(int)):
+class FileType(Enum):
     """
     File type enumeration
 
@@ -29,7 +30,7 @@ def dataframe_to_date_format(year: int, data_frame: pd.DataFrame) -> pd.DataFram
     :rtype: pd.DataFrame
     """
 
-    datetimes = day_of_year_to_datetime(year, data_frame.index)
+    datetimes = w2_datetime.day_of_year_to_datetime(year, data_frame.index)
     data_frame.index = datetimes
     data_frame.index.name = 'Date'
     return data_frame
@@ -267,13 +268,13 @@ def read_hdf(group: str, infile: str, variables: List[str]) -> pd.DataFrame:
         ts = {}
         for variable in variables:
             ts_path = f'{group}/{variable}'
-            ts[v] = f.get(ts_path)
+            ts[variable] = f.get(ts_path)
 
         dates = []
         for dstr in dates_str:
             dstr = dstr.decode('utf-8')
-            d = pd.to_datetime(dstr)
-            dates.append(d)
+            dt = pd.to_datetime(dstr)
+            dates.append(dt)
 
         df = pd.DataFrame(ts, index=dates)
         return df

@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import holoviews as hv
 from holoviews import opts
 import yaml
+from typing import List
 warnings.filterwarnings("ignore")
 
 
