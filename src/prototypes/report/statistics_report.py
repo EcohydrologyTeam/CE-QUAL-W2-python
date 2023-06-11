@@ -164,7 +164,7 @@ def generate_report(data_frames: List[pd.DataFrame], **kwargs) -> docx.Document:
             row = table.add_row().cells
             cell = row[0]
             cell.text = key
-            format_cell(cell, table_font_size=table_font_size, bold=False, alignment='right')
+            format_cell(cell, table_font_size=table_font_size, bold=False, alignment='left')
             for j, col in enumerate(df.columns):
                 d = summary_statistics[col][key]
                 cell = row[j + 1]
