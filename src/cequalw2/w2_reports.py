@@ -1,3 +1,9 @@
+import os
+import pandas as pd
+import datetime
+import sqlite3
+
+
 def generate_plots_report(*args, **kwargs) -> None:
     """
     Generate a report of all the plots in the specified plot control dataframe.

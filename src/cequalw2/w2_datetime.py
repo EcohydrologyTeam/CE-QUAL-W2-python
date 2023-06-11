@@ -1,3 +1,7 @@
+import datetime
+from typing import List
+
+
 def round_time(date_time: datetime.datetime = None, round_to: int = 60) -> datetime.datetime:
     """
     Round a datetime object to the nearest specified time interval.
