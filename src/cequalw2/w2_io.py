@@ -72,8 +72,10 @@ def read_npt_opt(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.
         df = pd.read_fwf(infile, skiprows=skiprows, widths=ncols_to_read*[8],
                          names=columns_to_read, index_col=0)
     except:
-        print('Error reading ' + infile)
-        raise
+        raise IOError(f'Error reading {infile}')
+
+    df.attrs['Filename'] = infile
+
     return df
 
 
@@ -105,8 +107,10 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
                              index_col=0)
             df = df.drop(axis=1, labels=['JUNK1', 'JUNK2'])
     except:
-        print('Error reading ' + infile)
-        raise
+        raise IOError(f'Error reading {infile}')
+
+    df.attrs['Filename'] = infile
+
     return df
 
 
@@ -167,6 +171,7 @@ def read(*args, **kwargs):
 
     # Convert day-of-year column of the data frames to date format
     df = dataframe_to_date_format(year, df)
+    df.attrs['Filename'] = infile
 
     return df
 
@@ -277,6 +282,8 @@ def read_hdf(group: str, infile: str, variables: List[str]) -> pd.DataFrame:
             dates.append(dt)
 
         df = pd.DataFrame(ts, index=dates)
+        df.attrs['Filename'] = infile
+
         return df
 
 
