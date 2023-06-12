@@ -129,9 +129,12 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     ylabel: str = kwargs.get('ylabel', None)
     figsize: tuple = kwargs.get('fig_size', (15, 9))
     line_style: str = kwargs.get('line_style', '-')
-    colors = kwargs.get('colors', 'k')
+    colors = kwargs.get('colors', k2)
+    fig = kwargs.get('fig', None)
+    axes = kwargs.get('ax', None)
 
-    fig, axes = plt.subplots(figsize=figsize)
+    if fig is None or axes is None:
+        fig, axes = plt.subplots(figsize=figsize)
 
     axes.set_prop_cycle("color", colors)
 
