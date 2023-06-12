@@ -131,17 +131,17 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     line_style: str = kwargs.get('line_style', '-')
     colors = kwargs.get('colors', k2)
     fig = kwargs.get('fig', None)
-    axes = kwargs.get('ax', None)
+    ax = kwargs.get('ax', None)
 
-    if fig is None or axes is None:
-        fig, axes = plt.subplots(figsize=figsize)
+    if fig is None or ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
 
-    axes.set_prop_cycle("color", colors)
+    ax.set_prop_cycle("color", colors)
 
-    df.plot(ax=axes, title=title, ylabel=ylabel, style=line_style)
+    df.plot(ax=ax, title=title, ylabel=ylabel, style=line_style)
 
     if legend_values:
-        axes.legend(legend_values)
+        ax.legend(legend_values)
 
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
@@ -205,48 +205,58 @@ def plot_dataframe(*args) -> hv.core.overlay.Overlay:
     return myplot
 
 
-def multi_plot(df, title: str = None, legend_list: List[str] = None, xlabel: str = None,
-               ylabels: List[str] = None, colors: List[str] = None, figsize=(15, 21),
-               style: str = '-', palette: str = 'colorblind', **kwargs):
+def multi_plot(df, **kwargs):
     """
     Plot multiple time series from a DataFrame on a single figure.
 
-    :param df: DataFrame containing the time series data.
-    :type df: pd.DataFrame
-    :param title: Title of the plot. Defaults to None.
-    :type title: str
-    :param legend_list: List of labels for the legend. Defaults to None.
-    :type legend_list: List[str]
-    :param xlabel: Label for the x-axis. Defaults to None.
-    :type xlabel: str
-    :param ylabels: List of labels for the y-axes. Defaults to None.
-    :type ylabels: List[str]
-    :param colors: List of colors for each time series. Defaults to None.
-    :type colors: List[str]
-    :param figsize: Figure size in inches. Defaults to (15, 21).
-    :type figsize: tuple
-    :param style: Line style for the time series. Defaults to '-'.
-    :type style: str
-    :param palette: Color palette to use for the time series. Defaults to 'colorblind'.
-    :type palette: str
-    :param **kwargs: Additional keyword arguments to be passed to the plot function.
+    Parameters:
+        df (pandas.DataFrame): The DataFrame containing the time series data.
+        **kwargs: Additional keyword arguments for customization.
 
-    :return: None
+    Keyword Arguments:
+        title (str): The title of the plot. Default is None.
+        legend_list (list): A list of legend labels for the plot. Default is None.
+        xlabel (str): The label for the x-axis. Default is None.
+        ylabels (list): A list of labels for the y-axes. Default is None.
+        colors (list): A list of colors for the time series. Default is None.
+        figsize (tuple): The size of the figure (width, height) in inches. Default is (15, 21).
+        style (str): The line style for the time series. Default is '-'.
+        palette (str): The color palette to use for generating colors. Default is 'colorblind'.
+        fig (matplotlib.figure.Figure): An existing figure object to use for the plot. Default is None.
+        ax (matplotlib.axes.Axes): An existing axes object to use for the plot. Default is None.
+
+    Returns:
+        matplotlib.figure.Figure: The generated figure.
+
     """
 
-    fig, axes = plt.subplots(figsize=figsize)
+    # Parse keyword arguments
+    title = kwargs.get('title', None)
+    legend_list = kwargs.get('legend_list', None)
+    xlabel = kwargs.get('xlabel', None)
+    ylabels = kwargs.get('ylabels', None)
+    colors = kwargs.get('colors', None)
+    figsize = kwargs.get('figsize', (15, 21))
+    style = kwargs.get('style', '-')
+    palette = kwargs.get('palette', 'colorblind')
+    fig = kwargs.get('fig', None)
+    ax = kwargs.get('ax', None)
+
+    if fig is None or ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+
     plt.subplots_adjust(top=0.97)  # Save room for the plot title
 
     if not colors:
         colors = get_colors(df, palette, min_colors=6)
 
-    axes.set_prop_cycle("color", colors)
+    ax.set_prop_cycle("color", colors)
 
-    subplot_axes = df.plot(subplots=True, ax=axes, sharex=True, legend=False, title=title,
+    subplot_axes = df.plot(subplots=True, sharex=True, legend=False, title=title,
                            style=style, color=colors, **kwargs)
 
     if title:
-        axes.set_title(title)
+        ax.set_title(title)
 
     if not ylabels:
         ylabels = df.columns
@@ -256,7 +266,7 @@ def multi_plot(df, title: str = None, legend_list: List[str] = None, xlabel: str
         ax.set_ylabel(ylabel)
 
     if legend_list:
-        axes.legend(legend_list)
+        ax.legend(legend_list)
 
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
