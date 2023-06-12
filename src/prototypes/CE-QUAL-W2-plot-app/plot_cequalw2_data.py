@@ -14,7 +14,7 @@ import cequalw2 as w2
 class CSVPlotApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CSV Plot App")
+        self.setWindowTitle("CE-QUAL-W2 Plot")
         self.setGeometry(100, 100, 800, 600)
 
         self.file_path = ""
@@ -78,12 +78,7 @@ class CSVPlotApp(QMainWindow):
             self.file_path = file_dialog.selectedFiles()[0]
             directory, filename = os.path.split(self.file_path)
             self.filename_label = filename
-            with open(self.file_path, 'r') as f:
-                lines = f.readlines()
-                header_vals = lines[2].strip().strip(',').strip().split(',')
-                for i, val in enumerate(header_vals):
-                    header_vals[i] = val.strip()
-                data_columns = header_vals[1:]
+            data_columns = w2.get_data_columns(self.file_path)
             self.data = w2.read(self.file_path, self.year, data_columns)
             self.filename_input.setText(filename)
 

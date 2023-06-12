@@ -18,6 +18,29 @@ class FileType(Enum):
     CSV = 2
 
 
+def get_data_columns(file_path):
+    """
+    Extracts data columns from a file.
+
+    Parameters:
+        file_path (str): The path to the file.
+
+    Returns:
+        list: A list of data columns extracted from the file.
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist.
+    """
+
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+        header_vals = lines[2].strip().strip(',').strip().split(',')
+        for i, val in enumerate(header_vals):
+            header_vals[i] = val.strip()
+        data_columns = header_vals[1:]
+        return data_columns
+
+
 def dataframe_to_date_format(year: int, data_frame: pd.DataFrame) -> pd.DataFrame:
     """
     Convert the day-of-year column in a CE-QUAL-W2 data frame to datetime objects.
