@@ -38,8 +38,7 @@ class CSVPlotApp(qtw.QMainWindow):
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setMaximumHeight(25)
         toolbar_background_color = "#aaddaa"
-        toolbar_foreground_color = "#333333"
-        self.toolbar.setStyleSheet(f"background-color: {toolbar_background_color}; foreground-color: {toolbar_foreground_color}")
+        self.toolbar.setStyleSheet(f"background-color: {toolbar_background_color}")
 
         button_layout = qtw.QHBoxLayout()
         button_layout.addWidget(self.button_browse)
