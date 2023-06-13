@@ -12,10 +12,11 @@ import csv
 sys.path.append('../../../src')
 import cequalw2 as w2
 
+
 class CSVPlotApp(qtw.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('CE-QUAL-W2 Plot')
+        self.setWindowTitle('CE-QUAL-W2 Viewer')
         self.setGeometry(100, 100, 1200, 900)
         self.PLOT_TYPE = 'plot'
 
@@ -37,8 +38,8 @@ class CSVPlotApp(qtw.QMainWindow):
 
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setMaximumHeight(25)
-        self.toolbar_background_color = '#aaddaa'
-        self.toolbar.setStyleSheet(f'background-color: {self.toolbar_background_color}')
+        self.toolbar_background_color = '#eeffee'
+        self.toolbar.setStyleSheet(f'background-color: {self.toolbar_background_color}; font-size: 14px; color: black;')
 
         self.button_layout = qtw.QHBoxLayout()
         self.button_layout.setAlignment(qtc.Qt.AlignLeft)
