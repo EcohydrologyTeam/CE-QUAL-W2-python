@@ -236,6 +236,8 @@ def read(*args, **kwargs):
             raise ValueError(
                 'The file type was not specified, and it could not be determined from the filename.')
 
+    print('file_type:', file_type)
+    
     # Read the data
     if file_type == FileType.FIXED_WIDTH:
         df = read_npt_opt(infile, data_columns, skiprows=skiprows)

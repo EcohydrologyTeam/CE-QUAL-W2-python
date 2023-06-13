@@ -4,13 +4,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import PyQt5.QtWidgets as qtw
 import PyQt5.QtCore as qtc
+# from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import glob
 import csv
 
+
 sys.path.append('../../../src')
 import cequalw2 as w2
+
 
 class CSVPlotApp(qtw.QMainWindow):
     def __init__(self):
@@ -32,9 +35,11 @@ class CSVPlotApp(qtw.QMainWindow):
         self.button_plot.clicked.connect(self.plot_data)
         self.button_plot.setFixedWidth(100)
 
+        # Create a Matplotlib figure and canvas
         self.figure = plt.Figure()
         self.canvas = FigureCanvas(self.figure)
 
+        # Create a navigation toolbar
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setMaximumHeight(25)
         self.toolbar_background_color = '#aaddaa'
@@ -77,37 +82,24 @@ class CSVPlotApp(qtw.QMainWindow):
         self.radio_multiplot = qtw.QRadioButton('One Plot per Variable')
         self.plot_option_group.addButton(self.radio_plot)
         self.plot_option_group.addButton(self.radio_multiplot)
-        self.radio_plot.setChecked(True)
+        self.radio_plot.setChecked(True)  # Set default selection to Plot
         self.plot_option_group.buttonClicked.connect(self.plot_option_changed)
         self.radio_layout = qtw.QHBoxLayout()
         self.radio_layout.setAlignment(qtc.Qt.AlignLeft)
         self.radio_layout.addWidget(self.radio_plot)
         self.radio_layout.addWidget(self.radio_multiplot)
 
-        # Create tabs
-        self.tab_widget = qtw.QTabWidget()
-        self.plot_tab = qtw.QWidget()
-        self.statistics_tab = qtw.QWidget()
-        self.tab_widget.addTab(self.plot_tab, "Plot")
-        self.tab_widget.addTab(self.statistics_tab, "Statistics")
+        self.layout = qtw.QVBoxLayout()
+        self.layout.addWidget(self.toolbar)
+        self.layout.addWidget(self.canvas)
+        self.layout.addWidget(self.stats_table)
+        self.layout.addLayout(self.start_year_and_filename_layout)
+        self.layout.addLayout(self.radio_layout)
+        self.layout.addLayout(self.button_layout)
 
-        # Set layout for plot_tab
-        self.plot_tab_layout = qtw.QVBoxLayout()
-        self.plot_tab_layout.addWidget(self.toolbar)
-        self.plot_tab_layout.addWidget(self.canvas)
-        self.plot_tab_layout.addLayout(self.start_year_and_filename_layout)
-        self.plot_tab_layout.addLayout(self.radio_layout)
-        self.plot_tab_layout.addLayout(self.button_layout)
-        self.plot_tab.setLayout(self.plot_tab_layout)
-
-        # Set layout for statistics_tab
-        self.statistics_tab_layout = qtw.QVBoxLayout()
-        self.statistics_tab_layout.addWidget(self.stats_table)
-        self.statistics_tab.setLayout(self.statistics_tab_layout)
-
-        # Set tabs as central widget
-        self.setCentralWidget(self.tab_widget)
-
+        self.central_widget = qtw.QWidget(self)
+        self.central_widget.setLayout(self.layout)
+        self.setCentralWidget(self.central_widget)
 
     def parse_year_csv(self, w2_control_file_path):
         rows = []
@@ -120,7 +112,6 @@ class CSVPlotApp(qtw.QMainWindow):
                     self.year = int(rows[i + 1][2])
                     self.start_year_input.setText(str(self.year))
 
-
     def parse_year_npt(self, w2_control_file_path):
         with open(w2_control_file_path, 'r') as f:
             lines = f.readlines()
@@ -131,7 +122,6 @@ class CSVPlotApp(qtw.QMainWindow):
                 year_str = data_line[24:].strip()
                 self.year = int(year_str)
                 self.start_year_input.setText(str(self.year))
-
 
     def get_model_year(self):
         # Locate the CE-QUAL-W2 control file
@@ -170,17 +160,14 @@ class CSVPlotApp(qtw.QMainWindow):
 
         return
 
-
     def update_year(self, text):
         try:
             self.year = int(text)
         except ValueError:
             self.year = self.DEFAULT_YEAR
 
-
     def update_filename(self, text):
         self.filename = text
-
 
     def browse_file(self):
         file_dialog = qtw.QFileDialog(self)
@@ -209,7 +196,6 @@ class CSVPlotApp(qtw.QMainWindow):
             except IOError:
                 self.show_warning_dialog()
                 file_dialog.close()
-
 
     def plot_data(self):
         if self.data is not None:
@@ -252,14 +238,12 @@ class CSVPlotApp(qtw.QMainWindow):
                     item.setTextAlignment(0x0082)
                     self.stats_table.setItem(row, col, item)
 
-
     def plot_option_changed(self):
         selected_option = self.plot_option_group.checkedButton().text()
         if selected_option == 'Single Plot':
             self.PLOT_TYPE = 'plot'
         elif selected_option == 'One Plot per Variable':
             self.PLOT_TYPE = 'multiplot'
-
 
     def show_warning_dialog(self):
         app = qtw.QApplication([])
