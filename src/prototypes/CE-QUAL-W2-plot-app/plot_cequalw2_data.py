@@ -7,6 +7,7 @@ import PyQt5.QtCore as qtc
 # from PyQt5.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+import glob
 
 
 sys.path.append('../../../src')
@@ -16,20 +17,20 @@ import cequalw2 as w2
 class CSVPlotApp(qtw.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CE-QUAL-W2 Plot")
+        self.setWindowTitle('CE-QUAL-W2 Plot')
         self.setGeometry(100, 100, 1200, 900)
-        self.PLOT_TYPE = "plot"
+        self.PLOT_TYPE = 'plot'
 
-        self.file_path = ""
+        self.file_path = ''
         self.data = None
         self.DEFAULT_YEAR = 2023
         self.year = self.DEFAULT_YEAR
 
-        self.button_browse = qtw.QPushButton("Browse", self)
+        self.button_browse = qtw.QPushButton('Browse', self)
         self.button_browse.clicked.connect(self.browse_file)
         self.button_browse.setFixedWidth(100)
 
-        self.button_plot = qtw.QPushButton("Plot", self)
+        self.button_plot = qtw.QPushButton('Plot', self)
         self.button_plot.clicked.connect(self.plot_data)
         self.button_plot.setFixedWidth(100)
 
@@ -40,15 +41,15 @@ class CSVPlotApp(qtw.QMainWindow):
         # Create a navigation toolbar
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setMaximumHeight(25)
-        self.toolbar_background_color = "#aaddaa"
-        self.toolbar.setStyleSheet(f"background-color: {self.toolbar_background_color}")
+        self.toolbar_background_color = '#aaddaa'
+        self.toolbar.setStyleSheet(f'background-color: {self.toolbar_background_color}')
 
         self.button_layout = qtw.QHBoxLayout()
         self.button_layout.setAlignment(qtc.Qt.AlignLeft)
         self.button_layout.addWidget(self.button_browse)
         self.button_layout.addWidget(self.button_plot)
 
-        self.start_year_label = qtw.QLabel("Start Year:", self)
+        self.start_year_label = qtw.QLabel('Start Year:', self)
         self.start_year_label.setFixedWidth(75)
         self.start_year_input = qtw.QLineEdit(self)
         self.start_year_input.setAlignment(qtc.Qt.AlignCenter)
@@ -57,7 +58,7 @@ class CSVPlotApp(qtw.QMainWindow):
         self.start_year_input.setText(str(self.DEFAULT_YEAR))
         self.start_year_input.textChanged.connect(self.update_year)
 
-        self.filename_label = qtw.QLabel("Filename:")
+        self.filename_label = qtw.QLabel('Filename:')
         self.filename_label.setFixedWidth(75)
         self.filename_input = qtw.QLineEdit(self)
         self.filename_input.setFixedWidth(400)
@@ -76,8 +77,8 @@ class CSVPlotApp(qtw.QMainWindow):
         self.stats_table.setMinimumHeight(200)
 
         self.plot_option_group = qtw.QButtonGroup(self)
-        self.radio_plot = qtw.QRadioButton("Single Plot")
-        self.radio_multiplot = qtw.QRadioButton("One Plot per Variable")
+        self.radio_plot = qtw.QRadioButton('Single Plot')
+        self.radio_multiplot = qtw.QRadioButton('One Plot per Variable')
         self.plot_option_group.addButton(self.radio_plot)
         self.plot_option_group.addButton(self.radio_multiplot)
         self.radio_plot.setChecked(True)  # Set default selection to Plot
@@ -99,6 +100,24 @@ class CSVPlotApp(qtw.QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
 
+    def get_model_year(self):
+        # Locate the CE-QUAL-W2 control file
+        path1 = glob.glob(os.path.join(directory, 'w2_con.csv'))
+        path2 = glob.glob(os.path.join(directory, '../w2_con.csv'))
+        path3 = glob.glob(os.path.join(directory, 'w2_con.npt'))
+        path4 = glob.glob(os.path.join(directory, '../w2_con.npt'))
+
+        if path1:
+            print(f'{w2_con.csv} was found!')
+        elif path1:
+            print(f'../{w2_con.csv} was found!')
+        elif path1:
+            print(f'{w2_con.npt} was found!')
+        elif path1:
+            print(f'../{w2_con.npt} was found!')
+        else:
+            print('No control file found!')
+
     def update_year(self, text):
         try:
             self.year = int(text)
@@ -111,21 +130,26 @@ class CSVPlotApp(qtw.QMainWindow):
     def browse_file(self):
         file_dialog = qtw.QFileDialog(self)
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
-        file_dialog.setNameFilter("CSV Files (*.csv)")
-        file_dialog.setNameFilters(["CSV Files (*.csv)", "NPT Files (*.npt)", "OPT Files (*.opt)"])
+        file_dialog.setNameFilter('CSV Files (*.csv)')
+        file_dialog.setNameFilters(['CSV Files (*.csv)', 'NPT Files (*.npt)', 'OPT Files (*.opt)'])
         if file_dialog.exec_():
             self.file_path = file_dialog.selectedFiles()[0]
-            directory, filename = os.path.split(self.file_path)
-            self.filename_input.setText(filename)
-            basefilename, extension = os.path.splitext(filename)
+            self.directory, self.filename = os.path.split(self.file_path)
+            self.filename_input.setText(self.filename)
+            basefilename, extension = os.path.splitext(self.filename)
 
-            if extension.lower() in [".npt", ".opt"]:
+            # Get data columns
+            if extension.lower() in ['.npt', '.opt']:
                 data_columns = w2.get_data_columns_fixed_width(self.file_path)
-            elif extension.lower() == ".csv":
+            elif extension.lower() == '.csv':
                 data_columns = w2.get_data_columns_csv(self.file_path)
             else:
-                raise ValueError("Only *.csv, *.npt, and *.opt files are supported.")
+                raise ValueError('Only *.csv, *.npt, and *.opt files are supported.')
 
+            # Get model year
+            self.get_model_year()
+
+            # Read the data
             try:
                 self.data = w2.read(self.file_path, self.year, data_columns)
             except IOError:
@@ -137,9 +161,9 @@ class CSVPlotApp(qtw.QMainWindow):
             self.figure.clear()
             ax = self.figure.add_subplot(111)
             # self.data.plot(ax=ax)
-            if self.PLOT_TYPE == "plot":
+            if self.PLOT_TYPE == 'plot':
                 w2.plot(self.data, fig=self.figure, ax=ax)
-            elif self.PLOT_TYPE == "multiplot":
+            elif self.PLOT_TYPE == 'multiplot':
                 w2.multi_plot(self.data, fig=self.figure, ax=ax)
             self.canvas.draw()
 
@@ -156,9 +180,9 @@ class CSVPlotApp(qtw.QMainWindow):
                     value = statistics.iloc[row, col]
                     try:
                         if row != 0: # if it is not the "count" statistic, which is an integer
-                            value_text = f"{value:.2f}"
+                            value_text = f'{value:.2f}'
                         else:
-                            value_text = f"{int(value):d}"
+                            value_text = f'{int(value):d}'
                     except ValueError:
                         value_text = str(value)
                     item = qtw.QTableWidgetItem(value_text)
@@ -167,17 +191,17 @@ class CSVPlotApp(qtw.QMainWindow):
 
     def plot_option_changed(self):
         selected_option = self.plot_option_group.checkedButton().text()
-        if selected_option == "Single Plot":
-            self.PLOT_TYPE = "plot"
-        elif selected_option == "One Plot per Variable":
-            self.PLOT_TYPE = "multiplot"
+        if selected_option == 'Single Plot':
+            self.PLOT_TYPE = 'plot'
+        elif selected_option == 'One Plot per Variable':
+            self.PLOT_TYPE = 'multiplot'
 
     def show_warning_dialog(self):
         app = qtw.QApplication([])
         message_box = qtw.QMessageBox()
         message_box.setIcon(qtw.QMessageBox.Critical)
-        message_box.setWindowTitle("Error")
-        message_box.setText(f"An error occurred while opening {self.filename}")
+        message_box.setWindowTitle('Error')
+        message_box.setText(f'An error occurred while opening {self.filename}')
         message_box.setStandardButtons(qtw.QMessageBox.Close)
         message_box.exec_()
 
