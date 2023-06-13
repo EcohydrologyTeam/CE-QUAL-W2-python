@@ -13,7 +13,7 @@ sys.path.append('../../../src')
 import cequalw2 as w2
 
 
-class CSVPlotApp(qtw.QMainWindow):
+class CeQualW2Viewer(qtw.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('CE-QUAL-W2 Viewer')
@@ -321,6 +321,6 @@ class CSVPlotApp(qtw.QMainWindow):
 
 if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
-    window = CSVPlotApp()
+    window = CeQualW2Viewer()
     window.show()
     sys.exit(app.exec_())
