@@ -112,11 +112,20 @@ class CSVPlotApp(qtw.QMainWindow):
         file_dialog = qtw.QFileDialog(self)
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
         file_dialog.setNameFilter("CSV Files (*.csv)")
+        file_dialog.setNameFilters(["CSV Files (*.csv)", "NPT Files (*.npt)", "OPT Files (*.opt)"])
         if file_dialog.exec_():
             self.file_path = file_dialog.selectedFiles()[0]
             directory, filename = os.path.split(self.file_path)
             self.filename_input.setText(filename)
-            data_columns = w2.get_data_columns(self.file_path)
+            basefilename, extension = os.path.splitext(filename)
+
+            if extension.lower() in [".npt", ".opt"]:
+                data_columns = w2.get_data_columns_fixed_width(self.file_path)
+            elif extension.lower() == ".csv":
+                data_columns = w2.get_data_columns_csv(self.file_path)
+            else:
+                raise ValueError("Only *.csv, *.npt, and *.opt files are supported.")
+
             try:
                 self.data = w2.read(self.file_path, self.year, data_columns)
             except IOError:

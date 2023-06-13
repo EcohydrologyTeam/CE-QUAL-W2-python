@@ -18,7 +18,7 @@ class FileType(Enum):
     CSV = 2
 
 
-def get_data_columns(file_path):
+def get_data_columns_csv(file_path):
     """
     Extracts data columns from a file.
 
@@ -38,6 +38,66 @@ def get_data_columns(file_path):
         for i, val in enumerate(header_vals):
             header_vals[i] = val.strip()
         data_columns = header_vals[1:]
+        return data_columns
+
+
+def split_fixed_width_line(line, field_width):
+    """
+    Split a line into segments of fixed width.
+
+    Args:
+        line (str): The line to be split.
+        field_width (int): The width of each segment.
+
+    Returns:
+        list: A list of segments of fixed width.
+
+    Examples:
+        >>> line = "This is a sample line that we want to split."
+        >>> segments = split_fixed_width_line(line, 8)
+        >>> segments
+        ['This is ', 'a sample', ' line th', 'at we wa', 'nt to sp', 'lit.']
+    """
+
+    return [line[i:i + field_width] for i in range(0, len(line), field_width)]
+
+
+def get_data_columns_fixed_width(file_path):
+    """
+    Retrieves the data columns from a fixed-width file.
+
+    Args:
+        file_path (str): The path to the fixed-width file.
+
+    Returns:
+        list: A list containing the data columns extracted from the file.
+
+    Example:
+        >>> file_path = 'data.txt'
+        >>> data_columns = get_data_columns_fixed_width(file_path)
+        >>> print(data_columns)
+        ['Column1', 'Column2', 'Column3', 'Column4']
+    """
+
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+        header = lines[2]
+
+        header_vals = split_fixed_width_line(lines[2], 8)
+
+        for i, val in enumerate(header_vals):
+            header_vals[i] = val.strip()
+        data_columns = header_vals[1:]
+        if data_columns[-1] == "":
+            data_columns = data_columns[:-1]
+
+        # print("Header Line:")
+        # print(header)
+        # print("Header values:")
+        # print(header_vals)
+        # print("Data columns:")
+        # print(data_columns)
+
         return data_columns
 
 
