@@ -82,7 +82,6 @@ def get_data_columns_fixed_width(file_path):
     with open(file_path, 'r') as f:
         lines = f.readlines()
         header = lines[2]
-
         header_vals = split_fixed_width_line(lines[2], 8)
 
         for i, val in enumerate(header_vals):
@@ -90,13 +89,6 @@ def get_data_columns_fixed_width(file_path):
         data_columns = header_vals[1:]
         if data_columns[-1] == "":
             data_columns = data_columns[:-1]
-
-        # print("Header Line:")
-        # print(header)
-        # print("Header values:")
-        # print(header_vals)
-        # print("Data columns:")
-        # print(data_columns)
 
         return data_columns
 

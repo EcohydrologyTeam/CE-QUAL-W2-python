@@ -8,6 +8,7 @@ import PyQt5.QtCore as qtc
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import glob
+import csv
 
 
 sys.path.append('../../../src')
@@ -100,23 +101,64 @@ class CSVPlotApp(qtw.QMainWindow):
         self.central_widget.setLayout(self.layout)
         self.setCentralWidget(self.central_widget)
 
+    def parse_year_csv(self, w2_control_file_path):
+        rows = []
+        with open(w2_control_file_path, 'r') as f:
+            csv_reader = csv.reader(f)
+            for row in (csv_reader):
+                rows.append(row)
+        for i, row in enumerate(rows):
+                if row[0].upper() == 'TMSTRT':
+                    self.year = int(rows[i + 1][2])
+                    self.start_year_input.setText(str(self.year))
+
+    def parse_year_npt(self, w2_control_file_path):
+        with open(w2_control_file_path, 'r') as f:
+            lines = f.readlines()
+        for i, line in enumerate(lines):
+            line = line.strip().upper()
+            if line.startswith('TMSTR') or line.startswith('TIME'):
+                data_line = lines[i + 1]
+                year_str = data_line[24:].strip()
+                self.year = int(year_str)
+                self.start_year_input.setText(str(self.year))
+
     def get_model_year(self):
         # Locate the CE-QUAL-W2 control file
-        path1 = glob.glob(os.path.join(directory, 'w2_con.csv'))
-        path2 = glob.glob(os.path.join(directory, '../w2_con.csv'))
-        path3 = glob.glob(os.path.join(directory, 'w2_con.npt'))
-        path4 = glob.glob(os.path.join(directory, '../w2_con.npt'))
+        path1 = os.path.join(self.directory, 'w2_con.csv')
+        path2 = os.path.join(self.directory, '../w2_con.csv')
+        path3 = os.path.join(self.directory, 'w2_con.npt')
+        path4 = os.path.join(self.directory, '../w2_con.npt')
+        w2_control_file_path = None
+        w2_file_type = None
 
-        if path1:
-            print(f'{w2_con.csv} was found!')
-        elif path1:
-            print(f'../{w2_con.csv} was found!')
-        elif path1:
-            print(f'{w2_con.npt} was found!')
-        elif path1:
-            print(f'../{w2_con.npt} was found!')
+        if glob.glob(path1):
+            print(f'{path1} was found!')
+            w2_control_file_path = path1
+            w2_file_type = "CSV"
+        elif glob.glob(path2):
+            print(f'{path2} was found!')
+            w2_control_file_path = path2
+            w2_file_type = "CSV"
+        elif glob.glob(path3):
+            print(f'{path3} was found!')
+            w2_control_file_path = path3
+            w2_file_type = "NPT"
+        elif glob.glob(path4):
+            print(f'{path4} was found!')
+            w2_control_file_path = path4
+            w2_file_type = "NPT"
         else:
             print('No control file found!')
+
+        print("w2_control_file_path = ", w2_control_file_path)
+
+        if w2_file_type == "CSV":
+            self.parse_year_csv(w2_control_file_path)
+        elif w2_file_type == "NPT":
+            self.parse_year_npt(w2_control_file_path)
+
+        return
 
     def update_year(self, text):
         try:
@@ -130,8 +172,7 @@ class CSVPlotApp(qtw.QMainWindow):
     def browse_file(self):
         file_dialog = qtw.QFileDialog(self)
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
-        file_dialog.setNameFilter('CSV Files (*.csv)')
-        file_dialog.setNameFilters(['CSV Files (*.csv)', 'NPT Files (*.npt)', 'OPT Files (*.opt)'])
+        file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)', 'OPT Files (*.opt)'])
         if file_dialog.exec_():
             self.file_path = file_dialog.selectedFiles()[0]
             self.directory, self.filename = os.path.split(self.file_path)
