@@ -8,6 +8,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import glob
 import csv
+import sqlite3
 
 sys.path.append('../../../src')
 import cequalw2 as w2
@@ -109,12 +110,17 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Create a new tab and a QTableWidget
         self.data_tab = qtw.QWidget()
         self.data_table = qtw.QTableWidget(self.data_tab)
+        self.data_table.itemChanged.connect(self.table_cell_changed)
         self.tab_widget.addTab(self.data_tab, "Data")
 
         # Set layout for data_tab
         self.data_tab_layout = qtw.QVBoxLayout()
         self.data_tab_layout.addWidget(self.data_table)
         self.data_tab.setLayout(self.data_tab_layout)
+        self.button_save_data = qtw.QPushButton('Save', self)
+        self.button_save_data.clicked.connect(self.save_data_to_sqlite)
+        self.button_save_data.setFixedWidth(100)
+        self.data_tab_layout.addWidget(self.button_save_data)
 
         # Fill the QTableWidget with data
         self.update_data_table()
@@ -291,7 +297,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
     def plot_data(self):
         if self.data is None:
             return
-
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         # self.data.plot(ax=ax)
@@ -317,6 +322,31 @@ class CeQualW2Viewer(qtw.QMainWindow):
         message_box.setText(message)
         # message_box.setStandardButtons(qtw.QMessageBox.Close)
         message_box.exec_()
+
+
+    def table_cell_changed(self, item):
+        if self.data is not None:
+            row = item.row()
+            col = item.column()
+            value = item.text()
+            # print(row, col, value)
+            try:
+                if col == 0:
+                    datetime_index = pd.to_datetime(value, format='%m/%d/%Y %H:%M')
+                else:
+                    self.data.iloc[row, col - 1] = float(value)
+            except ValueError:
+                print('ValueError:', row, col, value)
+            except IndexError:
+                print('IndexError:', row, col, value)
+
+
+    def save_data_to_sqlite(self):
+        if self.data is not None:
+            con = sqlite3.connect("data.db")
+            self.data.to_sql("data_table", con, if_exists="replace", index=True)
+            con.close()
+            print(self.data.head())
 
 
 if __name__ == '__main__':
