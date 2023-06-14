@@ -25,6 +25,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.data = None
         self.DEFAULT_YEAR = 2023
         self.year = self.DEFAULT_YEAR
+        self.database_path = None
 
         self.button_browse = qtw.QPushButton('Browse', self)
         self.button_browse.clicked.connect(self.browse_file)
@@ -117,10 +118,22 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.data_tab_layout = qtw.QVBoxLayout()
         self.data_tab_layout.addWidget(self.data_table)
         self.data_tab.setLayout(self.data_tab_layout)
-        self.button_save_data = qtw.QPushButton('Save', self)
-        self.button_save_data.clicked.connect(self.save_data_to_sqlite)
-        self.button_save_data.setFixedWidth(100)
-        self.data_tab_layout.addWidget(self.button_save_data)
+
+        # Create save buttons for the data table
+        self.button_data_save = qtw.QPushButton('Save', self)
+        self.button_data_save.clicked.connect(self.save_data_to_sqlite)
+        self.button_data_save.setFixedWidth(100)
+
+        self.button_data_save_as = qtw.QPushButton('Save As...', self)
+        self.button_data_save_as.clicked.connect(self.save_as)
+        self.button_data_save_as.setFixedWidth(100)
+
+        self.save_button_layout = qtw.QHBoxLayout()
+        self.save_button_layout.setAlignment(qtc.Qt.AlignLeft)
+        self.save_button_layout.addWidget(self.button_data_save)
+        self.save_button_layout.addWidget(self.button_data_save_as)
+
+        self.data_tab_layout.addLayout(self.save_button_layout)
 
         # Fill the QTableWidget with data
         self.update_data_table()
@@ -341,12 +354,35 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 print('IndexError:', row, col, value)
 
 
+    def save_as(self):
+        options = qtw.QFileDialog.Options()
+        options |= qtw.QFileDialog.DontUseNativeDialog
+        file_dialog = qtw.QFileDialog()
+        file_dialog.setOptions(options)
+        file_dialog.setNameFilters(["All Files (*)", "SQLite Databases (*.db)"])
+
+        # options = qtw.QFileDialog.Options()
+        # options |= qtw.QFileDialog.DontUseNativeDialog
+        # self.database_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", "", "All Files (*);SQLite Databases (*.db)", options=options)
+
+        if file_dialog.exec_() == qtw.QFileDialog.Accepted:
+            self.database_path = file_dialog.selectedFiles()[0]
+
+        if self.database_path:
+            self.save_data_to_sqlite()
+
+
     def save_data_to_sqlite(self):
-        if self.data is not None:
-            con = sqlite3.connect("data.db")
-            self.data.to_sql("data_table", con, if_exists="replace", index=True)
-            con.close()
-            print(self.data.head())
+        if self.database_path is None:
+            self.save_as()
+        elif self.data is not None:
+            if os.path.exists(self.database_path):
+                reply = qtw.QMessageBox.question(self, "File Exists", "The file already exists. Do you want to replace it?",
+                                             qtw.QMessageBox.Yes | qtw.QMessageBox.No)
+                if reply == qtw.QMessageBox.Yes:
+                    con = sqlite3.connect(self.database_path)
+                    self.data.to_sql("data_table", con, if_exists="replace", index=True)
+                    con.close()
 
 
 if __name__ == '__main__':
