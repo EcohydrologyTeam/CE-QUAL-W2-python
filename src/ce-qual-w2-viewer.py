@@ -354,22 +354,30 @@ class CeQualW2Viewer(qtw.QMainWindow):
         default_filename = self.file_path + '.db'
         options = qtw.QFileDialog.Options()
         # options |= qtw.QFileDialog.DontUseNativeDialog
-        self.database_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
                                                    "All Files (*);;Text Files (*.txt)", options=options)
+        if not returned_path:
+            return
+
+        self.database_path = returned_path
 
         if self.database_path and self.data is not None:
-            if os.path.exists(self.database_path):
-                reply = qtw.QMessageBox.question(self, "File Exists",
-                                                 "The file already exists. Do you want to replace it?",
-                                                 qtw.QMessageBox.Yes | qtw.QMessageBox.No)
-                if reply == qtw.QMessageBox.Yes:
-                    self.save_to_sqlite()
-                elif reply == qtw.QMessageBox.No:
-                    return
-            else:
-                self.save_to_sqlite()
+            self.save_to_sqlite()
+            self.update_stats_table()
 
-        self.update_stats_table()
+        # MacOS native dialog asks if you want to replace the file
+        # I don't think I need the following code anymore
+        # if self.database_path and self.data is not None:
+        #     if os.path.exists(self.database_path):
+        #         reply = qtw.QMessageBox.question(self, "File Exists",
+        #                                          "The file already exists. Do you want to replace it?",
+        #                                          qtw.QMessageBox.Yes | qtw.QMessageBox.No)
+        #         if reply == qtw.QMessageBox.Yes:
+        #             self.save_to_sqlite()
+        #         elif reply == qtw.QMessageBox.No:
+        #             return
+        #     else:
+        #         self.save_to_sqlite()
 
 
 if __name__ == '__main__':
