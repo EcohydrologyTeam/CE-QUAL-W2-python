@@ -1,3 +1,4 @@
+import cequalw2 as w2
 import sys
 import os
 import pandas as pd
@@ -11,7 +12,6 @@ import csv
 import sqlite3
 
 sys.path.append('../../../src')
-import cequalw2 as w2
 
 
 class CeQualW2Viewer(qtw.QMainWindow):
@@ -26,6 +26,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.DEFAULT_YEAR = 2023
         self.year = self.DEFAULT_YEAR
         self.database_path = None
+        self.table_name = 'data'
 
         self.button_browse = qtw.QPushButton('Browse', self)
         self.button_browse.clicked.connect(self.browse_file)
@@ -121,17 +122,17 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         # Create save buttons for the data table
         self.button_data_save = qtw.QPushButton('Save', self)
-        self.button_data_save.clicked.connect(self.save_data_to_sqlite)
+        self.button_data_save.clicked.connect(self.save_data)
         self.button_data_save.setFixedWidth(100)
 
-        self.button_data_save_as = qtw.QPushButton('Save As...', self)
-        self.button_data_save_as.clicked.connect(self.save_as)
-        self.button_data_save_as.setFixedWidth(100)
+        # self.button_data_save_as = qtw.QPushButton('Save As...', self)
+        # self.button_data_save_as.clicked.connect(self.save_as)
+        # self.button_data_save_as.setFixedWidth(100)
 
         self.save_button_layout = qtw.QHBoxLayout()
         self.save_button_layout.setAlignment(qtc.Qt.AlignLeft)
         self.save_button_layout.addWidget(self.button_data_save)
-        self.save_button_layout.addWidget(self.button_data_save_as)
+        # self.save_button_layout.addWidget(self.button_data_save_as)
 
         self.data_tab_layout.addLayout(self.save_button_layout)
 
@@ -140,7 +141,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         # Set tabs as central widget
         self.setCentralWidget(self.tab_widget)
-
 
     def update_data_table(self):
         if self.data is not None:
@@ -173,7 +173,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
                         item.setTextAlignment(0x0082)
                     self.data_table.setItem(row, column, item)
 
-
     def parse_year_csv(self, w2_control_file_path):
         rows = []
         with open(w2_control_file_path, 'r') as f:
@@ -181,10 +180,9 @@ class CeQualW2Viewer(qtw.QMainWindow):
             for row in (csv_reader):
                 rows.append(row)
         for i, row in enumerate(rows):
-                if row[0].upper() == 'TMSTRT':
-                    self.year = int(rows[i + 1][2])
-                    self.start_year_input.setText(str(self.year))
-
+            if row[0].upper() == 'TMSTRT':
+                self.year = int(rows[i + 1][2])
+                self.start_year_input.setText(str(self.year))
 
     def parse_year_npt(self, w2_control_file_path):
         with open(w2_control_file_path, 'r') as f:
@@ -196,7 +194,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 year_str = data_line[24:].strip()
                 self.year = int(year_str)
                 self.start_year_input.setText(str(self.year))
-
 
     def get_model_year(self):
         # Locate the CE-QUAL-W2 control file
@@ -229,17 +226,14 @@ class CeQualW2Viewer(qtw.QMainWindow):
         elif w2_file_type == "NPT":
             self.parse_year_npt(w2_control_file_path)
 
-
     def update_year(self, text):
         try:
             self.year = int(text)
         except ValueError:
             self.year = self.DEFAULT_YEAR
 
-
     def update_filename(self, text):
         self.filename = text
-
 
     def browse_file(self):
         file_dialog = qtw.QFileDialog(self)
@@ -272,13 +266,11 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 file_dialog.close()
 
         self.update_data_table()
-        self.make_stats_table()
+        self.update_stats_table()
 
-
-    def make_stats_table(self):
+    def update_stats_table(self):
         if self.data is None:
             return
-
         # Compute statistics
         statistics = self.data.describe().reset_index()
         self.stats_table.setRowCount(len(statistics))
@@ -296,16 +288,15 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 try:
                     if col == 0:
                         value_text = str(value)
-                    elif row == 0: 
-                        value_text = f'{int(value):d}' # format the "count" statistic as an integer
+                    elif row == 0:
+                        value_text = f'{int(value):d}'  # format the "count" statistic as an integer
                     else:
-                        value_text = f'{value:.2f}' # format everything else as a float
+                        value_text = f'{value:.2f}'  # format everything else as a float
                 except ValueError:
                     value_text = str(value)
                 item = qtw.QTableWidgetItem(value_text)
                 item.setTextAlignment(0x0082)
                 self.stats_table.setItem(row, col, item)
-
 
     def plot_data(self):
         if self.data is None:
@@ -318,7 +309,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         elif self.PLOT_TYPE == 'multiplot':
             w2.multi_plot(self.data, fig=self.figure, ax=ax)
         self.canvas.draw()
-
+        self.update_stats_table()
 
     def plot_option_changed(self):
         selected_option = self.plot_option_group.checkedButton().text()
@@ -327,7 +318,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         elif selected_option == 'One Plot per Variable':
             self.PLOT_TYPE = 'multiplot'
 
-
     def show_warning_dialog(self, message):
         message_box = qtw.QMessageBox()
         message_box.setIcon(qtw.QMessageBox.Critical)
@@ -335,7 +325,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         message_box.setText(message)
         # message_box.setStandardButtons(qtw.QMessageBox.Close)
         message_box.exec_()
-
 
     def table_cell_changed(self, item):
         if self.data is not None:
@@ -354,35 +343,33 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 print('IndexError:', row, col, value)
 
 
-    def save_as(self):
+    def save_to_sqlite(self):
+        self.table_name = self.filename
+        con = sqlite3.connect(self.database_path)
+        self.data.to_sql(self.table_name, con, if_exists="replace", index=True)
+        con.close()
+
+
+    def save_data(self):
+        default_filename = self.file_path + '.db'
         options = qtw.QFileDialog.Options()
-        options |= qtw.QFileDialog.DontUseNativeDialog
-        file_dialog = qtw.QFileDialog()
-        file_dialog.setOptions(options)
-        file_dialog.setNameFilters(["All Files (*)", "SQLite Databases (*.db)"])
-
-        # options = qtw.QFileDialog.Options()
         # options |= qtw.QFileDialog.DontUseNativeDialog
-        # self.database_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", "", "All Files (*);SQLite Databases (*.db)", options=options)
+        self.database_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+                                                   "All Files (*);;Text Files (*.txt)", options=options)
 
-        if file_dialog.exec_() == qtw.QFileDialog.Accepted:
-            self.database_path = file_dialog.selectedFiles()[0]
-
-        if self.database_path:
-            self.save_data_to_sqlite()
-
-
-    def save_data_to_sqlite(self):
-        if self.database_path is None:
-            self.save_as()
-        elif self.data is not None:
+        if self.database_path and self.data is not None:
             if os.path.exists(self.database_path):
-                reply = qtw.QMessageBox.question(self, "File Exists", "The file already exists. Do you want to replace it?",
-                                             qtw.QMessageBox.Yes | qtw.QMessageBox.No)
+                reply = qtw.QMessageBox.question(self, "File Exists",
+                                                 "The file already exists. Do you want to replace it?",
+                                                 qtw.QMessageBox.Yes | qtw.QMessageBox.No)
                 if reply == qtw.QMessageBox.Yes:
-                    con = sqlite3.connect(self.database_path)
-                    self.data.to_sql("data_table", con, if_exists="replace", index=True)
-                    con.close()
+                    self.save_to_sqlite()
+                elif reply == qtw.QMessageBox.No:
+                    return
+            else:
+                self.save_to_sqlite()
+
+        self.update_stats_table()
 
 
 if __name__ == '__main__':
