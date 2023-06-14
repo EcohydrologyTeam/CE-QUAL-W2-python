@@ -143,12 +143,22 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.setCentralWidget(self.tab_widget)
 
     def update_data_table(self):
-        if self.data is not None:
-            # Convert DataFrame to numpy array for efficiency
-            array_data = self.data.values
+        """
+        Updates the data table with the current data.
 
-            # Get the datetime index as an array
-            # datetime_array = self.data.index.to_numpy()
+        This method takes the current data stored in the `data` attribute and updates the `data_table` widget accordingly.
+
+        If the `data` attribute is not `None`, the method performs the following steps:
+        1. Converts the DataFrame to a numpy array for efficiency.
+        2. Converts the datetime index to a formatted string representation.
+        3. Sets the table headers with the formatted datetime index and column names.
+        4. Populates the table with the values from the numpy array, aligned and formatted.
+
+        Note:
+            This method assumes that the `data_table` widget has been properly initialized.
+        """
+        if self.data is not None:
+            array_data = self.data.values
             datetime_index = self.data.index.to_series().dt.strftime('%m/%d/%Y %H:%M')
             datetime_strings = datetime_index.tolist()
 
@@ -174,10 +184,21 @@ class CeQualW2Viewer(qtw.QMainWindow):
                     self.data_table.setItem(row, column, item)
 
     def parse_year_csv(self, w2_control_file_path):
+        """
+        Parses the year from a CSV file and sets it as the year attribute.
+
+        This method reads a CSV file specified by `w2_control_file_path` and searches for a row where the first column (index 0)
+        contains the value 'TMSTRT'. The year value is extracted from the subsequent row in the third column (index 2) and set
+        as the year attribute of the class. Additionally, the extracted year is displayed in a QLineEdit widget with the object name
+        'start_year_input'.
+
+        Args:
+            w2_control_file_path (str): The file path to the CSV file.
+        """
         rows = []
         with open(w2_control_file_path, 'r') as f:
             csv_reader = csv.reader(f)
-            for row in (csv_reader):
+            for row in csv_reader:
                 rows.append(row)
         for i, row in enumerate(rows):
             if row[0].upper() == 'TMSTRT':
@@ -185,6 +206,18 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 self.start_year_input.setText(str(self.year))
 
     def parse_year_npt(self, w2_control_file_path):
+        """
+        Parses the year from an NPT file and sets it as the year attribute.
+
+        This method reads an NPT file specified by `w2_control_file_path` and searches for a line that starts with 'TMSTR' or 'TIME'.
+        The subsequent line is then extracted, and the year value is obtained by removing the first 24 characters from the line
+        and stripping any leading or trailing whitespace. The extracted year is then converted to an integer and set as the year
+        attribute of the class. Additionally, the extracted year is displayed in a QLineEdit widget with the object name
+        'start_year_input'.
+
+        Args:
+            w2_control_file_path (str): The file path to the NPT file.
+        """
         with open(w2_control_file_path, 'r') as f:
             lines = f.readlines()
         for i, line in enumerate(lines):
@@ -196,30 +229,44 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 self.start_year_input.setText(str(self.year))
 
     def get_model_year(self):
-        # Locate the CE-QUAL-W2 control file
-        path1 = os.path.join(self.directory, 'w2_con.csv')
-        path2 = os.path.join(self.directory, '../w2_con.csv')
-        path3 = os.path.join(self.directory, 'w2_con.npt')
-        path4 = os.path.join(self.directory, '../w2_con.npt')
+        """
+        Retrieves the model year from the CE-QUAL-W2 control file.
+
+        This method locates the CE-QUAL-W2 control file in the specified directory by searching for specific filenames:
+        - 'w2_con.csv'
+        - '../w2_con.csv'
+        - 'w2_con.npt'
+        - '../w2_con.npt'
+
+        Once the control file is found, its path and file type are stored in variables. The method then determines the file type
+        (either CSV or NPT) and calls the appropriate parsing method (`parse_year_csv` or `parse_year_npt`) to extract the model year.
+        The extracted year is then set as the year attribute of the class.
+
+        Note:
+            If no control file is found, a message is printed to indicate the absence of the file.
+        """
+        control_file_paths = [
+            os.path.join(self.directory, 'w2_con.csv'),
+            os.path.join(self.directory, '../w2_con.csv'),
+            os.path.join(self.directory, 'w2_con.npt'),
+            os.path.join(self.directory, '../w2_con.npt')
+        ]
+
         w2_control_file_path = None
         w2_file_type = None
 
-        if glob.glob(path1):
-            w2_control_file_path = path1
-            w2_file_type = "CSV"
-        elif glob.glob(path2):
-            w2_control_file_path = path2
-            w2_file_type = "CSV"
-        elif glob.glob(path3):
-            w2_control_file_path = path3
-            w2_file_type = "NPT"
-        elif glob.glob(path4):
-            w2_control_file_path = path4
-            w2_file_type = "NPT"
-        else:
-            print('No control file found!')
+        for path in control_file_paths:
+            if glob.glob(path):
+                w2_control_file_path = path
+                _, extension = os.path.splitext(path)
+                w2_file_type = extension[1:].upper()
+                break
 
-        print("w2_control_file_path = ", w2_control_file_path)
+        if w2_control_file_path is None:
+            print('No control file found!')
+            return
+
+        print("w2_control_file_path =", w2_control_file_path)
 
         if w2_file_type == "CSV":
             self.parse_year_csv(w2_control_file_path)
@@ -227,15 +274,61 @@ class CeQualW2Viewer(qtw.QMainWindow):
             self.parse_year_npt(w2_control_file_path)
 
     def update_year(self, text):
+        """
+        Updates the year attribute based on the provided text.
+
+        This method attempts to convert the `text` parameter to an integer and assigns it to the year attribute (`self.year`).
+        If the conversion fails due to a `ValueError`, the year attribute is set to the default year value (`self.DEFAULT_YEAR`).
+
+        Args:
+            text (str): The text representing the new year value.
+        """
         try:
             self.year = int(text)
         except ValueError:
             self.year = self.DEFAULT_YEAR
 
     def update_filename(self, text):
+        """
+        Updates the filename attribute with the provided text.
+
+        This method updates the filename attribute (`self.filename`) with the given text value. The filename attribute represents
+        the name of a file associated with the class or object.
+
+        Args:
+            text (str): The new filename text.
+        """
+        self.filename = text
+
+    def update_filename(self, text):
+        """
+        Updates the filename attribute with the provided text.
+
+        This method sets the filename attribute (`self.filename`) to the given text value.
+
+        Args:
+            text (str): The new filename.
+        """
         self.filename = text
 
     def browse_file(self):
+        """
+        Browse and process a selected file.
+
+        This method opens a file dialog to allow the user to browse and select a file. Once a file is selected, the method performs
+        the following steps:
+        1. Extracts the file path, directory, and filename.
+        2. Sets the filename in a QLineEdit widget (`self.filename_input`).
+        3. Determines the file extension and calls the appropriate methods to retrieve the data columns.
+        4. Retrieves the model year using the `get_model_year` method.
+        5. Attempts to read the data from the selected file using the extracted file path, year, and data columns.
+        6. Displays a warning dialog if an error occurs while opening the file.
+        7. Updates the data table and statistics table.
+
+        Note:
+            - Supported file extensions are '.csv', '.npt', and '.opt'.
+            - The `update_data_table` and `update_stats_table` methods are called after processing the file.
+        """
         file_dialog = qtw.QFileDialog(self)
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
         file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)', 'OPT Files (*.opt)'])
@@ -245,7 +338,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
             self.filename_input.setText(self.filename)
             basefilename, extension = os.path.splitext(self.filename)
 
-            # Get data columns
             if extension.lower() in ['.npt', '.opt']:
                 data_columns = w2.get_data_columns_fixed_width(self.file_path)
             elif extension.lower() == '.csv':
@@ -255,10 +347,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 self.show_warning_dialog('Only *.csv, *.npt, and *.opt files are supported.')
                 return
 
-            # Get model year
             self.get_model_year()
 
-            # Read the data
             try:
                 self.data = w2.read(self.file_path, self.year, data_columns)
             except IOError:
@@ -269,29 +359,45 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.update_stats_table()
 
     def update_stats_table(self):
+        """
+        Updates the statistics table based on the available data.
+
+        This method computes descriptive statistics for the data stored in the `data` attribute and populates the statistics table (`self.stats_table`) with the results.
+        If the `data` attribute is `None`, the method returns without performing any calculations.
+
+        The statistics table is set up with the appropriate number of rows and columns based on the number of statistics and data columns.
+        The header labels are set to display the column names, and the table cells are populated with the computed statistics.
+        The formatting of the statistics values depends on their type:
+        - The "count" statistic is displayed as an integer.
+        - Other statistics are displayed as floating-point numbers with two decimal places.
+        - If a value cannot be converted to a number, it is displayed as a string.
+
+        Note:
+            - The number of columns in the statistics table is equal to the number of data columns plus one, accounting for the index column that lists the statistics names.
+            - The `data` attribute must be set with the data before calling this method.
+        """
         if self.data is None:
             return
-        # Compute statistics
+
         statistics = self.data.describe().reset_index()
         self.stats_table.setRowCount(len(statistics))
         self.stats_table.setColumnCount(len(self.data.columns) + 1)
-        # Note: col = 0 is the index column, which lists the statistics names
-        # Therefore, the total number of columns is len(data.columns) + 1
+
         header = ['']
         for col in self.data.columns:
             header.append(col)
         self.stats_table.setHorizontalHeaderLabels(header)
+
         for row in range(len(statistics)):
             for col in range(len(self.data.columns) + 1):
-                # See note above about the number of columns
                 value = statistics.iloc[row, col]
                 try:
                     if col == 0:
                         value_text = str(value)
                     elif row == 0:
-                        value_text = f'{int(value):d}'  # format the "count" statistic as an integer
+                        value_text = f'{int(value):d}'
                     else:
-                        value_text = f'{value:.2f}'  # format everything else as a float
+                        value_text = f'{value:.2f}'
                 except ValueError:
                     value_text = str(value)
                 item = qtw.QTableWidgetItem(value_text)
@@ -299,39 +405,86 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 self.stats_table.setItem(row, col, item)
 
     def plot_data(self):
+        """
+        Plots the data using the selected plot type.
+
+        This method clears the existing figure, creates a subplot, and plots the data based on the selected plot type (`self.PLOT_TYPE`).
+        If the `data` attribute is `None`, the method returns without performing any plotting.
+
+        The plot is rendered on the canvas (`self.canvas`) associated with the figure.
+        Additionally, the statistics table is updated after plotting the data.
+
+        Note:
+            - The figure and canvas must be properly initialized before calling this method.
+            - The `data` attribute must be set with the data before calling this method.
+            - The plot type is determined by the value of `self.PLOT_TYPE`.
+        """
         if self.data is None:
             return
+
         self.figure.clear()
         ax = self.figure.add_subplot(111)
-        # self.data.plot(ax=ax)
+
         if self.PLOT_TYPE == 'plot':
             w2.plot(self.data, fig=self.figure, ax=ax)
         elif self.PLOT_TYPE == 'multiplot':
             w2.multi_plot(self.data, fig=self.figure, ax=ax)
+
         self.canvas.draw()
         self.update_stats_table()
 
     def plot_option_changed(self):
+        """
+        Handles the change in the selected plot option.
+
+        This method retrieves the text of the currently selected plot option from the checked radio button in the plot option group.
+        Based on the selected option, the `PLOT_TYPE` attribute is updated to either 'plot' (for single plot) or 'multiplot' (for one plot per variable).
+
+        Note:
+            - The plot option group and radio buttons must be properly set up and connected to this method.
+            - The `PLOT_TYPE` attribute controls the type of plot to be generated in the `plot_data` method.
+        """
         selected_option = self.plot_option_group.checkedButton().text()
+
         if selected_option == 'Single Plot':
             self.PLOT_TYPE = 'plot'
         elif selected_option == 'One Plot per Variable':
             self.PLOT_TYPE = 'multiplot'
 
     def show_warning_dialog(self, message):
+        """
+        Displays a warning dialog with the given message.
+
+        This method creates and shows a warning dialog box with the provided `message`. The dialog box includes a critical icon,
+        a title, and the message text.
+
+        Args:
+            message (str): The warning message to be displayed.
+        """
         message_box = qtw.QMessageBox()
         message_box.setIcon(qtw.QMessageBox.Critical)
         message_box.setWindowTitle('Error')
         message_box.setText(message)
-        # message_box.setStandardButtons(qtw.QMessageBox.Close)
         message_box.exec_()
 
     def table_cell_changed(self, item):
+        """
+        Handles the change in a table cell value.
+
+        This method is triggered when a cell value in the table widget (`self.data_table`) is changed.
+        If the `data` attribute is not `None`, the method retrieves the row, column, and new value of the changed cell.
+        If the column index is 0, it attempts to convert the value to a datetime object using the specified format.
+        Otherwise, it attempts to convert the value to a float and updates the corresponding value in the `data` DataFrame.
+
+        Note:
+            - The table widget (`self.data_table`) must be properly set up and connected to this method.
+            - The `data` attribute must be set with the data before calling this method.
+        """
         if self.data is not None:
             row = item.row()
             col = item.column()
             value = item.text()
-            # print(row, col, value)
+
             try:
                 if col == 0:
                     datetime_index = pd.to_datetime(value, format='%m/%d/%Y %H:%M')
@@ -342,20 +495,42 @@ class CeQualW2Viewer(qtw.QMainWindow):
             except IndexError:
                 print('IndexError:', row, col, value)
 
-
     def save_to_sqlite(self):
+        """
+        Saves the data to an SQLite database.
+
+        This method saves the data stored in the `data` attribute to an SQLite database file specified by the `database_path` attribute.
+        The table name is set as the `filename` attribute.
+        If the database file already exists, the table with the same name is replaced.
+        The data is saved with the index included as a column.
+
+        Note:
+            - The `data` attribute must be set with the data before calling this method.
+            - The `database_path` attribute must be properly set with the path to the SQLite database file.
+        """
         self.table_name = self.filename
         con = sqlite3.connect(self.database_path)
         self.data.to_sql(self.table_name, con, if_exists="replace", index=True)
         con.close()
 
-
     def save_data(self):
+        """
+        Saves the data to a selected file as an SQLite database.
+
+        This method allows the user to select a file path to save the data as an SQLite database.
+        If a valid file path is selected and the `data` attribute is not `None`, the following steps are performed:
+        1. The `database_path` attribute is set to the selected file path.
+        2. The `save_to_sqlite` method is called to save the data to the SQLite database file.
+        3. The statistics table is updated after saving the data.
+
+        Note:
+            - The `data` attribute must be set with the data before calling this method.
+        """
         default_filename = self.file_path + '.db'
         options = qtw.QFileDialog.Options()
         # options |= qtw.QFileDialog.DontUseNativeDialog
         returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
-                                                   "All Files (*);;Text Files (*.txt)", options=options)
+                                                           "All Files (*);;Text Files (*.txt)", options=options)
         if not returned_path:
             return
 
