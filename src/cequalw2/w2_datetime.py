@@ -50,7 +50,7 @@ def day_of_year_to_datetime(year: int, day_of_year_list: List[int]) -> List[date
     return datetimes
 
 
-def convert_to_datetime(year: int, days: List[int]) -> List[datetime]:
+def convert_to_datetime(year: int, days: List[int]) -> List[datetime.datetime]:
     """
     Convert a list of days of the year to datetime objects for a specific year.
 
@@ -65,4 +65,3 @@ def convert_to_datetime(year: int, days: List[int]) -> List[datetime]:
     start_date = datetime.datetime(year, 1, 1)
     datetime_objects = [start_date + datetime.timedelta(days=day - 1) for day in days]
     return datetime_objects
-
