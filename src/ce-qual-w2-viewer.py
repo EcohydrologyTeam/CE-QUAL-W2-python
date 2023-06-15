@@ -623,6 +623,14 @@ class CeQualW2Viewer(qtw.QMainWindow):
         return np.array(array)
 
     def copy_data(self):
+        """
+        Copy the selected data from the current tab's table widget to the clipboard.
+
+        This method checks the current index of the tab widget and determines the
+        corresponding table widget to work with. It then copies the selected cells
+        from the table widget and sets the resulting string as the text content of
+        the clipboard.
+        """
         if self.tab_widget.currentIndex() == 1:
             table_widget = self.stats_table
         elif self.tab_widget.currentIndex() == 2:
@@ -641,6 +649,14 @@ class CeQualW2Viewer(qtw.QMainWindow):
             qtw.QApplication.clipboard().setText(s)
 
     def paste_data(self):
+        """
+        Paste data from the clipboard into the selected cells of the current tab's table widget.
+
+        This method checks the current index of the tab widget and determines the
+        corresponding table widget to work with. It retrieves the data from the clipboard,
+        parses it into a NumPy array using the parse_2x2_array() method, and then inserts
+        the values into the selected cells of the table widget.
+        """
         if self.tab_widget.currentIndex() == 1:
             table_widget = self.stats_table
         elif self.tab_widget.currentIndex() == 2:
