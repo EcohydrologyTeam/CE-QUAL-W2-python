@@ -663,18 +663,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
                     col = left_col + j
                     table_widget.setItem(row, col, qtw.QTableWidgetItem(values[i][j]))
 
-    # def copy_data_table(self):
-    #     self.copy(self.data_table)
-
-    # def copy_stats_table(self):
-    #     self.copy(self.stats_table)
-
-    # def paste_data_table(self):
-    #     self.paste(self.data_table)
-
-    # def paste_stats_table(self):
-    #     self.paste(self.stats_table)
-
 
 if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
