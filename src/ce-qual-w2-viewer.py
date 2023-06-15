@@ -208,6 +208,55 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Set tabs as central widget
         self.setCentralWidget(self.tab_widget)
 
+    def update_stats_table(self):
+        """
+        Updates the statistics table based on the available data.
+
+        This method computes descriptive statistics for the data stored in the `data` attribute and populates the statistics table (`self.stats_table`) with the results.
+        If the `data` attribute is `None`, the method returns without performing any calculations.
+
+        The statistics table is set up with the appropriate number of rows and columns based on the number of statistics and data columns.
+        The header labels are set to display the column names, and the table cells are populated with the computed statistics.
+        The formatting of the statistics values depends on their type:
+        - The "count" statistic is displayed as an integer.
+        - Other statistics are displayed as floating-point numbers with two decimal places.
+        - If a value cannot be converted to a number, it is displayed as a string.
+
+        Note:
+            - The number of columns in the statistics table is equal to the number of data columns plus one, accounting for the index column that lists the statistics names.
+            - The `data` attribute must be set with the data before calling this method.
+        """
+        if self.data is None:
+            return
+
+        statistics = self.data.describe().reset_index()
+        self.stats_table.setRowCount(len(statistics))
+        self.stats_table.setColumnCount(len(self.data.columns) + 1)
+
+        header = ['']
+        for col in self.data.columns:
+            header.append(col)
+        self.stats_table.setHorizontalHeaderLabels(header)
+
+        for row in range(len(statistics)):
+            for col in range(len(self.data.columns) + 1):
+                value = statistics.iloc[row, col]
+                try:
+                    if col == 0:
+                        value_text = str(value)
+                    elif row == 0:
+                        value_text = f'{int(value):d}'
+                    else:
+                        value_text = f'{value:.2f}'
+                except ValueError:
+                    value_text = str(value)
+                item = qtw.QTableWidgetItem(value_text)
+                item.setTextAlignment(0x0082)
+                self.stats_table.setItem(row, col, item)
+
+        # Autofit the column widths
+        self.stats_table.resizeColumnsToContents()
+
     def update_data_table(self):
         """
         Updates the data table with the current data.
@@ -248,6 +297,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
                         item = qtw.QTableWidgetItem(value_text)
                         item.setTextAlignment(0x0082)
                     self.data_table.setItem(row, column, item)
+        # Autofit the column widths
+        self.data_table.resizeColumnsToContents()
 
     def parse_year_csv(self, w2_control_file_path):
         """
@@ -424,51 +475,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.update_data_table()
         self.update_stats_table()
 
-    def update_stats_table(self):
-        """
-        Updates the statistics table based on the available data.
-
-        This method computes descriptive statistics for the data stored in the `data` attribute and populates the statistics table (`self.stats_table`) with the results.
-        If the `data` attribute is `None`, the method returns without performing any calculations.
-
-        The statistics table is set up with the appropriate number of rows and columns based on the number of statistics and data columns.
-        The header labels are set to display the column names, and the table cells are populated with the computed statistics.
-        The formatting of the statistics values depends on their type:
-        - The "count" statistic is displayed as an integer.
-        - Other statistics are displayed as floating-point numbers with two decimal places.
-        - If a value cannot be converted to a number, it is displayed as a string.
-
-        Note:
-            - The number of columns in the statistics table is equal to the number of data columns plus one, accounting for the index column that lists the statistics names.
-            - The `data` attribute must be set with the data before calling this method.
-        """
-        if self.data is None:
-            return
-
-        statistics = self.data.describe().reset_index()
-        self.stats_table.setRowCount(len(statistics))
-        self.stats_table.setColumnCount(len(self.data.columns) + 1)
-
-        header = ['']
-        for col in self.data.columns:
-            header.append(col)
-        self.stats_table.setHorizontalHeaderLabels(header)
-
-        for row in range(len(statistics)):
-            for col in range(len(self.data.columns) + 1):
-                value = statistics.iloc[row, col]
-                try:
-                    if col == 0:
-                        value_text = str(value)
-                    elif row == 0:
-                        value_text = f'{int(value):d}'
-                    else:
-                        value_text = f'{value:.2f}'
-                except ValueError:
-                    value_text = str(value)
-                item = qtw.QTableWidgetItem(value_text)
-                item.setTextAlignment(0x0082)
-                self.stats_table.setItem(row, col, item)
 
     def plot_data(self):
         """
