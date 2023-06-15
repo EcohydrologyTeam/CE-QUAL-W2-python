@@ -187,27 +187,17 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.save_button_layout.setAlignment(qtc.Qt.AlignLeft)
         self.save_button_layout.addWidget(self.button_data_save)
 
-        # Create Copy action for the data table
-        copy_data_table_action = qtw.QAction('Copy', self)
-        copy_data_table_action.setShortcut('Ctrl+C')
-        copy_data_table_action.triggered.connect(self.copy_data_table)
-        edit_menu.addAction(copy_data_table_action)
+        # Create Copy action for the stats and data tables
+        copy_action = qtw.QAction('Copy', self)
+        copy_action.setShortcut('Ctrl+C')
+        copy_action.triggered.connect(self.copy_data)
+        edit_menu.addAction(copy_action)
 
-        # Create Copy action for the stats table
-        copy_stats_table_action = qtw.QAction('Copy', self)
-        copy_stats_table_action.setShortcut('Ctrl+C')
-        copy_stats_table_action.triggered.connect(self.copy_stats_table)
-
-        # Create Paste action for the data table
-        paste_data_table_action = qtw.QAction('Paste', self)
-        paste_data_table_action.setShortcut('Ctrl+V')
-        paste_data_table_action.triggered.connect(self.paste_data_table)
-        edit_menu.addAction(paste_data_table_action)
-
-        # Create Paste action for the stats table
-        paste_stats_table_action = qtw.QAction('Paste', self)
-        paste_stats_table_action.setShortcut('Ctrl+V')
-        paste_stats_table_action.triggered.connect(self.paste_data_table)
+        # Create Paste action for the stats and data tables
+        paste_action = qtw.QAction('Paste', self)
+        paste_action.setShortcut('Ctrl+V')
+        paste_action.triggered.connect(self.paste_data)
+        edit_menu.addAction(paste_action)
 
         self.data_tab_layout.addLayout(self.save_button_layout)
 
@@ -632,17 +622,14 @@ class CeQualW2Viewer(qtw.QMainWindow):
         array = [row.split('\t') for row in rows]
         return np.array(array)
 
-    def copy(self, table_widget: MyTableWidget):
-        """
-        Copy the selected cells of the table to the clipboard.
+    def copy_data(self):
+        if self.tab_widget.currentIndex() == 1:
+            table_widget = self.stats_table
+        elif self.tab_widget.currentIndex() == 2:
+            table_widget = self.data_table
+        else:
+            return
 
-        The selected cells are concatenated into a string with tab-separated
-        values for columns and newline-separated values for rows. The resulting
-        string is then set as the text content of the clipboard.
-
-        :param table_widget: The table widget from which to copy the cells.
-        :type table_widget: MyTableWidget
-        """
         selected = table_widget.selectedRanges()
         if selected:
             s = ''
@@ -653,18 +640,14 @@ class CeQualW2Viewer(qtw.QMainWindow):
             s = s.strip()
             qtw.QApplication.clipboard().setText(s)
 
-    def paste(self, table_widget: MyTableWidget):
-        """
-        Paste the contents of the clipboard into the selected cells of the table.
+    def paste_data(self):
+        if self.tab_widget.currentIndex() == 1:
+            table_widget = self.stats_table
+        elif self.tab_widget.currentIndex() == 2:
+            table_widget = self.data_table
+        else:
+            return
 
-        The contents of the clipboard are expected to be in the same format as
-        produced by the copy() method (tab-separated values for columns, newline-separated
-        values for rows). The values are parsed into a NumPy array using the parse_2x2_array()
-        method and then inserted into the selected cells of the table.
-
-        :param table_widget: The table widget to paste the contents into.
-        :type table_widget: MyTableWidget
-        """
         selected = table_widget.selectedRanges()
         if selected:
             s = qtw.QApplication.clipboard().text()
@@ -680,17 +663,17 @@ class CeQualW2Viewer(qtw.QMainWindow):
                     col = left_col + j
                     table_widget.setItem(row, col, qtw.QTableWidgetItem(values[i][j]))
 
-    def copy_data_table(self):
-        self.copy(self.data_table)
+    # def copy_data_table(self):
+    #     self.copy(self.data_table)
 
-    def copy_stats_table(self):
-        self.copy(self.stats_table)
+    # def copy_stats_table(self):
+    #     self.copy(self.stats_table)
 
-    def paste_data_table(self):
-        self.paste(self.data_table)
+    # def paste_data_table(self):
+    #     self.paste(self.data_table)
 
-    def paste_stats_table(self):
-        self.paste(self.stats_table)
+    # def paste_stats_table(self):
+    #     self.paste(self.stats_table)
 
 
 if __name__ == '__main__':
