@@ -653,6 +653,9 @@ class CeQualW2Viewer(qtw.QMainWindow):
             s = qtw.QApplication.clipboard().text()
             values = self.parse_2x2_array(s)
             nrows, ncols = values.shape
+            maxcol = table_widget.columnCount()
+            maxrow = table_widget.rowCount()
+            # print(maxcol, maxrow, type(maxcol), type(maxrow))
 
             top_row = selected[0].topRow()
             left_col = selected[0].leftColumn()
@@ -661,7 +664,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 row = top_row + i
                 for j, col in enumerate(range(ncols)):
                     col = left_col + j
-                    table_widget.setItem(row, col, qtw.QTableWidgetItem(values[i][j]))
+                    if row < maxrow and col < maxcol:
+                        table_widget.setItem(row, col, qtw.QTableWidgetItem(values[i][j]))
 
 
 if __name__ == '__main__':
