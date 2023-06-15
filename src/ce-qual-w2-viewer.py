@@ -1,18 +1,61 @@
 import cequalw2 as w2
-import sys
 import os
+import sys
+import csv
+import glob
+import sqlite3
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import PyQt5.QtWidgets as qtw
-import PyQt5.QtCore as qtc
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import glob
-import csv
-import sqlite3
+import PyQt5.QtCore as qtc
+import PyQt5.QtWidgets as qtw
 
-sys.path.append('../../../src')
+sys.path.append('.')
 
+
+class MyTableWidget(qtw.QTableWidget):
+    """
+    Custom QTableWidget subclass that provides special key press handling.
+
+    This class extends the QTableWidget class and overrides the keyPressEvent method
+    to handle the Enter/Return key press event in a specific way. When the Enter/Return
+    key is pressed, the current cell is moved to the next cell in a wrapping fashion,
+    moving to the next row or wrapping to the top of the next column.
+    """
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def keyPressEvent(self, event):
+        """
+        Override the key press event handling.
+
+        If the Enter/Return key is pressed, move the current cell to the next cell
+        in a wrapping fashion, moving to the next row or wrapping to the top of
+        the next column. Otherwise, pass the event to the base class for default
+        key press handling.
+
+        :param event: The key press event.
+        :type event: QKeyEvent
+        """
+
+        if event.key() == qtc.Qt.Key_Enter or event.key() == qtc.Qt.Key_Return:
+            current_row = self.currentRow()
+            current_column = self.currentColumn()
+
+            if current_row == self.rowCount() - 1 and current_column == self.columnCount() - 1:
+                # Wrap around to the top of the next column
+                self.setCurrentCell(0, 0)
+            elif current_row < self.rowCount() - 1:
+                # Move to the next cell down
+                self.setCurrentCell(current_row + 1, current_column)
+            else:
+                # Move to the top of the next column
+                self.setCurrentCell(0, current_column + 1)
+        else:
+            super().keyPressEvent(event)
 
 class CeQualW2Viewer(qtw.QMainWindow):
     def __init__(self):
@@ -28,27 +71,39 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.database_path = None
         self.table_name = 'data'
 
+        # Create a menu bar
+        menubar = self.menuBar()
+
+        # Create Edit menu
+        edit_menu = menubar.addMenu('Edit')
+
+        # Create Browse button
         self.button_browse = qtw.QPushButton('Browse', self)
         self.button_browse.clicked.connect(self.browse_file)
         self.button_browse.setFixedWidth(100)
 
+        # Create Plot button
         self.button_plot = qtw.QPushButton('Plot', self)
         self.button_plot.clicked.connect(self.plot_data)
         self.button_plot.setFixedWidth(100)
 
+        # Create the figure and canvas
         self.figure = plt.Figure()
         self.canvas = FigureCanvas(self.figure)
 
+        # Create and customize the matplotlib navigation toolbar
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setMaximumHeight(25)
         self.toolbar_background_color = '#eeffee'
         self.toolbar.setStyleSheet(f'background-color: {self.toolbar_background_color}; font-size: 14px; color: black;')
 
+        # Create a button layout for the Browse and Plot buttons
         self.button_layout = qtw.QHBoxLayout()
         self.button_layout.setAlignment(qtc.Qt.AlignLeft)
         self.button_layout.addWidget(self.button_browse)
         self.button_layout.addWidget(self.button_plot)
 
+        # Create the start year label and text input field
         self.start_year_label = qtw.QLabel('Start Year:', self)
         self.start_year_label.setFixedWidth(75)
         self.start_year_input = qtw.QLineEdit(self)
@@ -58,6 +113,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.start_year_input.setText(str(self.DEFAULT_YEAR))
         self.start_year_input.textChanged.connect(self.update_year)
 
+        # Create the input filename label and text input field
         self.filename_label = qtw.QLabel('Filename:')
         self.filename_label.setFixedWidth(75)
         self.filename_input = qtw.QLineEdit(self)
@@ -65,6 +121,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.filename_input.setReadOnly(True)
         self.filename_input.textChanged.connect(self.update_filename)
 
+        # Create a layout for the start year and filename widgets
         self.start_year_and_filename_layout = qtw.QHBoxLayout()
         self.start_year_and_filename_layout.setAlignment(qtc.Qt.AlignLeft)
         self.start_year_and_filename_layout.addWidget(self.start_year_label)
@@ -72,10 +129,12 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.start_year_and_filename_layout.addWidget(self.filename_label)
         self.start_year_and_filename_layout.addWidget(self.filename_input)
 
-        self.stats_table = qtw.QTableWidget(self)
+        # Create the statistics table
+        self.stats_table = MyTableWidget(self)
         self.stats_table.setEditTriggers(qtw.QTableWidget.NoEditTriggers)
         self.stats_table.setMinimumHeight(200)
 
+        # Create the radio button items, group, and layout
         self.plot_option_group = qtw.QButtonGroup(self)
         self.radio_plot = qtw.QRadioButton('Single Plot')
         self.radio_multiplot = qtw.QRadioButton('One Plot per Variable')
@@ -111,28 +170,44 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         # Create a new tab and a QTableWidget
         self.data_tab = qtw.QWidget()
-        self.data_table = qtw.QTableWidget(self.data_tab)
+        self.data_table = MyTableWidget(self.data_tab)
         self.data_table.itemChanged.connect(self.table_cell_changed)
         self.tab_widget.addTab(self.data_tab, "Data")
 
-        # Set layout for data_tab
+        # Set layout for the Data tab
         self.data_tab_layout = qtw.QVBoxLayout()
         self.data_tab_layout.addWidget(self.data_table)
         self.data_tab.setLayout(self.data_tab_layout)
 
-        # Create save buttons for the data table
+        # Create save buttons and layout for the data table
         self.button_data_save = qtw.QPushButton('Save', self)
         self.button_data_save.clicked.connect(self.save_data)
         self.button_data_save.setFixedWidth(100)
-
-        # self.button_data_save_as = qtw.QPushButton('Save As...', self)
-        # self.button_data_save_as.clicked.connect(self.save_as)
-        # self.button_data_save_as.setFixedWidth(100)
-
         self.save_button_layout = qtw.QHBoxLayout()
         self.save_button_layout.setAlignment(qtc.Qt.AlignLeft)
         self.save_button_layout.addWidget(self.button_data_save)
-        # self.save_button_layout.addWidget(self.button_data_save_as)
+
+        # Create Copy action for the data table
+        copy_data_table_action = qtw.QAction('Copy', self)
+        copy_data_table_action.setShortcut('Ctrl+C')
+        copy_data_table_action.triggered.connect(self.copy_data_table)
+        edit_menu.addAction(copy_data_table_action)
+
+        # Create Copy action for the stats table
+        copy_stats_table_action = qtw.QAction('Copy', self)
+        copy_stats_table_action.setShortcut('Ctrl+C')
+        copy_stats_table_action.triggered.connect(self.copy_stats_table)
+
+        # Create Paste action for the data table
+        paste_data_table_action = qtw.QAction('Paste', self)
+        paste_data_table_action.setShortcut('Ctrl+V')
+        paste_data_table_action.triggered.connect(self.paste_data_table)
+        edit_menu.addAction(paste_data_table_action)
+
+        # Create Paste action for the stats table
+        paste_stats_table_action = qtw.QAction('Paste', self)
+        paste_stats_table_action.setShortcut('Ctrl+V')
+        paste_stats_table_action.triggered.connect(self.paste_data_table)
 
         self.data_tab_layout.addLayout(self.save_button_layout)
 
@@ -540,19 +615,82 @@ class CeQualW2Viewer(qtw.QMainWindow):
             self.save_to_sqlite()
             self.update_stats_table()
 
-        # MacOS native dialog asks if you want to replace the file
-        # I don't think I need the following code anymore
-        # if self.database_path and self.data is not None:
-        #     if os.path.exists(self.database_path):
-        #         reply = qtw.QMessageBox.question(self, "File Exists",
-        #                                          "The file already exists. Do you want to replace it?",
-        #                                          qtw.QMessageBox.Yes | qtw.QMessageBox.No)
-        #         if reply == qtw.QMessageBox.Yes:
-        #             self.save_to_sqlite()
-        #         elif reply == qtw.QMessageBox.No:
-        #             return
-        #     else:
-        #         self.save_to_sqlite()
+    def parse_2x2_array(self, string):
+        """
+        Parse a 2x2 array from a string.
+
+        The string should represent a 2x2 array with values separated by tabs
+        for columns and newlines for rows. This method splits the string into rows
+        and columns, and returns a NumPy array representing the 2x2 array.
+
+        :param string: The string representation of the 2x2 array.
+        :type string: str
+        :return: The NumPy array representing the 2x2 array.
+        :rtype: numpy.ndarray
+        """
+        rows = string.split('\n')
+        array = [row.split('\t') for row in rows]
+        return np.array(array)
+
+    def copy(self, table_widget: MyTableWidget):
+        """
+        Copy the selected cells of the table to the clipboard.
+
+        The selected cells are concatenated into a string with tab-separated
+        values for columns and newline-separated values for rows. The resulting
+        string is then set as the text content of the clipboard.
+
+        :param table_widget: The table widget from which to copy the cells.
+        :type table_widget: MyTableWidget
+        """
+        selected = table_widget.selectedRanges()
+        if selected:
+            s = ''
+            for row in range(selected[0].topRow(), selected[0].bottomRow() + 1):
+                for col in range(selected[0].leftColumn(), selected[0].rightColumn() + 1):
+                    s += str(table_widget.item(row, col).text()) + '\t'
+                s = s.strip() + '\n'
+            s = s.strip()
+            qtw.QApplication.clipboard().setText(s)
+
+    def paste(self, table_widget: MyTableWidget):
+        """
+        Paste the contents of the clipboard into the selected cells of the table.
+
+        The contents of the clipboard are expected to be in the same format as
+        produced by the copy() method (tab-separated values for columns, newline-separated
+        values for rows). The values are parsed into a NumPy array using the parse_2x2_array()
+        method and then inserted into the selected cells of the table.
+
+        :param table_widget: The table widget to paste the contents into.
+        :type table_widget: MyTableWidget
+        """
+        selected = table_widget.selectedRanges()
+        if selected:
+            s = qtw.QApplication.clipboard().text()
+            values = self.parse_2x2_array(s)
+            nrows, ncols = values.shape
+
+            top_row = selected[0].topRow()
+            left_col = selected[0].leftColumn()
+
+            for i, row in enumerate(range(nrows)):
+                row = top_row + i
+                for j, col in enumerate(range(ncols)):
+                    col = left_col + j
+                    table_widget.setItem(row, col, qtw.QTableWidgetItem(values[i][j]))
+
+    def copy_data_table(self):
+        self.copy(self.data_table)
+
+    def copy_stats_table(self):
+        self.copy(self.stats_table)
+
+    def paste_data_table(self):
+        self.paste(self.data_table)
+
+    def paste_stats_table(self):
+        self.paste(self.stats_table)
 
 
 if __name__ == '__main__':
