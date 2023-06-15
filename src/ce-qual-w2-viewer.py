@@ -57,6 +57,7 @@ class MyTableWidget(qtw.QTableWidget):
         else:
             super().keyPressEvent(event)
 
+
 class CeQualW2Viewer(qtw.QMainWindow):
     def __init__(self):
         super().__init__()
