@@ -457,17 +457,24 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
             if extension.lower() in ['.npt', '.opt']:
                 data_columns = w2.get_data_columns_fixed_width(self.file_path)
+                FILE_TYPE = 'ASCII'
             elif extension.lower() == '.csv':
                 data_columns = w2.get_data_columns_csv(self.file_path)
+                FILE_TYPE = 'ASCII'
+            elif extension.lower() == '.db':
+                FILE_TYPE = 'SQLITE'
             else:
                 file_dialog.close()
-                self.show_warning_dialog('Only *.csv, *.npt, and *.opt files are supported.')
+                self.show_warning_dialog('Only *.csv, *.npt, *.opt, and *.db files are supported.')
                 return
 
             self.get_model_year()
 
             try:
-                self.data = w2.read(self.file_path, self.year, data_columns)
+                if FILE_TYPE == 'ASCII':
+                    self.data = w2.read(self.file_path, self.year, data_columns)
+                elif FILE_TYPE == 'SQLITE':
+                    self.data = w2.read_sqlite(self.file_path)
             except IOError:
                 self.show_warning_dialog(f'An error occurred while opening {self.filename}')
                 file_dialog.close()
@@ -580,7 +587,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
             - The `data` attribute must be set with the data before calling this method.
             - The `database_path` attribute must be properly set with the path to the SQLite database file.
         """
-        self.table_name = self.filename
+        self.table_name, _ = os.path.splitext(self.filename)
         con = sqlite3.connect(self.database_path)
         self.data.to_sql(self.table_name, con, if_exists="replace", index=True)
         con.close()

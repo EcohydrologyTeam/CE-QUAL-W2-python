@@ -2,6 +2,7 @@ import pandas as pd
 from typing import List
 from enum import Enum
 import h5py
+import sqlite3
 from . import w2_datetime
 
 
@@ -189,6 +190,61 @@ def read_csv(infile: str, data_columns: List[str], skiprows: int = 3) -> pd.Data
     return df
 
 
+def read_sqlite(file_path: str) -> pd.DataFrame:
+    """
+    Read an SQLite database file and return the contents of the first table as a Pandas DataFrame.
+
+    Args:
+        file_path (str): The path to the SQLite database file.
+
+    Returns:
+        pd.DataFrame: The contents of the first table in the SQLite database.
+
+    Raises:
+        sqlite3.OperationalError: If there is an error executing SQL queries.
+    """
+
+    # Establish a connection to the SQLite database file
+    connection = sqlite3.connect(file_path)
+
+    # Create a cursor object to execute SQL queries
+    cursor = connection.cursor()
+
+    # Execute the SQL query to fetch table names
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+
+    # Fetch all table names from the cursor as a list of tuples
+    tables = cursor.fetchall()
+
+    # Fetch the name of the first (and only) table in the list
+    table_name = tables[0][0]
+
+    # Execute the SQL query to fetch all records from the table
+    cursor.execute(f"SELECT * FROM {table_name}")
+
+    # Fetch all records from the cursor as a list of tuples
+    records = cursor.fetchall()
+
+    # Get the column names from the cursor description
+    column_names = [description[0] for description in cursor.description]
+
+    # Create a Pandas DataFrame from the records and column names
+    df = pd.DataFrame(records, columns=column_names)
+
+    # Convert the first column to Pandas date-time objects
+    df[column_names[0]] = pd.to_datetime(df[column_names[0]])
+    
+    # Set the index to the date-time column
+    df.set_index(column_names[0], inplace=True)
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+
+    # Return the DataFrame
+    return df
+
+
 def read(*args, **kwargs):
     """
     Read CE-QUAL-W2 time series data in various formats and convert the Day of Year to date-time
@@ -237,7 +293,7 @@ def read(*args, **kwargs):
                 'The file type was not specified, and it could not be determined from the filename.')
 
     print('file_type:', file_type)
-    
+
     # Read the data
     if file_type == FileType.FIXED_WIDTH:
         df = read_npt_opt(infile, data_columns, skiprows=skiprows)
@@ -286,7 +342,6 @@ def read_met(*args, **kwargs) -> pd.DataFrame:
     data_columns = kwargs.get('data_columns')
 
     return read(infile, year, data_columns, **kwargs)
-
 
 
 def write_hdf(df: pd.DataFrame, group: str, outfile: str, overwrite=True):
