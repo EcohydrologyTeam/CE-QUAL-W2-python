@@ -252,8 +252,17 @@ def multi_plot(df, **kwargs):
 
     ax.set_prop_cycle("color", colors)
 
-    subplot_axes = df.plot(subplots=True, sharex=True, legend=False, title=title,
-                           style=style, color=colors, **kwargs)
+    # Set keyword arguments
+    kwargs['subplots'] = True
+    kwargs['sharex'] = True
+    kwargs['legend'] = False
+    kwargs['title'] = title
+    kwargs['style'] = style
+    kwargs['color'] = colors
+    kwargs['figsize'] = figsize
+
+    # Plot the data
+    subplot_axes = df.plot(**kwargs)
 
     if title:
         ax.set_title(title)

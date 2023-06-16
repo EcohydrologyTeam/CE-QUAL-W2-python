@@ -462,10 +462,10 @@ class CeQualW2Viewer(qtw.QMainWindow):
             basefilename, extension = os.path.splitext(self.filename)
 
             if extension.lower() in ['.npt', '.opt']:
-                data_columns = w2.get_data_columns_fixed_width(self.file_path)
+                self.data_columns = w2.get_data_columns_fixed_width(self.file_path)
                 FILE_TYPE = 'ASCII'
             elif extension.lower() == '.csv':
-                data_columns = w2.get_data_columns_csv(self.file_path)
+                self.data_columns = w2.get_data_columns_csv(self.file_path)
                 FILE_TYPE = 'ASCII'
             elif extension.lower() == '.db':
                 FILE_TYPE = 'SQLITE'
@@ -478,7 +478,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
             try:
                 if FILE_TYPE == 'ASCII':
-                    self.data = w2.read(self.file_path, self.year, data_columns)
+                    self.data = w2.read(self.file_path, self.year, self.data_columns)
                 elif FILE_TYPE == 'SQLITE':
                     self.data = w2.read_sqlite(self.file_path)
             except IOError:
@@ -508,12 +508,15 @@ class CeQualW2Viewer(qtw.QMainWindow):
             return
 
         self.figure.clear()
+        # ax = self.figure.subplots(1,len(self.data_columns))
         ax = self.figure.add_subplot(111)
+        # ax = self.figure.add_subplot(1, len(self.data_columns), 1)
+        # self.figure.set_size_inches((len(self.data_columns) * 2.5), 9)
 
         if self.PLOT_TYPE == 'plot':
-            w2.plot(self.data, fig=self.figure, ax=ax)
+            w2.plot(self.data, fig=self.figure, ax=ax, figsize=None)
         elif self.PLOT_TYPE == 'multiplot':
-            w2.multi_plot(self.data, fig=self.figure, ax=ax)
+            w2.multi_plot(self.data, fig=self.figure, ax=ax, figsize=None)
 
         self.canvas.draw()
         self.update_stats_table()
