@@ -511,7 +511,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # ax = self.figure.subplots(1,len(self.data_columns))
         ax = self.figure.add_subplot(111)
         # ax = self.figure.add_subplot(1, len(self.data_columns), 1)
-        # self.figure.set_size_inches((len(self.data_columns) * 2.5), 9)
+        # self.figure.set_size_inches(9, h=(len(self.data_columns) * 1))
 
         if self.PLOT_TYPE == 'plot':
             w2.plot(self.data, fig=self.figure, ax=ax, figsize=None)

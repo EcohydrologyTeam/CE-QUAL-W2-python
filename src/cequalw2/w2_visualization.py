@@ -147,64 +147,6 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     return fig
 
 
-def plot_dataframe(*args) -> hv.core.overlay.Overlay:
-    """
-    This function creates a plot using Holoviews and Pandas DataFrame.
-
-    :param *args: Positional arguments required for the function.
-                  The arguments must be provided in the following order:
-        1. df (pd.DataFrame): The DataFrame containing the data to be plotted.
-        2. title (str): The title of the plot.
-        3. legend_values (list): The values for the legend.
-        4. xlabel (str): The label for the x-axis.
-        5. ylabel (str): The label for the y-axis.
-        6. figsize (tuple): The figure size as a tuple of width and height.
-        7. line_style (str): The line style for the plot.
-        8. color_palette (str): The color palette to use.
-
-    :type *args: variable arguments
-
-    :raises ValueError: If the number of arguments is not equal to 8.
-
-    :returns: A Holoviews Overlay object representing the plot.
-    """
-
-    # Assign positional arguments to variables
-    if len(args) != 8:
-        raise ValueError(
-            "The following eight arguments are required: df, title, legend_values, xlabel, "
-            "ylabel, figsize, line_style, color_palette")
-
-    df: pd.DataFrame
-    title: str
-    legend_values: list
-    xlabel: str
-    ylabel: str
-    figsize: tuple
-    line_style: str
-    color_palette: str
-
-    df, title, legend_values, xlabel, ylabel, figsize, line_style, color_palette = args
-
-    # Convert the dataframe to a Holoviews Dataset
-    dataset = hv.Dataset(df, kdims=[xlabel], vdims=list(df.columns))
-
-    # Define the style options
-    style_opts = opts.Curve(line_width=2, line_style=line_style)
-
-    # Generate the color palette
-    color_palette = hv.plotting.util.process_cmap(color_palette, categorical=True)
-    color_cycle = color_palette[0:len(df.columns)]
-
-    # Create the plot
-    myplot = dataset.to(hv.Curve, xlabel, list(df.columns), label=legend_values).opts(
-        opts.Curve(color=color_cycle, **style_opts), opts.Overlay(legend_position='right'),
-        opts.Curve(width=figsize[0], height=figsize[1]), title=title, xlabel=xlabel, ylabel=ylabel
-    )
-
-    return myplot
-
-
 def multi_plot(df, **kwargs):
     """
     Plot multiple time series from a DataFrame on a single figure.
@@ -261,12 +203,38 @@ def multi_plot(df, **kwargs):
     kwargs['color'] = colors
     kwargs['figsize'] = figsize
 
+    '''
+    ##############################################################
+    # Calculate the number subplots
+    num_subplots = len(df.columns)
+
+    # Set the minimum subplot height
+    min_subplot_height = 0.5
+
+    # Plot the data
+    # _, subplot_axes = plt.subplots(num_plots, 1, figsize=None, gridspec_kw={'height_ratios': height_ratios})
+    _, subplot_axes = plt.subplots(num_subplots, 1, gridspec_kw={"height_ratios": [3.5] * num_subplots}, sharex=True, figsize=(10, num_subplots))
+
+    kwargs['ax'] = subplot_axes
+
+    for ax_temp, col in zip(subplot_axes, df.columns):
+        kwargs['ax'] = ax_temp
+        df[col].plot(**kwargs)
+
+    kwargs['ax'] = ax
+    for col in df.columns:
+        plt.plot(df[col], **kwargs)
+    ##############################################################
+    '''
+
     # Plot the data
     subplot_axes = df.plot(**kwargs)
 
+    # Set the title
     if title:
         ax.set_title(title)
 
+    # Label the y-axes
     if not ylabels:
         ylabels = df.columns
 
@@ -277,8 +245,67 @@ def multi_plot(df, **kwargs):
     if legend_list:
         ax.legend(legend_list)
 
+
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
+
+
+def plot_dataframe(*args) -> hv.core.overlay.Overlay:
+    """
+    This function creates a plot using Holoviews and Pandas DataFrame.
+
+    :param *args: Positional arguments required for the function.
+                  The arguments must be provided in the following order:
+        1. df (pd.DataFrame): The DataFrame containing the data to be plotted.
+        2. title (str): The title of the plot.
+        3. legend_values (list): The values for the legend.
+        4. xlabel (str): The label for the x-axis.
+        5. ylabel (str): The label for the y-axis.
+        6. figsize (tuple): The figure size as a tuple of width and height.
+        7. line_style (str): The line style for the plot.
+        8. color_palette (str): The color palette to use.
+
+    :type *args: variable arguments
+
+    :raises ValueError: If the number of arguments is not equal to 8.
+
+    :returns: A Holoviews Overlay object representing the plot.
+    """
+
+    # Assign positional arguments to variables
+    if len(args) != 8:
+        raise ValueError(
+            "The following eight arguments are required: df, title, legend_values, xlabel, "
+            "ylabel, figsize, line_style, color_palette")
+
+    df: pd.DataFrame
+    title: str
+    legend_values: list
+    xlabel: str
+    ylabel: str
+    figsize: tuple
+    line_style: str
+    color_palette: str
+
+    df, title, legend_values, xlabel, ylabel, figsize, line_style, color_palette = args
+
+    # Convert the dataframe to a Holoviews Dataset
+    dataset = hv.Dataset(df, kdims=[xlabel], vdims=list(df.columns))
+
+    # Define the style options
+    style_opts = opts.Curve(line_width=2, line_style=line_style)
+
+    # Generate the color palette
+    color_palette = hv.plotting.util.process_cmap(color_palette, categorical=True)
+    color_cycle = color_palette[0:len(df.columns)]
+
+    # Create the plot
+    myplot = dataset.to(hv.Curve, xlabel, list(df.columns), label=legend_values).opts(
+        opts.Curve(color=color_cycle, **style_opts), opts.Overlay(legend_position='right'),
+        opts.Curve(width=figsize[0], height=figsize[1]), title=title, xlabel=xlabel, ylabel=ylabel
+    )
+
+    return myplot
 
 
 def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype: str = 'png',
