@@ -1,6 +1,7 @@
-import pandas as pd
+import os
 from typing import List
 from enum import Enum
+import pandas as pd
 import h5py
 import sqlite3
 from . import w2_datetime
@@ -19,6 +20,28 @@ class FileType(Enum):
     CSV = 2
 
 
+def get_header_row_number(file_path):
+    """Get the row number of the header in a file.
+
+    This function determines the row number of the header in a file based on the file name.
+    If the file name starts with 'tsr' (case insensitive), the header row number is 0.
+    Otherwise, the header row number is 2.
+
+    Args:
+        file_path (str): The path of the file.
+
+    Returns:
+        int: The row number of the header in the file.
+
+    """
+    _, filename = os.path.split(file_path)
+    if filename.lower().startswith('tsr'):
+        header_row_number = 0
+    else:
+        header_row_number = 2
+    return header_row_number
+
+
 def get_data_columns_csv(file_path):
     """
     Extracts data columns from a file.
@@ -34,11 +57,46 @@ def get_data_columns_csv(file_path):
     """
 
     with open(file_path, 'r') as f:
+        # Get the header line
         lines = f.readlines()
-        header_vals = lines[2].strip().strip(',').strip().split(',')
+        header_row_number = get_header_row_number(file_path)
+        header_vals = lines[header_row_number].strip().strip(',').strip().split(',')
+        # Get the data columns
         for i, val in enumerate(header_vals):
             header_vals[i] = val.strip()
         data_columns = header_vals[1:]
+        return data_columns
+
+
+def get_data_columns_fixed_width(file_path):
+    """
+    Retrieves the data columns from a fixed-width file.
+
+    Args:
+        file_path (str): The path to the fixed-width file.
+
+    Returns:
+        list: A list containing the data columns extracted from the file.
+
+    Example:
+        >>> file_path = 'data.txt'
+        >>> data_columns = get_data_columns_fixed_width(file_path)
+        >>> print(data_columns)
+        ['Column1', 'Column2', 'Column3', 'Column4']
+    """
+
+    with open(file_path, 'r') as f:
+        # Get the header line
+        header_row_number = get_header_row_number(file_path)
+        header = f.readlines()[header_row_number]
+        header_vals = split_fixed_width_line(lines[2], 8)
+
+        for i, val in enumerate(header_vals):
+            header_vals[i] = val.strip()
+        data_columns = header_vals[1:]
+        if data_columns[-1] == "":
+            data_columns = data_columns[:-1]
+
         return data_columns
 
 
@@ -61,37 +119,6 @@ def split_fixed_width_line(line, field_width):
     """
 
     return [line[i:i + field_width] for i in range(0, len(line), field_width)]
-
-
-def get_data_columns_fixed_width(file_path):
-    """
-    Retrieves the data columns from a fixed-width file.
-
-    Args:
-        file_path (str): The path to the fixed-width file.
-
-    Returns:
-        list: A list containing the data columns extracted from the file.
-
-    Example:
-        >>> file_path = 'data.txt'
-        >>> data_columns = get_data_columns_fixed_width(file_path)
-        >>> print(data_columns)
-        ['Column1', 'Column2', 'Column3', 'Column4']
-    """
-
-    with open(file_path, 'r') as f:
-        lines = f.readlines()
-        header = lines[2]
-        header_vals = split_fixed_width_line(lines[2], 8)
-
-        for i, val in enumerate(header_vals):
-            header_vals[i] = val.strip()
-        data_columns = header_vals[1:]
-        if data_columns[-1] == "":
-            data_columns = data_columns[:-1]
-
-        return data_columns
 
 
 def dataframe_to_date_format(year: int, data_frame: pd.DataFrame) -> pd.DataFrame:

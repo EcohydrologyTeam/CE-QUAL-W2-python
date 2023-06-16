@@ -92,6 +92,10 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.figure = plt.Figure()
         self.canvas = FigureCanvas(self.figure)
 
+        # Create a scroll area to contain the plot
+        self.scroll_area = qtw.QScrollArea(self)
+        self.scroll_area.setWidgetResizable(False)
+
         # Create and customize the matplotlib navigation toolbar
         self.toolbar = NavigationToolbar(self.canvas, self)
         self.toolbar.setMaximumHeight(25)
@@ -158,7 +162,9 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Set layout for plot_tab
         self.plot_tab_layout = qtw.QVBoxLayout()
         self.plot_tab_layout.addWidget(self.toolbar)
-        self.plot_tab_layout.addWidget(self.canvas)
+        self.plot_tab_layout.addWidget(self.scroll_area)
+        self.scroll_area.setWidget(self.canvas)
+        # self.plot_tab_layout.addWidget(self.canvas)
         self.plot_tab_layout.addLayout(self.start_year_and_filename_layout)
         self.plot_tab_layout.addLayout(self.radio_layout)
         self.plot_tab_layout.addLayout(self.button_layout)
