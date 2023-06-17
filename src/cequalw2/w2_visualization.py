@@ -148,16 +148,6 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
 
-def multi_plot_experimental(df, fig=None, figsize=None):
-    num_subplots = len(df.columns)
-    # _, axes = plt.subplots(nrows=num_subplots, ncols=1, figsize=(10, num_subplots*2))
-    for i, col in enumerate(df.columns):
-        ax = fig.add_subplot(num_subplots, 1, i + 1)
-        df[col].plot(ax=ax)
-    fig.tight_layout()
-    # fig.set_figheight(num_subplots * 2)
-    return fig
-
 
 def multi_plot(df, **kwargs):
     """
@@ -185,29 +175,27 @@ def multi_plot(df, **kwargs):
     """
 
     # Set defaults
-    fig = kwargs.get('fig', None)
-    ax = kwargs.get('ax', None)
     subplots = True
     sharex = True
 
     # Parse keyword arguments
+    fig = kwargs.get('fig', None)
+    ax = kwargs.get('ax', None)
+    figsize = kwargs.get('figsize', (15, 30))
     title = kwargs.get('title', None)
     xlabel = kwargs.get('xlabel', None)
     ylabels = kwargs.get('ylabels', None)
     colors = kwargs.get('colors', None)
-    figsize = kwargs.get('figsize', (15, 21))
     style = kwargs.get('style', '-')
     palette = kwargs.get('palette', 'colorblind')
 
-    # if fig is None and ax is None:
-    #     fig, ax = plt.subplots(figsize=figsize)
-    # else:
-    #     ax = fig.add_subplot(111)
+    if fig is None and ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        ax = fig.add_subplot(111)
 
-    # fig.set_figheight(25)
-    ax = fig.add_subplot(111)
-
-    plt.subplots_adjust(top=0.97)  # Save room for the plot title
+    # Save room for the plot title
+    plt.subplots_adjust(top=0.99)
 
     if not colors:
         colors = get_colors(df, palette, min_colors=6)
@@ -219,7 +207,7 @@ def multi_plot(df, **kwargs):
 
     # Plot the data
     axes = df.plot(fig=fig, ax=ax, subplots=subplots, sharex=sharex, xlabel=xlabel,
-        figsize=figsize, style=style)
+        figsize=figsize, style=style, legend=False)
 
     # Set the title
     if title:

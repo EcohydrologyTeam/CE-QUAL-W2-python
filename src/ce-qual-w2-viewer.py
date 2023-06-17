@@ -7,6 +7,7 @@ import sqlite3
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import PyQt5.QtCore as qtc
@@ -62,7 +63,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('CE-QUAL-W2 Viewer')
-        self.setGeometry(100, 100, 1200, 900)
+        self.setGeometry(0, 0, 1500, 900)
         self.PLOT_TYPE = 'plot'
 
         self.file_path = ''
@@ -150,8 +151,14 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.tab_widget.addTab(self.statistics_tab, "Statistics")
 
         # Create empty canvas and add a navigation toolbar
-        self.canvas = FigureCanvas() # The figure will be added to the canvas via the plot method
-        self.toolbar = self.create_navigation_toolbar()
+        self.figure = plt.figure()
+        self.canvas = FigureCanvas(self.figure)
+
+        # Create and customize the matplotlib navigation toolbar
+        self.toolbar = NavigationToolbar(self.canvas, self)
+        self.toolbar.setMaximumHeight(25)
+        self.toolbar_background_color = '#eeffee'
+        self.toolbar.setStyleSheet(f'background-color: {self.toolbar_background_color}; font-size: 14px; color: black;')
 
         # Set layout for plot_tab
         self.plot_tab_layout = qtw.QVBoxLayout()
@@ -206,14 +213,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         # Set tabs as central widget
         self.setCentralWidget(self.tab_widget)
-
-    def create_navigation_toolbar(self):
-        # Create and customize the matplotlib navigation toolbar
-        toolbar = NavigationToolbar(self.canvas, self)
-        toolbar.setMaximumHeight(25)
-        toolbar_background_color = '#eeffee'
-        toolbar.setStyleSheet(f'background-color: {toolbar_background_color}; font-size: 14px; color: black;')
-        return toolbar
 
     def update_stats_table(self):
         """
@@ -489,27 +488,21 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.update_data_table()
         self.update_stats_table()
 
-    def remove_canvas_from_scroll_area(self):
-        # Find the canvas widget and remove it manually
-        for i in range(self.scroll_area.layout().count()):
-            item = self.scroll_area.layout().itemAt(i)
-            if item.widget() == self.canvas:
-                self.scroll_area.layout().removeItem(item)
-                break
-        self.canvas.close()  # Close the existing canvas
-        # Optionally, delete the canvas widget to release the resources
-        self.canvas.deleteLater()
-        # Refresh the scroll area to reflect the changes
-        self.scroll_area.update()
+    def resize_canvas(self, fig_width, fig_height):
+        """
+        Resize canvas, converting figure width and height in inches to pixels.
 
-    def update_canvas(self, new_canvas):
-        # Later, if you want to change the Figure displayed on the canvas:
-        # Clear the layout to remove the existing canvas
-        layout = self.scroll_area.layout()
-        # layout.removeWidget(self.canvas)
-        self.remove_canvas_from_scroll_area()
-        self.scroll_area.setWidget(new_canvas)
-        self.canvas = new_canvas
+        :param fig_width: Width of the figure in inches.
+        :type fig_width: float
+
+        :param fig_height: Height of the figure in inches.
+        :type fig_height: float
+
+        :return: None
+        :rtype: None
+        """
+        default_dpi = mpl.rcParams['figure.dpi']
+        self.canvas.resize(int(default_dpi * fig_width), int(default_dpi * fig_height))
 
     def plot_data(self):
         """
@@ -532,31 +525,24 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # self.figure.clear()
         # ax = self.figure.add_subplot(111)
 
+        fig_width = 14
+        fig_height = 8
+
         if self.PLOT_TYPE == 'plot':
             # Create the figure and canvas
-            fig_width = 15
-            fig_height = 9
-            self.figure = plt.Figure(figsize=(fig_width, fig_height), constrained_layout=True)
-            new_canvas = FigureCanvas(self.figure)
-            self.update_canvas(new_canvas)
-            w2.plot(self.data, fig=self.figure, figsize=None)
+            # self.figure = plt.Figure(figsize=(fig_width, fig_height), constrained_layout=True)
+            w2.plot(self.data, fig=self.figure, figsize=(fig_width, fig_height))
+            self.resize_canvas(fig_width, fig_height)
         elif self.PLOT_TYPE == 'multiplot':
             # Create the figure and canvas
-            subplot_scale_factor = 1
+            subplot_scale_factor = 1.2
             num_subplots = len(self.data)
-            fig_width = 15
             fig_height = num_subplots * subplot_scale_factor
-            self.figure = plt.Figure(figsize=(fig_width, fig_height), constrained_layout=True)
-            new_canvas = FigureCanvas(self.figure)
-            self.update_canvas(new_canvas)
-            w2.multi_plot(self.data, fig=self.figure, figsize=None)
+            w2.multi_plot(self.data, fig=self.figure, figsize=(fig_width, fig_height))
+            self.resize_canvas(fig_width, fig_height)
         else:
-            # Create an empty figure, if a plot can't be created
-            fig_width = 15
-            fig_height = 9
-            self.figure = plt.Figure(figsize=(fig_width, fig_height), constrained_layout=True)
-            new_canvas = FigureCanvas(self.figure)
-            self.update_canvas(new_canvas)
+            self.resize_canvas(fig_width, fig_height)
+            pass
 
         # Draw the canvas and create or update the statistics table
         self.canvas.draw() # self.canvas was updated to new_canvas in update_canvas() above
