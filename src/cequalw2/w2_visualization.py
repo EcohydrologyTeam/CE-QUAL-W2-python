@@ -104,140 +104,140 @@ def simple_plot(series: pd.Series, **kwargs) -> plt.Figure:
     return fig
 
 
-    def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
-        """
-        Plot a DataFrame using matplotlib.
+def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
+    """
+    Plot a DataFrame using matplotlib.
 
-        Args:
-            df (pd.DataFrame): The DataFrame to be plotted.
-            **kwargs: Additional keyword arguments for customizing the plot.
+    Args:
+        df (pd.DataFrame): The DataFrame to be plotted.
+        **kwargs: Additional keyword arguments for customizing the plot.
 
-        Keyword Args:
-            fig (plt.Figure): The figure object to use for the plot. If not provided, a new figure will be created.
-            ax (plt.Axes): The axes object to use for the plot. If not provided, a new axes will be created.
-            legend_values (List[str]): The legend labels for the plot.
-            fig_size (tuple): The size of the figure in inches (width, height). Default is (15, 9).
-            style (str): The line style of the plot. Default is '-'.
-            colors: The colors to use for plotting.
+    Keyword Args:
+        fig (plt.Figure): The figure object to use for the plot. If not provided, a new figure will be created.
+        ax (plt.Axes): The axes object to use for the plot. If not provided, a new axes will be created.
+        legend_values (List[str]): The legend labels for the plot.
+        fig_size (tuple): The size of the figure in inches (width, height). Default is (15, 9).
+        style (str): The line style of the plot. Default is '-'.
+        colors: The colors to use for plotting.
 
-        Returns:
-            plt.Figure: The figure object containing the plot.
+    Returns:
+        plt.Figure: The figure object containing the plot.
 
-        """
-        fig = kwargs.get('fig', None)
-        ax = kwargs.get('ax', None)
-        legend_values: List[str] = kwargs.get('legend_values', None)
-        figsize: tuple = kwargs.get('fig_size', (15, 9))
-        style: str = kwargs.get('style', '-')
-        colors = kwargs.get('colors', k2)
+    """
+    fig = kwargs.get('fig', None)
+    ax = kwargs.get('ax', None)
+    legend_values: List[str] = kwargs.get('legend_values', None)
+    figsize: tuple = kwargs.get('fig_size', (15, 9))
+    style: str = kwargs.get('style', '-')
+    colors = kwargs.get('colors', k2)
 
-        if fig is None and ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-        else:
-            ax = fig.add_subplot(111)
+    if fig is None and ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        ax = fig.add_subplot(111)
 
-        ax.set_prop_cycle("color", colors)
+    ax.set_prop_cycle("color", colors)
 
-        kwargs['fig'] = fig
-        kwargs['ax'] = ax
-        kwargs['style'] = style
-        if 'colors' in kwargs.keys():
-            kwargs.pop('colors')
+    kwargs['fig'] = fig
+    kwargs['ax'] = ax
+    kwargs['style'] = style
+    if 'colors' in kwargs.keys():
+        kwargs.pop('colors')
 
-        df.plot(**kwargs)
+    df.plot(**kwargs)
 
-        if legend_values:
-            ax.legend(legend_values)
+    if legend_values:
+        ax.legend(legend_values)
 
-        fig.tight_layout()  # This resolves a lot of layout issues
-        return fig
+    fig.tight_layout()  # This resolves a lot of layout issues
+    return fig
 
 
-    def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
-        """
-        Plot a DataFrame using matplotlib separating the variables into multiple subplots.
+def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
+    """
+    Plot a DataFrame using matplotlib separating the variables into multiple subplots.
 
-        This function creates a subplot for each column of the provided DataFrame and plots the data using matplotlib.
-        It supports various customization options such as specifying the figure and axes objects, figure size, title,
-        x-label, y-labels, colors, line style, and color palette.
+    This function creates a subplot for each column of the provided DataFrame and plots the data using matplotlib.
+    It supports various customization options such as specifying the figure and axes objects, figure size, title,
+    x-label, y-labels, colors, line style, and color palette.
 
-        Args:
-            df (pd.DataFrame): The DataFrame containing the data to be plotted.
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data to be plotted.
 
-        Keyword Args:
-            fig (plt.Figure, optional): The figure object to use for the plot. If not provided, a new figure will be created.
-            ax (plt.Axes, optional): The axes object to use for the plot. If not provided, a new axes will be created.
-            figsize (tuple, optional): The size of the figure in inches (width, height). Default is (15, 30).
-            title (str, optional): The title of the plot.
-            xlabel (str, optional): The label for the x-axis.
-            ylabels (Union[str, List[str]], optional): The labels for the y-axes. If not provided, column names will be used.
-            colors (Union[str, List[str]], optional): The colors to use for plotting. If not provided, a color palette will be used.
-            style (str, optional): The line style of the plot. Default is '-'.
-            palette (str, optional): The color palette to use. Default is 'colorblind'.
+    Keyword Args:
+        fig (plt.Figure, optional): The figure object to use for the plot. If not provided, a new figure will be created.
+        ax (plt.Axes, optional): The axes object to use for the plot. If not provided, a new axes will be created.
+        figsize (tuple, optional): The size of the figure in inches (width, height). Default is (15, 30).
+        title (str, optional): The title of the plot.
+        xlabel (str, optional): The label for the x-axis.
+        ylabels (Union[str, List[str]], optional): The labels for the y-axes. If not provided, column names will be used.
+        colors (Union[str, List[str]], optional): The colors to use for plotting. If not provided, a color palette will be used.
+        style (str, optional): The line style of the plot. Default is '-'.
+        palette (str, optional): The color palette to use. Default is 'colorblind'.
 
-        Returns:
-            plt.Figure: The figure object containing the subplots.
+    Returns:
+        plt.Figure: The figure object containing the subplots.
 
-        Raises:
-            None
+    Raises:
+        None
 
-        Example:
-            # Create a DataFrame
-            df = pd.DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6], 'z': [7, 8, 9]})
+    Example:
+        # Create a DataFrame
+        df = pd.DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6], 'z': [7, 8, 9]})
 
-            # Plot the DataFrame
-            multi_plot(df, title='Multiple Columns Plot', ylabels=['Y1', 'Y2', 'Y3'])
+        # Plot the DataFrame
+        multi_plot(df, title='Multiple Columns Plot', ylabels=['Y1', 'Y2', 'Y3'])
 
-        """
-        # Set defaults
-        subplots = True
-        sharex = True
+    """
+    # Set defaults
+    subplots = True
+    sharex = True
 
-        # Parse keyword arguments
-        fig = kwargs.get('fig', None)
-        ax = kwargs.get('ax', None)
-        figsize = kwargs.get('figsize', (15, 30))
-        title = kwargs.get('title', None)
-        xlabel = kwargs.get('xlabel', None)
-        ylabels = kwargs.get('ylabels', None)
-        colors = kwargs.get('colors', None)
-        style = kwargs.get('style', '-')
-        palette = kwargs.get('palette', 'colorblind')
+    # Parse keyword arguments
+    fig = kwargs.get('fig', None)
+    ax = kwargs.get('ax', None)
+    figsize = kwargs.get('figsize', (15, 30))
+    title = kwargs.get('title', None)
+    xlabel = kwargs.get('xlabel', None)
+    ylabels = kwargs.get('ylabels', None)
+    colors = kwargs.get('colors', None)
+    style = kwargs.get('style', '-')
+    palette = kwargs.get('palette', 'colorblind')
 
-        if fig is None and ax is None:
-            fig, ax = plt.subplots(figsize=figsize)
-        else:
-            ax = fig.add_subplot(111)
+    if fig is None and ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        ax = fig.add_subplot(111)
 
-        # Save room for the plot title
-        plt.subplots_adjust(top=0.99)
+    # Save room for the plot title
+    plt.subplots_adjust(top=0.99)
 
-        if not colors:
-            colors = get_colors(df, palette, min_colors=6)
+    if not colors:
+        colors = get_colors(df, palette, min_colors=6)
 
-        ax.set_prop_cycle("color", colors)
+    ax.set_prop_cycle("color", colors)
 
-        # Calculate the number subplots
-        num_subplots = len(df.columns)
+    # Calculate the number subplots
+    num_subplots = len(df.columns)
 
-        # Plot the data
-        axes = df.plot(fig=fig, ax=ax, subplots=subplots, sharex=sharex, xlabel=xlabel,
-                    figsize=figsize, style=style, legend=False)
+    # Plot the data
+    axes = df.plot(fig=fig, ax=ax, subplots=subplots, sharex=sharex, xlabel=xlabel,
+                figsize=figsize, style=style, legend=False)
 
-        # Set the title
-        if title:
-            ax.set_title(title)
+    # Set the title
+    if title:
+        ax.set_title(title)
 
-        # Label the y-axes
-        if not ylabels:
-            ylabels = df.columns
+    # Label the y-axes
+    if not ylabels:
+        ylabels = df.columns
 
-        # Label each sub-plot's y-axis
-        for subplot_axis, ylabel in zip(axes, ylabels):
-            subplot_axis.set_ylabel(ylabel)
+    # Label each sub-plot's y-axis
+    for subplot_axis, ylabel in zip(axes, ylabels):
+        subplot_axis.set_ylabel(ylabel)
 
-        fig.tight_layout()  # This resolves a lot of layout issues
-        return fig
+    fig.tight_layout()  # This resolves a lot of layout issues
+    return fig
 
 
 def plot_dataframe(*args) -> hv.core.overlay.Overlay:
