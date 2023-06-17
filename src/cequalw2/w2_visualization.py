@@ -29,14 +29,14 @@ everest = ['#3366CC', '#DC4020', '#10AA18', '#0099C6', '#FCE030',
            '#FF9900', ]  # (blue, red, green, teal, yellow, orange)
 
 k2 = (
-    sns.color_palette('husl', desat=0.8)[4],  # blue
-    sns.color_palette('tab10')[3],  # red
-    sns.color_palette('deep')[2],  # green
-    sns.color_palette('tab10', desat=0.8)[1],  # purple
-    sns.color_palette('deep', desat=0.8)[4],  # purple
-    sns.color_palette('colorblind')[2],  # sea green
-    sns.color_palette('colorblind')[0],  # deep blue
-    sns.color_palette('husl')[0],  # light red
+    sns.color_palette('husl', desat=0.8)[4],    # blue
+    sns.color_palette('tab10')[3],              # red
+    sns.color_palette('deep')[2],               # green
+    sns.color_palette('tab10', desat=0.8)[1],   # purple
+    sns.color_palette('deep', desat=0.8)[4],    # purple
+    sns.color_palette('colorblind')[2],         # sea green
+    sns.color_palette('colorblind')[0],         # deep blue
+    sns.color_palette('husl')[0]                # light red
 )
 
 # Define string formatting constants, which work in string format statements
@@ -133,8 +133,10 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     fig = kwargs.get('fig', None)
     ax = kwargs.get('ax', None)
 
-    if fig is None or ax is None:
+    if fig is None and ax is None:
         fig, ax = plt.subplots(figsize=figsize)
+    else:
+        ax = fig.add_subplot(111)
 
     ax.set_prop_cycle("color", colors)
 
@@ -144,6 +146,16 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
         ax.legend(legend_values)
 
     fig.tight_layout()  # This resolves a lot of layout issues
+    return fig
+
+def multi_plot_experimental(df, fig=None, figsize=None):
+    num_subplots = len(df.columns)
+    # _, axes = plt.subplots(nrows=num_subplots, ncols=1, figsize=(10, num_subplots*2))
+    for i, col in enumerate(df.columns):
+        ax = fig.add_subplot(num_subplots, 1, i + 1)
+        df[col].plot(ax=ax)
+    fig.tight_layout()
+    # fig.set_figheight(num_subplots * 2)
     return fig
 
 
@@ -172,26 +184,28 @@ def multi_plot(df, **kwargs):
 
     """
 
-    print(df)
-    print(df.columns)
-    print(len(df.columns))
+    # Set defaults
+    fig = kwargs.get('fig', None)
+    ax = kwargs.get('ax', None)
+    subplots = True
+    sharex = True
 
     # Parse keyword arguments
     title = kwargs.get('title', None)
-    legend_list = kwargs.get('legend_list', None)
     xlabel = kwargs.get('xlabel', None)
     ylabels = kwargs.get('ylabels', None)
     colors = kwargs.get('colors', None)
     figsize = kwargs.get('figsize', (15, 21))
     style = kwargs.get('style', '-')
     palette = kwargs.get('palette', 'colorblind')
-    fig = kwargs.get('fig', None)
-    ax = kwargs.get('ax', None)
 
-    if fig is None or ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
+    # if fig is None and ax is None:
+    #     fig, ax = plt.subplots(figsize=figsize)
+    # else:
+    #     ax = fig.add_subplot(111)
 
-    kwargs['ax'] = ax
+    # fig.set_figheight(25)
+    ax = fig.add_subplot(111)
 
     plt.subplots_adjust(top=0.97)  # Save room for the plot title
 
@@ -200,36 +214,12 @@ def multi_plot(df, **kwargs):
 
     ax.set_prop_cycle("color", colors)
 
-    # Set keyword arguments
-    kwargs['subplots'] = True
-    kwargs['sharex'] = True
-    kwargs['legend'] = False
-    kwargs['title'] = title
-    kwargs['style'] = style
-    kwargs['color'] = colors
-    kwargs['figsize'] = figsize
-
-    # # Calculate the number subplots
+    # Calculate the number subplots
     num_subplots = len(df.columns)
 
-    # ##############################################################
-
-    # # Set the minimum subplot height
-    # min_subplot_height = 0.5
-
-    # # Plot the data
-    # # _, subplot_axes = plt.subplots(num_plots, 1, figsize=None, gridspec_kw={'height_ratios': height_ratios})
-    # _, subplot_axes = plt.subplots(num_subplots, 1, gridspec_kw={"height_ratios": [3.5] * num_subplots}, sharex=True, figsize=(10, num_subplots))
-
-    # # kwargs['ax'] = subplot_axes
-
-    # for ax_temp, col in zip(subplot_axes, df.columns):
-    #     kwargs['ax'] = ax_temp
-    #     df[col].plot(subplots=False, sharex=True, xlabel=xlabel, style=style)
-    # ##############################################################
-
     # Plot the data
-    subplot_axes = df.plot(**kwargs)
+    axes = df.plot(fig=fig, ax=ax, subplots=subplots, sharex=sharex, xlabel=xlabel,
+        figsize=figsize, style=style)
 
     # Set the title
     if title:
@@ -240,10 +230,9 @@ def multi_plot(df, **kwargs):
         ylabels = df.columns
 
     # Label each sub-plot's y-axis
-    for ax, ylabel in zip(subplot_axes, ylabels):
-        ax.set_ylabel(ylabel)
+    for subplot_axis, ylabel in zip(axes, ylabels):
+        subplot_axis.set_ylabel(ylabel)
 
-    fig.set_figheight(num_subplots)
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
 
