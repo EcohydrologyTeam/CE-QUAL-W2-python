@@ -530,7 +530,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         if self.PLOT_TYPE == 'plot':
             # Create the figure and canvas
-            # self.figure = plt.Figure(figsize=(fig_width, fig_height), constrained_layout=True)
+            self.figure.clear()
             w2.plot(self.data, fig=self.figure, figsize=(fig_width, fig_height))
             self.resize_canvas(fig_width, fig_height)
         elif self.PLOT_TYPE == 'multiplot':
@@ -538,9 +538,11 @@ class CeQualW2Viewer(qtw.QMainWindow):
             subplot_scale_factor = 1.2
             num_subplots = len(self.data)
             fig_height = num_subplots * subplot_scale_factor
+            self.figure.clear()
             w2.multi_plot(self.data, fig=self.figure, figsize=(fig_width, fig_height))
             self.resize_canvas(fig_width, fig_height)
         else:
+            self.figure.clear()
             self.resize_canvas(fig_width, fig_height)
             pass
 

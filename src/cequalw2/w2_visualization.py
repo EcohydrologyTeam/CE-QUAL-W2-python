@@ -124,14 +124,12 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     :returns: A Matplotlib Figure object representing the plot.
     """
 
-    title: str = kwargs.get('title', None)
-    legend_values: List[str] = kwargs.get('legend_values', None)
-    ylabel: str = kwargs.get('ylabel', None)
-    figsize: tuple = kwargs.get('fig_size', (15, 9))
-    line_style: str = kwargs.get('line_style', '-')
-    colors = kwargs.get('colors', k2)
     fig = kwargs.get('fig', None)
     ax = kwargs.get('ax', None)
+    legend_values: List[str] = kwargs.get('legend_values', None)
+    figsize: tuple = kwargs.get('fig_size', (15, 9))
+    style: str = kwargs.get('style', '-')
+    colors = kwargs.get('colors', k2)
 
     if fig is None and ax is None:
         fig, ax = plt.subplots(figsize=figsize)
@@ -140,7 +138,13 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
 
     ax.set_prop_cycle("color", colors)
 
-    df.plot(ax=ax, title=title, ylabel=ylabel, style=line_style)
+    kwargs['fig'] = fig
+    kwargs['ax'] = ax
+    kwargs['style'] = style
+    if 'colors' in kwargs.keys():
+        kwargs.pop('colors')
+    # df.plot(ax=ax, title=title, xlabel=xlabel, ylabel=ylabel, style=line_style)
+    df.plot(**kwargs)
 
     if legend_values:
         ax.legend(legend_values)
