@@ -89,7 +89,7 @@ def get_data_columns_fixed_width(file_path):
         # Get the header line
         header_row_number = get_header_row_number(file_path)
         header = f.readlines()[header_row_number]
-        header_vals = split_fixed_width_line(lines[2], 8)
+        header_vals = split_fixed_width_line(header, 8)
 
         for i, val in enumerate(header_vals):
             header_vals[i] = val.strip()

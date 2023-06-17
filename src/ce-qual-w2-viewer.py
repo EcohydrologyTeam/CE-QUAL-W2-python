@@ -93,10 +93,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.button_data_save = qtw.QPushButton('Save', self)
         self.button_data_save.clicked.connect(self.save_data)
         self.button_data_save.setFixedWidth(100)
-        # Create save button layout
-        # self.save_button_layout = qtw.QHBoxLayout()
-        # self.save_button_layout.setAlignment(qtc.Qt.AlignLeft)
-        # self.save_button_layout.addWidget(self.button_data_save)
 
         # Create a scroll area to contain the plot
         self.plot_scroll_area = qtw.QScrollArea(self)
@@ -652,7 +648,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         options = qtw.QFileDialog.Options()
         # options |= qtw.QFileDialog.DontUseNativeDialog
         returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
-                                                           "All Files (*);;Text Files (*.txt)", options=options)
+                                                           "SQLite Files (*.db);; All Files (*)", options=options)
         if not returned_path:
             return
 
