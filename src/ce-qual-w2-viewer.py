@@ -502,7 +502,9 @@ class CeQualW2Viewer(qtw.QMainWindow):
         :rtype: None
         """
         default_dpi = mpl.rcParams['figure.dpi']
-        self.canvas.resize(int(default_dpi * fig_width), int(default_dpi * fig_height))
+        canvas_width = int(default_dpi * fig_width)
+        canvas_height = int(default_dpi * fig_height)
+        self.canvas.resize(canvas_width, canvas_height)
 
     def plot_data(self):
         """
@@ -535,8 +537,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
             self.resize_canvas(fig_width, fig_height)
         elif self.PLOT_TYPE == 'multiplot':
             # Create the figure and canvas
-            subplot_scale_factor = 1.2
-            num_subplots = len(self.data)
+            subplot_scale_factor = 2.0
+            num_subplots = len(self.data.columns)
             fig_height = num_subplots * subplot_scale_factor
             self.figure.clear()
             w2.multi_plot(self.data, fig=self.figure, figsize=(fig_width, fig_height))
