@@ -90,8 +90,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.button_plot.setFixedWidth(100)
 
         # Create a scroll area to contain the plot
-        self.scroll_area = qtw.QScrollArea(self)
-        self.scroll_area.setWidgetResizable(False)
+        self.plot_scroll_area = qtw.QScrollArea(self)
+        self.plot_scroll_area.setWidgetResizable(False)
 
         # Create a button layout for the Browse and Plot buttons
         self.button_layout = qtw.QHBoxLayout()
@@ -129,6 +129,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.stats_table = MyTableWidget(self)
         self.stats_table.setEditTriggers(qtw.QTableWidget.NoEditTriggers)
         self.stats_table.setMinimumHeight(200)
+        # self.stats_table.setMaximumHeight(300)
 
         # Create the radio button items, group, and layout
         self.plot_option_group = qtw.QButtonGroup(self)
@@ -143,13 +144,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.radio_layout.addWidget(self.radio_plot)
         self.radio_layout.addWidget(self.radio_multiplot)
 
-        # Create tabs
-        self.tab_widget = qtw.QTabWidget()
-        self.plot_tab = qtw.QWidget()
-        self.statistics_tab = qtw.QWidget()
-        self.tab_widget.addTab(self.plot_tab, "Plot")
-        self.tab_widget.addTab(self.statistics_tab, "Statistics")
-
         # Create empty canvas and add a navigation toolbar
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
@@ -160,11 +154,18 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.toolbar_background_color = '#eeffee'
         self.toolbar.setStyleSheet(f'background-color: {self.toolbar_background_color}; font-size: 14px; color: black;')
 
+        # Create tabs
+        self.tab_widget = qtw.QTabWidget()
+        self.plot_tab = qtw.QWidget()
+        self.statistics_tab = qtw.QWidget()
+        self.tab_widget.addTab(self.plot_tab, "Plot")
+        self.tab_widget.addTab(self.statistics_tab, "Statistics")
+
         # Set layout for plot_tab
         self.plot_tab_layout = qtw.QVBoxLayout()
         self.plot_tab_layout.addWidget(self.toolbar)
-        self.plot_tab_layout.addWidget(self.scroll_area)
-        self.scroll_area.setWidget(self.canvas)
+        self.plot_tab_layout.addWidget(self.plot_scroll_area)
+        self.plot_scroll_area.setWidget(self.canvas)
         self.plot_tab_layout.addLayout(self.start_year_and_filename_layout)
         self.plot_tab_layout.addLayout(self.radio_layout)
         self.plot_tab_layout.addLayout(self.button_layout)
@@ -173,6 +174,9 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Set layout for statistics_tab
         self.statistics_tab_layout = qtw.QVBoxLayout()
         self.statistics_tab_layout.addWidget(self.stats_table)
+        self.statistics_tab_layout.addLayout(self.start_year_and_filename_layout)
+        self.statistics_tab_layout.addLayout(self.radio_layout)
+        self.statistics_tab_layout.addLayout(self.button_layout)
         self.statistics_tab.setLayout(self.statistics_tab_layout)
 
         # Create a new tab and a QTableWidget
