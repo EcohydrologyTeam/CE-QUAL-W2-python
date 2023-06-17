@@ -70,7 +70,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.data = None
         self.DEFAULT_YEAR = 2023
         self.year = self.DEFAULT_YEAR
-        self.database_path = None
+        self.data_database_path = None
+        self.stats_database_path = None
         self.table_name = 'data'
 
         # Create a menu bar
@@ -89,10 +90,25 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.button_plot.clicked.connect(self.plot_data)
         self.button_plot.setFixedWidth(100)
 
-        # Create save buttons
-        self.button_data_save = qtw.QPushButton('Save', self)
+        # Create save button for the data
+        self.button_data_save = qtw.QPushButton('Save Data', self)
         self.button_data_save.clicked.connect(self.save_data)
         self.button_data_save.setFixedWidth(100)
+
+        # Create save button for the stats
+        self.button_stats_save = qtw.QPushButton('Save Stats', self)
+        self.button_stats_save.clicked.connect(self.save_stats)
+        self.button_stats_save.setFixedWidth(100)
+
+        # Create save button layout for the data
+        self.save_data_button_layout = qtw.QHBoxLayout()
+        self.save_data_button_layout.setAlignment(qtc.Qt.AlignLeft)
+        self.save_data_button_layout.addWidget(self.button_data_save)
+
+        # Create save button layout for the stats
+        self.save_stats_button_layout = qtw.QHBoxLayout()
+        self.save_stats_button_layout.setAlignment(qtc.Qt.AlignLeft)
+        self.save_stats_button_layout.addWidget(self.button_stats_save)
 
         # Create a scroll area to contain the plot
         self.plot_scroll_area = qtw.QScrollArea(self)
@@ -103,7 +119,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.button_layout.setAlignment(qtc.Qt.AlignLeft)
         self.button_layout.addWidget(self.button_browse)
         self.button_layout.addWidget(self.button_plot)
-        self.button_layout.addWidget(self.button_data_save)
 
         # Create the start year label and text input field
         self.start_year_label = qtw.QLabel('Start Year:', self)
@@ -167,7 +182,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.tab_widget.addTab(self.plot_tab, "Plot")
         self.tab_widget.addTab(self.statistics_tab, "Statistics")
 
-        # Set layout for plot_tab
+        # Set layout for the Plot Tab
         self.plot_tab_layout = qtw.QVBoxLayout()
         self.plot_tab_layout.addWidget(self.toolbar)
         self.plot_tab_layout.addWidget(self.plot_scroll_area)
@@ -177,20 +192,22 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.plot_tab_layout.addLayout(self.button_layout)
         self.plot_tab.setLayout(self.plot_tab_layout)
 
-        # Set layout for statistics_tab
+        # Set layout for the Statistics Tab
         self.statistics_tab_layout = qtw.QVBoxLayout()
         self.statistics_tab_layout.addWidget(self.stats_table)
+        self.statistics_tab_layout.addLayout(self.save_stats_button_layout)
         self.statistics_tab.setLayout(self.statistics_tab_layout)
 
-        # Create a new tab and a QTableWidget
+        # Create the Data Tab
         self.data_tab = qtw.QWidget()
         self.data_table = MyTableWidget(self.data_tab)
         self.data_table.itemChanged.connect(self.table_cell_changed)
         self.tab_widget.addTab(self.data_tab, "Data")
 
-        # Set layout for the Data tab
+        # Set layout for the Data Tab
         self.data_tab_layout = qtw.QVBoxLayout()
         self.data_tab_layout.addWidget(self.data_table)
+        self.data_tab_layout.addLayout(self.save_data_button_layout)
         self.data_tab.setLayout(self.data_tab_layout)
 
         # Create Copy action for the stats and data tables
@@ -204,8 +221,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         paste_action.setShortcut('Ctrl+V')
         paste_action.triggered.connect(self.paste_data)
         edit_menu.addAction(paste_action)
-
-        # self.data_tab_layout.addLayout(self.save_button_layout)
 
         # Fill the QTableWidget with data
         self.update_data_table()
@@ -234,8 +249,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
         if self.data is None:
             return
 
-        statistics = self.data.describe().reset_index()
-        self.stats_table.setRowCount(len(statistics))
+        self.stats = self.data.describe().reset_index()
+        self.stats_table.setRowCount(len(self.stats))
         self.stats_table.setColumnCount(len(self.data.columns) + 1)
 
         header = ['']
@@ -243,9 +258,9 @@ class CeQualW2Viewer(qtw.QMainWindow):
             header.append(col)
         self.stats_table.setHorizontalHeaderLabels(header)
 
-        for row in range(len(statistics)):
+        for row in range(len(self.stats)):
             for col in range(len(self.data.columns) + 1):
-                value = statistics.iloc[row, col]
+                value = self.stats.iloc[row, col]
                 try:
                     if col == 0:
                         value_text = str(value)
@@ -613,22 +628,22 @@ class CeQualW2Viewer(qtw.QMainWindow):
             except IndexError:
                 print('IndexError:', row, col, value)
 
-    def save_to_sqlite(self):
+    def save_to_sqlite(self, df: pd.DataFrame, database_path: str):
         """
         Saves the data to an SQLite database.
 
-        This method saves the data stored in the `data` attribute to an SQLite database file specified by the `database_path` attribute.
+        This method saves the data stored in the `data` attribute to an SQLite database file specified by the `data_database_path` attribute.
         The table name is set as the `filename` attribute.
         If the database file already exists, the table with the same name is replaced.
         The data is saved with the index included as a column.
 
         Note:
             - The `data` attribute must be set with the data before calling this method.
-            - The `database_path` attribute must be properly set with the path to the SQLite database file.
+            - The `data_database_path` attribute must be properly set with the path to the SQLite database file.
         """
         self.table_name, _ = os.path.splitext(self.filename)
-        con = sqlite3.connect(self.database_path)
-        self.data.to_sql(self.table_name, con, if_exists="replace", index=True)
+        con = sqlite3.connect(database_path)
+        df.to_sql(self.table_name, con, if_exists="replace", index=True)
         con.close()
 
     def save_data(self):
@@ -637,7 +652,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         This method allows the user to select a file path to save the data as an SQLite database.
         If a valid file path is selected and the `data` attribute is not `None`, the following steps are performed:
-        1. The `database_path` attribute is set to the selected file path.
+        1. The `data_database_path` attribute is set to the selected file path.
         2. The `save_to_sqlite` method is called to save the data to the SQLite database file.
         3. The statistics table is updated after saving the data.
 
@@ -652,10 +667,24 @@ class CeQualW2Viewer(qtw.QMainWindow):
         if not returned_path:
             return
 
-        self.database_path = returned_path
+        self.data_database_path = returned_path
 
-        if self.database_path and self.data is not None:
-            self.save_to_sqlite()
+        if self.data_database_path and self.data is not None:
+            self.save_to_sqlite(self.data, self.data_database_path)
+            self.update_stats_table()
+
+    def save_stats(self):
+        default_filename = self.file_path + '_stats.db'
+        options = qtw.QFileDialog.Options()
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+                                                           "SQLite Files (*.db);; All Files (*)", options=options)
+        if not returned_path:
+            return
+
+        self.stats_database_path = returned_path
+
+        if self.stats_database_path and self.stats is not None:
+            self.save_to_sqlite(self.stats, self.stats_database_path)
             self.update_stats_table()
 
     def parse_2x2_array(self, string):
