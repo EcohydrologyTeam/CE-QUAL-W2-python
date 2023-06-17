@@ -172,6 +172,10 @@ def multi_plot(df, **kwargs):
 
     """
 
+    print(df)
+    print(df.columns)
+    print(len(df.columns))
+
     # Parse keyword arguments
     title = kwargs.get('title', None)
     legend_list = kwargs.get('legend_list', None)
@@ -186,6 +190,8 @@ def multi_plot(df, **kwargs):
 
     if fig is None or ax is None:
         fig, ax = plt.subplots(figsize=figsize)
+
+    kwargs['ax'] = ax
 
     plt.subplots_adjust(top=0.97)  # Save room for the plot title
 
@@ -203,29 +209,24 @@ def multi_plot(df, **kwargs):
     kwargs['color'] = colors
     kwargs['figsize'] = figsize
 
-    '''
-    ##############################################################
-    # Calculate the number subplots
+    # # Calculate the number subplots
     num_subplots = len(df.columns)
 
-    # Set the minimum subplot height
-    min_subplot_height = 0.5
+    # ##############################################################
 
-    # Plot the data
-    # _, subplot_axes = plt.subplots(num_plots, 1, figsize=None, gridspec_kw={'height_ratios': height_ratios})
-    _, subplot_axes = plt.subplots(num_subplots, 1, gridspec_kw={"height_ratios": [3.5] * num_subplots}, sharex=True, figsize=(10, num_subplots))
+    # # Set the minimum subplot height
+    # min_subplot_height = 0.5
 
-    kwargs['ax'] = subplot_axes
+    # # Plot the data
+    # # _, subplot_axes = plt.subplots(num_plots, 1, figsize=None, gridspec_kw={'height_ratios': height_ratios})
+    # _, subplot_axes = plt.subplots(num_subplots, 1, gridspec_kw={"height_ratios": [3.5] * num_subplots}, sharex=True, figsize=(10, num_subplots))
 
-    for ax_temp, col in zip(subplot_axes, df.columns):
-        kwargs['ax'] = ax_temp
-        df[col].plot(**kwargs)
+    # # kwargs['ax'] = subplot_axes
 
-    kwargs['ax'] = ax
-    for col in df.columns:
-        plt.plot(df[col], **kwargs)
-    ##############################################################
-    '''
+    # for ax_temp, col in zip(subplot_axes, df.columns):
+    #     kwargs['ax'] = ax_temp
+    #     df[col].plot(subplots=False, sharex=True, xlabel=xlabel, style=style)
+    # ##############################################################
 
     # Plot the data
     subplot_axes = df.plot(**kwargs)
@@ -242,10 +243,7 @@ def multi_plot(df, **kwargs):
     for ax, ylabel in zip(subplot_axes, ylabels):
         ax.set_ylabel(ylabel)
 
-    if legend_list:
-        ax.legend(legend_list)
-
-
+    fig.set_figheight(num_subplots)
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
 
