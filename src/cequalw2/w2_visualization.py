@@ -130,6 +130,7 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     figsize: tuple = kwargs.get('fig_size', (15, 9))
     style: str = kwargs.get('style', '-')
     colors = kwargs.get('colors', k2)
+    ylabel = kwargs.get('ylabel', None)
 
     if fig is None and ax is None:
         fig, ax = plt.subplots(figsize=figsize)
@@ -138,9 +139,13 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
 
     ax.set_prop_cycle("color", colors)
 
+    if ylabel is None:
+        ylabel = df.columns[0]
+
     kwargs['fig'] = fig
     kwargs['ax'] = ax
     kwargs['style'] = style
+    kwargs['ylabel'] = ylabel
     if 'colors' in kwargs.keys():
         kwargs.pop('colors')
 
