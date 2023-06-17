@@ -12,6 +12,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import PyQt5.QtCore as qtc
 import PyQt5.QtWidgets as qtw
+import PyQt5.QtGui as qtg
 
 sys.path.append('.')
 
@@ -73,52 +74,57 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.data_database_path = None
         self.stats_database_path = None
         self.table_name = 'data'
+        self.default_fig_width = 12
+        self.default_fig_height = 6
 
         # Create a menu bar
         menubar = self.menuBar()
 
+        # Create an app toolbar
+        self.app_toolbar = self.addToolBar('Toolbar')
+        self.app_toolbar.setToolButtonStyle(qtc.Qt.ToolButtonTextUnderIcon)
+        self.app_toolbar.setMovable(False)
+
+        # Add an open button icon to the toolbar
+        open_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/folder-horizontal-open.png')
+        # open_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogOpenButton')))
+        open_action = qtw.QAction(open_icon, 'Open', self)
+        open_action.setShortcut('Ctrl+O')
+        open_action.triggered.connect(self.browse_file)
+        self.app_toolbar.addAction(open_action)
+
+        # Add a save button icon to the toolbar
+        save_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk-black.png')
+        # save_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogSaveButton')))
+        save_action = qtw.QAction(save_icon, 'Save', self)
+        save_action.setShortcut('Ctrl+S')
+        save_action.triggered.connect(self.save_data)
+        self.app_toolbar.addAction(save_action)
+
+        # Add a plot button icon to the toolbar
+        plot_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png')
+        # plot_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_ComputerIcon')))
+        plot_action = qtw.QAction(plot_icon, 'Plot', self)
+        plot_action.setShortcut('Ctrl+P')
+        plot_action.triggered.connect(self.plot)
+        self.app_toolbar.addAction(plot_action)
+
+        # Add a multi-plot button icon to the toolbar
+        multi_plot_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png')
+        multi_plot_action = qtw.QAction(plot_icon, 'Multi-Plot', self)
+        multi_plot_action.setShortcut('Ctrl+P')
+        multi_plot_action.triggered.connect(self.multi_plot)
+        self.app_toolbar.addAction(multi_plot_action)
+
+        # Add the toolbar to the main window
+        self.addToolBar(self.app_toolbar)
+
         # Create Edit menu
         edit_menu = menubar.addMenu('Edit')
-
-        # Create Browse button
-        self.button_browse = qtw.QPushButton('Browse', self)
-        self.button_browse.clicked.connect(self.browse_file)
-        self.button_browse.setFixedWidth(100)
-
-        # Create Plot button
-        self.button_plot = qtw.QPushButton('Plot', self)
-        self.button_plot.clicked.connect(self.plot_data)
-        self.button_plot.setFixedWidth(100)
-
-        # Create save button for the data
-        self.button_data_save = qtw.QPushButton('Save Data', self)
-        self.button_data_save.clicked.connect(self.save_data)
-        self.button_data_save.setFixedWidth(100)
-
-        # Create save button for the stats
-        self.button_stats_save = qtw.QPushButton('Save Stats', self)
-        self.button_stats_save.clicked.connect(self.save_stats)
-        self.button_stats_save.setFixedWidth(100)
-
-        # Create save button layout for the data
-        self.save_data_button_layout = qtw.QHBoxLayout()
-        self.save_data_button_layout.setAlignment(qtc.Qt.AlignLeft)
-        self.save_data_button_layout.addWidget(self.button_data_save)
-
-        # Create save button layout for the stats
-        self.save_stats_button_layout = qtw.QHBoxLayout()
-        self.save_stats_button_layout.setAlignment(qtc.Qt.AlignLeft)
-        self.save_stats_button_layout.addWidget(self.button_stats_save)
 
         # Create a scroll area to contain the plot
         self.plot_scroll_area = qtw.QScrollArea(self)
         self.plot_scroll_area.setWidgetResizable(False)
-
-        # Create a button layout for the Browse and Plot buttons
-        self.button_layout = qtw.QHBoxLayout()
-        self.button_layout.setAlignment(qtc.Qt.AlignLeft)
-        self.button_layout.addWidget(self.button_browse)
-        self.button_layout.addWidget(self.button_plot)
 
         # Create the start year label and text input field
         self.start_year_label = qtw.QLabel('Start Year:', self)
@@ -150,30 +156,16 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.stats_table = MyTableWidget(self)
         self.stats_table.setEditTriggers(qtw.QTableWidget.NoEditTriggers)
         self.stats_table.setMinimumHeight(200)
-        # self.stats_table.setMaximumHeight(300)
 
-        # Create the radio button items, group, and layout
-        self.plot_option_group = qtw.QButtonGroup(self)
-        self.radio_plot = qtw.QRadioButton('Single Plot')
-        self.radio_multiplot = qtw.QRadioButton('One Plot per Variable')
-        self.plot_option_group.addButton(self.radio_plot)
-        self.plot_option_group.addButton(self.radio_multiplot)
-        self.radio_plot.setChecked(True)
-        self.plot_option_group.buttonClicked.connect(self.plot_option_changed)
-        self.radio_layout = qtw.QHBoxLayout()
-        self.radio_layout.setAlignment(qtc.Qt.AlignLeft)
-        self.radio_layout.addWidget(self.radio_plot)
-        self.radio_layout.addWidget(self.radio_multiplot)
-
-        # Create empty canvas and add a navigation toolbar
+        # Create empty canvas and add a matplotlib navigation toolbar
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
 
         # Create and customize the matplotlib navigation toolbar
-        self.toolbar = NavigationToolbar(self.canvas, self)
-        self.toolbar.setMaximumHeight(25)
-        self.toolbar_background_color = '#eeffee'
-        self.toolbar.setStyleSheet(f'background-color: {self.toolbar_background_color}; font-size: 14px; color: black;')
+        self.navigation_toolbar = NavigationToolbar(self.canvas, self)
+        self.navigation_toolbar.setMaximumHeight(25)
+        self.navigation_toolbar_background_color = '#eeffee'
+        self.navigation_toolbar.setStyleSheet(f'background-color: {self.navigation_toolbar_background_color}; font-size: 14px; color: black;')
 
         # Create tabs
         self.tab_widget = qtw.QTabWidget()
@@ -184,18 +176,15 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         # Set layout for the Plot Tab
         self.plot_tab_layout = qtw.QVBoxLayout()
-        self.plot_tab_layout.addWidget(self.toolbar)
+        self.plot_tab_layout.addWidget(self.navigation_toolbar)
         self.plot_tab_layout.addWidget(self.plot_scroll_area)
         self.plot_scroll_area.setWidget(self.canvas)
         self.plot_tab_layout.addLayout(self.start_year_and_filename_layout)
-        self.plot_tab_layout.addLayout(self.radio_layout)
-        self.plot_tab_layout.addLayout(self.button_layout)
         self.plot_tab.setLayout(self.plot_tab_layout)
 
         # Set layout for the Statistics Tab
         self.statistics_tab_layout = qtw.QVBoxLayout()
         self.statistics_tab_layout.addWidget(self.stats_table)
-        self.statistics_tab_layout.addLayout(self.save_stats_button_layout)
         self.statistics_tab.setLayout(self.statistics_tab_layout)
 
         # Create the Data Tab
@@ -207,7 +196,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Set layout for the Data Tab
         self.data_tab_layout = qtw.QVBoxLayout()
         self.data_tab_layout.addWidget(self.data_table)
-        self.data_tab_layout.addLayout(self.save_data_button_layout)
         self.data_tab.setLayout(self.data_tab_layout)
 
         # Create Copy action for the stats and data tables
@@ -520,69 +508,35 @@ class CeQualW2Viewer(qtw.QMainWindow):
         canvas_height = int(default_dpi * fig_height)
         self.canvas.resize(canvas_width, canvas_height)
 
-    def plot_data(self):
-        """
-        Plots the data using the selected plot type.
-
-        This method clears the existing figure, creates a subplot, and plots the data based on the selected plot type (`self.PLOT_TYPE`).
-        If the `data` attribute is `None`, the method returns without performing any plotting.
-
-        The plot is rendered on the canvas (`self.canvas`) associated with the figure.
-        Additionally, the statistics table is updated after plotting the data.
-
-        Note:
-            - The figure and canvas must be properly initialized before calling this method.
-            - The `data` attribute must be set with the data before calling this method.
-            - The plot type is determined by the value of `self.PLOT_TYPE`.
-        """
+    def plot(self):
+        # Check if data is available
         if self.data is None:
             return
 
-        # self.figure.clear()
-        # ax = self.figure.add_subplot(111)
-
-        fig_width = 12
-        fig_height = 6
-
-        if self.PLOT_TYPE == 'plot':
-            # Create the figure and canvas
-            self.figure.clear()
-            w2.plot(self.data, fig=self.figure, figsize=(fig_width, fig_height))
-            self.resize_canvas(fig_width, fig_height)
-        elif self.PLOT_TYPE == 'multiplot':
-            # Create the figure and canvas
-            subplot_scale_factor = 2.0
-            num_subplots = len(self.data.columns)
-            fig_height = max(num_subplots * subplot_scale_factor, fig_height)
-            self.figure.clear()
-            w2.multi_plot(self.data, fig=self.figure, figsize=(fig_width, fig_height))
-            self.resize_canvas(fig_width, fig_height)
-        else:
-            self.figure.clear()
-            self.resize_canvas(fig_width, fig_height)
-            pass
+        # Create the figure and canvas
+        self.figure.clear()
+        w2.plot(self.data, fig=self.figure, figsize=(self.default_fig_width, self.default_fig_height))
+        self.resize_canvas(self.default_fig_width, self.default_fig_height)
 
         # Draw the canvas and create or update the statistics table
         self.canvas.draw() # self.canvas was updated to new_canvas in update_canvas() above
         self.update_stats_table()
 
-    def plot_option_changed(self):
-        """
-        Handles the change in the selected plot option.
+    def multi_plot(self):
+        # Check if data is available
+        if self.data is None:
+            return
+        # Create the figure and canvas
+        subplot_scale_factor = 2.0
+        num_subplots = len(self.data.columns)
+        multi_plot_fig_height = max(num_subplots * subplot_scale_factor, self.default_fig_height)
+        self.figure.clear()
+        w2.multi_plot(self.data, fig=self.figure, figsize=(self.default_fig_width, multi_plot_fig_height))
+        self.resize_canvas(self.default_fig_width, multi_plot_fig_height)
 
-        This method retrieves the text of the currently selected plot option from the checked radio button in the plot option group.
-        Based on the selected option, the `PLOT_TYPE` attribute is updated to either 'plot' (for single plot) or 'multiplot' (for one plot per variable).
-
-        Note:
-            - The plot option group and radio buttons must be properly set up and connected to this method.
-            - The `PLOT_TYPE` attribute controls the type of plot to be generated in the `plot_data` method.
-        """
-        selected_option = self.plot_option_group.checkedButton().text()
-
-        if selected_option == 'Single Plot':
-            self.PLOT_TYPE = 'plot'
-        elif selected_option == 'One Plot per Variable':
-            self.PLOT_TYPE = 'multiplot'
+        # Draw the canvas and create or update the statistics table
+        self.canvas.draw() # self.canvas was updated to new_canvas in update_canvas() above
+        self.update_stats_table()
 
     def show_warning_dialog(self, message):
         """
