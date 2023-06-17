@@ -89,6 +89,15 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.button_plot.clicked.connect(self.plot_data)
         self.button_plot.setFixedWidth(100)
 
+        # Create save buttons
+        self.button_data_save = qtw.QPushButton('Save', self)
+        self.button_data_save.clicked.connect(self.save_data)
+        self.button_data_save.setFixedWidth(100)
+        # Create save button layout
+        # self.save_button_layout = qtw.QHBoxLayout()
+        # self.save_button_layout.setAlignment(qtc.Qt.AlignLeft)
+        # self.save_button_layout.addWidget(self.button_data_save)
+
         # Create a scroll area to contain the plot
         self.plot_scroll_area = qtw.QScrollArea(self)
         self.plot_scroll_area.setWidgetResizable(False)
@@ -98,6 +107,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.button_layout.setAlignment(qtc.Qt.AlignLeft)
         self.button_layout.addWidget(self.button_browse)
         self.button_layout.addWidget(self.button_plot)
+        self.button_layout.addWidget(self.button_data_save)
 
         # Create the start year label and text input field
         self.start_year_label = qtw.QLabel('Start Year:', self)
@@ -174,9 +184,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Set layout for statistics_tab
         self.statistics_tab_layout = qtw.QVBoxLayout()
         self.statistics_tab_layout.addWidget(self.stats_table)
-        self.statistics_tab_layout.addLayout(self.start_year_and_filename_layout)
-        self.statistics_tab_layout.addLayout(self.radio_layout)
-        self.statistics_tab_layout.addLayout(self.button_layout)
         self.statistics_tab.setLayout(self.statistics_tab_layout)
 
         # Create a new tab and a QTableWidget
@@ -190,14 +197,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.data_tab_layout.addWidget(self.data_table)
         self.data_tab.setLayout(self.data_tab_layout)
 
-        # Create save buttons and layout for the data table
-        self.button_data_save = qtw.QPushButton('Save', self)
-        self.button_data_save.clicked.connect(self.save_data)
-        self.button_data_save.setFixedWidth(100)
-        self.save_button_layout = qtw.QHBoxLayout()
-        self.save_button_layout.setAlignment(qtc.Qt.AlignLeft)
-        self.save_button_layout.addWidget(self.button_data_save)
-
         # Create Copy action for the stats and data tables
         copy_action = qtw.QAction('Copy', self)
         copy_action.setShortcut('Ctrl+C')
@@ -210,7 +209,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         paste_action.triggered.connect(self.paste_data)
         edit_menu.addAction(paste_action)
 
-        self.data_tab_layout.addLayout(self.save_button_layout)
+        # self.data_tab_layout.addLayout(self.save_button_layout)
 
         # Fill the QTableWidget with data
         self.update_data_table()
@@ -531,8 +530,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # self.figure.clear()
         # ax = self.figure.add_subplot(111)
 
-        fig_width = 14
-        fig_height = 8
+        fig_width = 12
+        fig_height = 6
 
         if self.PLOT_TYPE == 'plot':
             # Create the figure and canvas
@@ -543,7 +542,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
             # Create the figure and canvas
             subplot_scale_factor = 2.0
             num_subplots = len(self.data.columns)
-            fig_height = num_subplots * subplot_scale_factor
+            fig_height = max(num_subplots * subplot_scale_factor, fig_height)
             self.figure.clear()
             w2.multi_plot(self.data, fig=self.figure, figsize=(fig_width, fig_height))
             self.resize_canvas(fig_width, fig_height)
