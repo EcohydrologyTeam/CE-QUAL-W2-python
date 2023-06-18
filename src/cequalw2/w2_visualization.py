@@ -177,11 +177,10 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     num_legend_entries = len(df.columns)
     num_legend_rows = (num_legend_entries + num_legend_cols - 1) // num_legend_cols
     # legend_height = 0.15 * num_legend_rows  # Adjust the height based on the number of rows
-    # legend_height = -0.1 * num_legend_rows  # Adjust the height based on the number of rows
-    legend_height = -0.1
+    legend_height = -0.01 * num_legend_rows  # Adjust the height based on the number of rows
     ax.legend(lines, legend_values, loc='upper center', bbox_to_anchor=(0.5, legend_height), ncol=num_legend_cols,
-        fontsize=10)
-    ax.set_height = 0.5
+        fontsize=8)
+    ax.set_height = 0.04 * num_legend_rows
 
     # Set tight layout. This resolves a lot of layout issues.
     fig.tight_layout()
