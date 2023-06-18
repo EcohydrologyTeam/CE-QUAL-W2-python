@@ -259,7 +259,6 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     kwargs['legend'] = False
 
     # Create the plot
-    # axes = df.plot(fig=fig, ax=ax, subplots=subplots, sharex=sharex, xlabel=xlabel, figsize=figsize, style=style, legend=False)
     axes = df.plot(**kwargs)
 
     # Set the title
@@ -276,6 +275,7 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
 
     # Set tight layout. This resolves a lot of layout issues.
     fig.tight_layout()
+
     return fig
 
 

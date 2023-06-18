@@ -628,6 +628,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Check if data is available
         if self.data is None:
             return
+
         # Create the figure and canvas
         subplot_scale_factor = 2.0
         num_subplots = len(self.data.columns)
