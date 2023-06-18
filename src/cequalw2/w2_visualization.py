@@ -157,7 +157,7 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
 
-
+@mpl.rc_context({'lines.linewidth': 3, 'lines.linestyle': '-'})
 def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     """
     Plot a DataFrame using matplotlib separating the variables into multiple subplots.
@@ -226,8 +226,17 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     num_subplots = len(df.columns)
 
     # Plot the data
-    axes = df.plot(fig=fig, ax=ax, subplots=subplots, sharex=sharex, xlabel=xlabel,
-                figsize=figsize, style=style, legend=False)
+
+    kwargs['fig'] = fig
+    kwargs['ax'] = ax
+    kwargs['subplots'] = subplots
+    kwargs['sharex'] = sharex
+    kwargs['xlabel'] = xlabel
+    kwargs['figsize'] = figsize
+    kwargs['style'] = style
+    kwargs['legend'] = False
+    # axes = df.plot(fig=fig, ax=ax, subplots=subplots, sharex=sharex, xlabel=xlabel, figsize=figsize, style=style, legend=False)
+    axes = df.plot(**kwargs)
 
     # Set the title
     if title:

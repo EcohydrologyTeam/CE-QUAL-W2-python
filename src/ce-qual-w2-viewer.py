@@ -96,13 +96,14 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # open_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogOpenButton')))
         # save_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogSaveButton')))
         # plot_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_ComputerIcon')))
+        # copy_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/notebook.png')
         open_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/folder-horizontal-open.png')
         save_data_icon  = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk-black.png')
         save_stats_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk.png')
-        copy_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/notebook.png')
-        paste_icon      = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/pencil.png')
-        plot_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png')
-        multi_plot_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/color-swatch.png')
+        copy_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-24/document-text-image.png')
+        paste_icon      = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-24/photo-album.png')
+        plot_icon       = qtg.QIcon('icons/matplotlib.png')
+        multi_plot_icon = qtg.QIcon('icons/matplotlib.png')
 
         # Set open_icon alignment to top
         # open_icon.addPixmap(open_icon.pixmap(24, 24, qtg.QIcon.Active, qtg.QIcon.On))
