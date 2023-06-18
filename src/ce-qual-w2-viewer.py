@@ -149,6 +149,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Create a scroll area to contain the plot
         self.plot_scroll_area = qtw.QScrollArea(self)
         self.plot_scroll_area.setWidgetResizable(False)
+        self.plot_scroll_area.setAlignment(qtc.Qt.AlignCenter)
 
         # Create the start year label and text input field
         self.start_year_label = qtw.QLabel('Start Year:', self)
@@ -495,7 +496,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
         """
         file_dialog = qtw.QFileDialog(self)
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
-        file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)', 'OPT Files (*.opt)'])
+        file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)',
+            'OPT Files (*.opt)', 'Excel Files (*.xlsx *.xls)', 'SQLite Files (*.db)'])
         if file_dialog.exec_():
             self.file_path = file_dialog.selectedFiles()[0]
             self.directory, self.filename = os.path.split(self.file_path)
@@ -510,6 +512,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 FILE_TYPE = 'ASCII'
             elif extension.lower() == '.db':
                 FILE_TYPE = 'SQLITE'
+            elif extension.lower() == '.xlsx' or extension.lower() == '.xls':
+                FILE_TYPE = 'EXCEL'
             else:
                 file_dialog.close()
                 self.show_warning_dialog('Only *.csv, *.npt, *.opt, and *.db files are supported.')
@@ -522,6 +526,12 @@ class CeQualW2Viewer(qtw.QMainWindow):
                     self.data = w2.read(self.file_path, self.year, self.data_columns)
                 elif FILE_TYPE == 'SQLITE':
                     self.data = w2.read_sqlite(self.file_path)
+                elif FILE_TYPE == 'EXCEL':
+                    self.data = pd.read_excel(self.file_path)
+                    first_column_name = self.data.columns[0]
+                    self.data.rename(columns={f'{first_column_name}': 'Date'}, inplace=True)
+                    self.data['Date'] = pd.to_datetime(self.data['Date'], format='%m/%d/%Y %H:%M')
+                    self.data.set_index('Date', inplace=True)
             except IOError:
                 self.show_warning_dialog(f'An error occurred while opening {self.filename}')
                 file_dialog.close()
