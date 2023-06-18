@@ -80,47 +80,70 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Create a menu bar
         menubar = self.menuBar()
 
+        # Create menus
+        file_menu = menubar.addMenu('File')
+        edit_menu = menubar.addMenu('Edit')
+        save_menu = menubar.addMenu('Save')
+        plot_menu = menubar.addMenu('Plot')
+
         # Create an app toolbar
         self.app_toolbar = self.addToolBar('Toolbar')
         self.app_toolbar.setToolButtonStyle(qtc.Qt.ToolButtonTextUnderIcon)
         self.app_toolbar.setMovable(False)
+        self.app_toolbar.setIconSize(qtc.QSize(24, 24))
 
-        # Add an open button icon to the toolbar
-        open_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/folder-horizontal-open.png')
+        # Create app toolbar icons
         # open_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogOpenButton')))
-        open_action = qtw.QAction(open_icon, 'Open', self)
+        # save_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogSaveButton')))
+        # plot_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_ComputerIcon')))
+        open_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/folder-horizontal-open.png')
+        save_data_icon  = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk-black.png')
+        save_stats_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk.png')
+        copy_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/notebook.png')
+        paste_icon      = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/pencil.png')
+        plot_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png')
+        multi_plot_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/color-swatch.png')
+
+        # Set open_icon alignment to top
+        # open_icon.addPixmap(open_icon.pixmap(24, 24, qtg.QIcon.Active, qtg.QIcon.On))
+
+        # Create Open action
+        open_action = qtw.QAction(open_icon, 'Open File', self)
         open_action.setShortcut('Ctrl+O')
         open_action.triggered.connect(self.browse_file)
-        self.app_toolbar.addAction(open_action)
 
-        # Add a save button icon to the toolbar
-        save_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk-black.png')
-        # save_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogSaveButton')))
-        save_action = qtw.QAction(save_icon, 'Save', self)
-        save_action.setShortcut('Ctrl+S')
-        save_action.triggered.connect(self.save_data)
-        self.app_toolbar.addAction(save_action)
+        # Create Copy action for the stats and data tables
+        copy_action = qtw.QAction(copy_icon, 'Copy Data', self)
+        copy_action.setShortcut('Ctrl+C')
+        copy_action.triggered.connect(self.copy_data)
+
+        # Create Paste action for the stats and data tables
+        paste_action = qtw.QAction(paste_icon, 'Paste Data', self)
+        paste_action.setShortcut('Ctrl+V')
+        paste_action.triggered.connect(self.paste_data)
+
+        # Add a save data button icon to the toolbar
+        save_data_action = qtw.QAction(save_data_icon, 'Save Data', self)
+        save_data_action.setShortcut('Ctrl+S')
+        save_data_action.triggered.connect(self.save_data)
+
+        # Add a save stats button icon to the toolbar
+        save_stats_action = qtw.QAction(save_stats_icon, 'Save Stats', self)
+        save_stats_action.setShortcut('Ctrl+Shift+S')
+        save_stats_action.triggered.connect(self.save_stats)
 
         # Add a plot button icon to the toolbar
-        plot_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png')
-        # plot_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_ComputerIcon')))
-        plot_action = qtw.QAction(plot_icon, 'Plot', self)
+        plot_action = qtw.QAction(plot_icon, 'Single Plot', self)
         plot_action.setShortcut('Ctrl+P')
         plot_action.triggered.connect(self.plot)
-        self.app_toolbar.addAction(plot_action)
 
         # Add a multi-plot button icon to the toolbar
-        multi_plot_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png')
-        multi_plot_action = qtw.QAction(plot_icon, 'Multi-Plot', self)
-        multi_plot_action.setShortcut('Ctrl+P')
+        multi_plot_action = qtw.QAction(multi_plot_icon, 'Multi-Plot', self)
+        multi_plot_action.setShortcut('Ctrl+Shift+P')
         multi_plot_action.triggered.connect(self.multi_plot)
-        self.app_toolbar.addAction(multi_plot_action)
 
         # Add the toolbar to the main window
         self.addToolBar(self.app_toolbar)
-
-        # Create Edit menu
-        edit_menu = menubar.addMenu('Edit')
 
         # Create a scroll area to contain the plot
         self.plot_scroll_area = qtw.QScrollArea(self)
@@ -198,17 +221,32 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.data_tab_layout.addWidget(self.data_table)
         self.data_tab.setLayout(self.data_tab_layout)
 
-        # Create Copy action for the stats and data tables
-        copy_action = qtw.QAction('Copy', self)
-        copy_action.setShortcut('Ctrl+C')
-        copy_action.triggered.connect(self.copy_data)
+        # Add actions to the menus
+        file_menu.addAction(open_action)
+        file_menu.addAction(save_data_action)
+        file_menu.addAction(save_stats_action)
         edit_menu.addAction(copy_action)
-
-        # Create Paste action for the stats and data tables
-        paste_action = qtw.QAction('Paste', self)
-        paste_action.setShortcut('Ctrl+V')
-        paste_action.triggered.connect(self.paste_data)
         edit_menu.addAction(paste_action)
+        plot_menu.addAction(plot_action)
+        plot_menu.addAction(multi_plot_action)
+
+        # Add actions to the app toolbar
+        self.app_toolbar.addAction(open_action)
+        self.app_toolbar.addAction(save_data_action)
+        self.app_toolbar.addAction(save_stats_action)
+        self.app_toolbar.addAction(save_data_action)
+        self.app_toolbar.addAction(save_stats_action)
+        self.app_toolbar.addAction(copy_action)
+        self.app_toolbar.addAction(paste_action)
+        self.app_toolbar.addAction(plot_action)
+        self.app_toolbar.addAction(multi_plot_action)
+
+        # Add a system tray icon
+        self.tray_icon = qtw.QSystemTrayIcon(self)
+        self.tray_icon.setIcon(qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png'))
+        self.tray_icon.setToolTip('CE-QUAL-W2 Viewer')
+        self.tray_icon.setVisible(True)
+        self.tray_icon.show()
 
         # Fill the QTableWidget with data
         self.update_data_table()
