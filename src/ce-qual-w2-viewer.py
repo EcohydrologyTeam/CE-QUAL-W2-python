@@ -102,7 +102,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         save_stats_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk.png')
         copy_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-24/document-text-image.png')
         paste_icon      = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-24/photo-album.png')
-        plot_icon       = qtg.QIcon('icons/matplotlib.png')
+        plot_icon       = qtg.QIcon('icons/w2_veiwer_multiplot.png')
         multi_plot_icon = qtg.QIcon('icons/matplotlib.png')
 
         # Set open_icon alignment to top
@@ -666,28 +666,28 @@ class CeQualW2Viewer(qtw.QMainWindow):
             self.save_to_sqlite(self.data, self.data_database_path)
             self.update_stats_table()
 
-def save_stats(self):
-    """
-    Saves statistics to an SQLite database file.
+    def save_stats(self):
+        """
+        Saves statistics to an SQLite database file.
 
-    Prompts the user to select a file path for saving the statistics and
-    saves the statistics to the chosen file path.
+        Prompts the user to select a file path for saving the statistics and
+        saves the statistics to the chosen file path.
 
-    :return: None
-    """
+        :return: None
+        """
 
-    default_filename = self.file_path + '_stats.db'
-    options = qtw.QFileDialog.Options()
-    returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
-                                                       "SQLite Files (*.db);; All Files (*)", options=options)
-    if not returned_path:
-        return
+        default_filename = self.file_path + '_stats.db'
+        options = qtw.QFileDialog.Options()
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+                                                        "SQLite Files (*.db);; All Files (*)", options=options)
+        if not returned_path:
+            return
 
-    self.stats_database_path = returned_path
+        self.stats_database_path = returned_path
 
-    if self.stats_database_path and self.stats is not None:
-        self.save_to_sqlite(self.stats, self.stats_database_path)
-        self.update_stats_table()
+        if self.stats_database_path and self.stats is not None:
+            self.save_to_sqlite(self.stats, self.stats_database_path)
+            self.update_stats_table()
 
     def parse_2x2_array(self, string):
         """

@@ -384,3 +384,53 @@ def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype:
                 else:
                     outpath = f'{inpath}_{ts_plot.variable_name}.{filetype}'
                     ts_plot.get_figure().savefig(outpath)
+
+                    
+@mpl.rc_context({'axes.labelsize': 3})
+def tiny_plot(df, **kwargs):
+    """
+    Create a tiny plot for generating app icons.
+
+    This function creates a tiny plot using the specified DataFrame and additional keyword arguments.
+    The plot is customized to have a small size of 3x3 inches and a font size of 3 points.
+    It utilizes the 'w2.plot' function for the actual plotting.
+
+    Parameters:
+        df (pandas.DataFrame): The DataFrame containing the data to be plotted.
+        **kwargs: Additional keyword arguments to be passed to the 'w2.plot' function.
+
+    Returns:
+        None
+
+    Example:
+        >>> df = pd.DataFrame(...)
+        >>> tiny_plot(df, title='My App Icon')
+    """
+    kwargs['figsize'] = (3, 3)
+    kwargs['fontsize'] = 3
+    plot(df, **kwargs)
+
+@mpl.rc_context({'axes.labelsize': 3})
+def tiny_multi_plot(df, **kwargs):
+    """
+    Create a tiny multi-plot for generating app icons.
+
+    This function creates a tiny multi-plot using the specified DataFrame and additional keyword arguments.
+    The plot is customized to have a small size of 3x3 inches and a font size of 3 points.
+    It utilizes the 'w2.multi_plot' function for the actual plotting.
+
+    Parameters:
+        df (pandas.DataFrame): The DataFrame containing the data to be plotted.
+        **kwargs: Additional keyword arguments to be passed to the 'w2.multi_plot' function.
+
+    Returns:
+        None
+
+    Example:
+        >>> df = pd.DataFrame(...)
+        >>> tiny_multi_plot(df, title='My App Icon')
+    """
+    kwargs['figsize'] = (3, 3)
+    kwargs['fontsize'] = 3
+    multi_plot(df, **kwargs)
+
