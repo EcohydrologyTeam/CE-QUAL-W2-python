@@ -608,13 +608,18 @@ class CeQualW2Viewer(qtw.QMainWindow):
         canvas_height = int(default_dpi * fig_height)
         self.canvas.resize(canvas_width, canvas_height)
 
+    def clear_figure_and_canvas(self):
+        self.canvas.figure.clear()
+        self.figure.clear()
+        self.figure.clf()
+
     def plot(self):
         # Check if data is available
         if self.data is None:
             return
 
         # Create the figure and canvas
-        self.figure.clear()
+        self.clear_figure_and_canvas()
         plot_scale_factor = 1.5
         canvas_height = plot_scale_factor * self.default_fig_height
         w2.plot(self.data, fig=self.figure, figsize=(self.default_fig_width, self.default_fig_height))
@@ -630,10 +635,10 @@ class CeQualW2Viewer(qtw.QMainWindow):
             return
 
         # Create the figure and canvas
+        self.clear_figure_and_canvas()
         subplot_scale_factor = 2.0
         num_subplots = len(self.data.columns)
         multi_plot_fig_height = max(num_subplots * subplot_scale_factor, self.default_fig_height)
-        self.figure.clear()
         w2.multi_plot(self.data, fig=self.figure, figsize=(self.default_fig_width, multi_plot_fig_height))
         self.resize_canvas(self.default_fig_width, multi_plot_fig_height)
 
