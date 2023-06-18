@@ -408,7 +408,8 @@ def tiny_plot(df, **kwargs):
     """
     kwargs['figsize'] = (3, 3)
     kwargs['fontsize'] = 3
-    plot(df, **kwargs)
+    fig = plot(df, **kwargs)
+    return fig
 
 @mpl.rc_context({'axes.labelsize': 3})
 def tiny_multi_plot(df, **kwargs):
@@ -432,5 +433,6 @@ def tiny_multi_plot(df, **kwargs):
     """
     kwargs['figsize'] = (3, 3)
     kwargs['fontsize'] = 3
-    multi_plot(df, **kwargs)
+    fig = multi_plot(df, **kwargs)
+    return fig
 

@@ -102,8 +102,8 @@ class CeQualW2Viewer(qtw.QMainWindow):
         save_stats_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk.png')
         copy_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-24/document-text-image.png')
         paste_icon      = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-24/photo-album.png')
-        plot_icon       = qtg.QIcon('icons/w2_veiwer_multiplot.png')
-        multi_plot_icon = qtg.QIcon('icons/matplotlib.png')
+        plot_icon       = qtg.QIcon('icons/w2_veiwer_single_plot_icon.png')
+        multi_plot_icon = qtg.QIcon('icons/w2_veiwer_multi_plot_icon.png')
 
         # Set open_icon alignment to top
         # open_icon.addPixmap(open_icon.pixmap(24, 24, qtg.QIcon.Active, qtg.QIcon.On))
