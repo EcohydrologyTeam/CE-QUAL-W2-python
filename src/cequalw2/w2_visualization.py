@@ -145,10 +145,6 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     # Set the color cycle
     ax.set_prop_cycle("color", colors)
 
-    # Set the y-xaxis label
-    if ylabel is None:
-        ylabel = df.columns[0]
-
     # Set the keyword arguments for the plot
     kwargs['fig'] = fig
     kwargs['ax'] = ax
@@ -164,7 +160,6 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     # Get a list of line objects
     lines = ax.get_lines()
 
-
     # Create the legend
     if not legend_values:
         legend_values = df.columns
@@ -173,14 +168,14 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     # ax.legend(legend_values, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=len(df.columns))
 
     # Set the legend below the bottom axis
-    num_legend_cols = 5  # Number of columns in the legend
+    num_legend_cols = 7  # Number of columns in the legend
     num_legend_entries = len(df.columns)
     num_legend_rows = (num_legend_entries + num_legend_cols - 1) // num_legend_cols
     # legend_height = 0.15 * num_legend_rows  # Adjust the height based on the number of rows
-    legend_height = -0.01 * num_legend_rows  # Adjust the height based on the number of rows
+    legend_height = -0.025 * num_legend_rows  # Adjust the height based on the number of rows
     ax.legend(lines, legend_values, loc='upper center', bbox_to_anchor=(0.5, legend_height), ncol=num_legend_cols,
         fontsize=8)
-    ax.set_height = 0.04 * num_legend_rows
+    ax.set_height = 0.05 * num_legend_rows
 
     # Set tight layout. This resolves a lot of layout issues.
     fig.tight_layout()

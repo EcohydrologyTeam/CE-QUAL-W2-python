@@ -256,6 +256,57 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Set tabs as central widget
         self.setCentralWidget(self.tab_widget)
 
+        # Add a recent files list to the file menu
+        self.recent_files_menu = file_menu.addMenu('Recent Files')
+        self.recent_files_menu.aboutToShow.connect(self.update_recent_files_menu)
+        
+    def update_recent_files_menu(self):
+        """
+        Updates the recent files menu with the most recent files.
+
+        This method updates the recent files menu with the most recent files.
+        """
+        self.recent_files_menu.clear()
+        self.recent_files_menu.addAction('Clear Menu', self.clear_recent_files_menu)
+        self.recent_files_menu.addSeparator()
+        recent_files = self.get_recent_files()
+        for file in recent_files:
+            self.recent_files_menu.addAction(file, lambda checked, file=file: self.open_recent_file(file))
+
+    def clear_recent_files_menu(self):
+        """
+        Clears the recent files menu.
+
+        This method clears the recent files menu.
+        """
+        self.set_recent_files([])
+        self.update_recent_files_menu()
+
+    def get_recent_files(self):
+        """
+        Retrieves the recent files from the settings.
+
+        This method retrieves the recent files from the settings.
+
+        Returns:
+            A list of recent files.
+        """
+        settings = qtc.QSettings()
+        recent_files = settings.value('recent_files', [])
+        return recent_files
+
+    def set_recent_files(self, recent_files):
+        """
+        Sets the recent files in the settings.
+
+        This method sets the recent files in the settings.
+
+        Args:
+            recent_files (list): A list of recent files.
+        """
+        settings = qtc.QSettings()
+        settings.setValue('recent_files', recent_files)
+
     def update_stats_table(self):
         """
         Updates the statistics table based on the available data.
