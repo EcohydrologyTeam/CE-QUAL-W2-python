@@ -666,19 +666,28 @@ class CeQualW2Viewer(qtw.QMainWindow):
             self.save_to_sqlite(self.data, self.data_database_path)
             self.update_stats_table()
 
-    def save_stats(self):
-        default_filename = self.file_path + '_stats.db'
-        options = qtw.QFileDialog.Options()
-        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
-                                                           "SQLite Files (*.db);; All Files (*)", options=options)
-        if not returned_path:
-            return
+def save_stats(self):
+    """
+    Saves statistics to an SQLite database file.
 
-        self.stats_database_path = returned_path
+    Prompts the user to select a file path for saving the statistics and
+    saves the statistics to the chosen file path.
 
-        if self.stats_database_path and self.stats is not None:
-            self.save_to_sqlite(self.stats, self.stats_database_path)
-            self.update_stats_table()
+    :return: None
+    """
+
+    default_filename = self.file_path + '_stats.db'
+    options = qtw.QFileDialog.Options()
+    returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+                                                       "SQLite Files (*.db);; All Files (*)", options=options)
+    if not returned_path:
+        return
+
+    self.stats_database_path = returned_path
+
+    if self.stats_database_path and self.stats is not None:
+        self.save_to_sqlite(self.stats, self.stats_database_path)
+        self.update_stats_table()
 
     def parse_2x2_array(self, string):
         """

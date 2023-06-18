@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
+import matplotlib as mpl
 import holoviews as hv
 from holoviews import opts
 import yaml
@@ -157,7 +158,6 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     fig.tight_layout()  # This resolves a lot of layout issues
     return fig
 
-@mpl.rc_context({'lines.linewidth': 3, 'lines.linestyle': '-'})
 def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     """
     Plot a DataFrame using matplotlib separating the variables into multiple subplots.
@@ -226,7 +226,6 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     num_subplots = len(df.columns)
 
     # Plot the data
-
     kwargs['fig'] = fig
     kwargs['ax'] = ax
     kwargs['subplots'] = subplots
