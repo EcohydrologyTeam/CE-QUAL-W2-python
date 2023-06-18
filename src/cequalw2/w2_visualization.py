@@ -168,7 +168,8 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     num_legend_cols = 8  # Number of columns in the legend
     num_legend_entries = len(df.columns)
     num_legend_rows = (num_legend_entries + num_legend_cols - 1) // num_legend_cols
-    legend_height = -0.025 * num_legend_rows  # Adjust the height based on the number of rows
+    # Adjust the height based on the number of rows
+    legend_height = -0.025 * num_legend_rows - 0.1
     ax.legend(lines, legend_values, loc='upper center', bbox_to_anchor=(0.5, legend_height), ncol=num_legend_cols,
         fontsize=9)
     ax.set_height = 0.05 * num_legend_rows
