@@ -564,11 +564,13 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         # Create the figure and canvas
         self.figure.clear()
+        plot_scale_factor = 2.0
+        canvas_height = plot_scale_factor * self.default_fig_height
         w2.plot(self.data, fig=self.figure, figsize=(self.default_fig_width, self.default_fig_height))
-        self.resize_canvas(self.default_fig_width, self.default_fig_height)
+        self.resize_canvas(self.default_fig_width, canvas_height)
 
         # Draw the canvas and create or update the statistics table
-        self.canvas.draw() # self.canvas was updated to new_canvas in update_canvas() above
+        self.canvas.draw()
         self.update_stats_table()
 
     def multi_plot(self):
@@ -584,7 +586,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.resize_canvas(self.default_fig_width, multi_plot_fig_height)
 
         # Draw the canvas and create or update the statistics table
-        self.canvas.draw() # self.canvas was updated to new_canvas in update_canvas() above
+        self.canvas.draw()
         self.update_stats_table()
 
     def show_warning_dialog(self, message):

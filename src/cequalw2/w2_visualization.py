@@ -125,37 +125,67 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
         plt.Figure: The figure object containing the plot.
 
     """
+    # Parse the keyword arguments and set the defaults
     fig = kwargs.get('fig', None)
     ax = kwargs.get('ax', None)
     legend_values: List[str] = kwargs.get('legend_values', None)
+    if 'legend_values' in kwargs.keys():
+        kwargs.pop('legend_values')
     figsize: tuple = kwargs.get('fig_size', (15, 9))
     style: str = kwargs.get('style', '-')
     colors = kwargs.get('colors', k2)
     ylabel = kwargs.get('ylabel', None)
 
+    # Create the figure and axes
     if fig is None and ax is None:
         fig, ax = plt.subplots(figsize=figsize)
     else:
         ax = fig.add_subplot(111)
 
+    # Set the color cycle
     ax.set_prop_cycle("color", colors)
 
+    # Set the y-xaxis label
     if ylabel is None:
         ylabel = df.columns[0]
 
+    # Set the keyword arguments for the plot
     kwargs['fig'] = fig
     kwargs['ax'] = ax
     kwargs['style'] = style
     kwargs['ylabel'] = ylabel
+    kwargs['legend'] = False
     if 'colors' in kwargs.keys():
         kwargs.pop('colors')
 
-    df.plot(**kwargs)
+    # Create the plot
+    axes = df.plot(**kwargs)
 
-    if legend_values:
-        ax.legend(legend_values)
+    # Get a list of line objects
+    lines = ax.get_lines()
 
-    fig.tight_layout()  # This resolves a lot of layout issues
+
+    # Create the legend
+    if not legend_values:
+        legend_values = df.columns
+
+    # axes.legend(lines, legend_values, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=len(df.columns))
+    # ax.legend(legend_values, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=len(df.columns))
+
+    # Set the legend below the bottom axis
+    num_legend_cols = 5  # Number of columns in the legend
+    num_legend_entries = len(df.columns)
+    num_legend_rows = (num_legend_entries + num_legend_cols - 1) // num_legend_cols
+    # legend_height = 0.15 * num_legend_rows  # Adjust the height based on the number of rows
+    # legend_height = -0.1 * num_legend_rows  # Adjust the height based on the number of rows
+    legend_height = -0.1
+    ax.legend(lines, legend_values, loc='upper center', bbox_to_anchor=(0.5, legend_height), ncol=num_legend_cols,
+        fontsize=10)
+    ax.set_height = 0.5
+
+    # Set tight layout. This resolves a lot of layout issues.
+    fig.tight_layout()
+
     return fig
 
 def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
@@ -215,7 +245,8 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
         ax = fig.add_subplot(111)
 
     # Save room for the plot title
-    plt.subplots_adjust(top=0.99)
+    if title:
+        plt.subplots_adjust(top=0.99)
 
     if not colors:
         colors = get_colors(df, palette, min_colors=6)
