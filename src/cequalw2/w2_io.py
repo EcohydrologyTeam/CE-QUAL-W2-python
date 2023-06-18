@@ -371,6 +371,23 @@ def read_met(*args, **kwargs) -> pd.DataFrame:
     return read(infile, year, data_columns, **kwargs)
 
 
+def read_excel(file_path: str, **kwargs):
+    """
+    Read CE-QUAL-W2 time series from an Excel file.
+
+    :param file_path: The path to the Excel file.
+    :type file_path: str
+    :return: Dataframe of the time series in the input file.
+    :rtype: pd.DataFrame
+    """
+    df = pd.read_excel(file_path)
+    first_column_name = df.columns[0]
+    df.rename(columns={f'{first_column_name}': 'Date'}, inplace=True)
+    df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %H:%M')
+    df.set_index('Date', inplace=True)
+    return df
+
+
 def write_hdf(df: pd.DataFrame, group: str, outfile: str, overwrite=True):
     """
     Write CE-QUAL-W2 timeseries dataframe to HDF5

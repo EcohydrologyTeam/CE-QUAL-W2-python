@@ -4,8 +4,6 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 import matplotlib as mpl
-import holoviews as hv
-from holoviews import opts
 import yaml
 from typing import List
 warnings.filterwarnings("ignore")
@@ -280,62 +278,64 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     return fig
 
 
-def plot_dataframe(*args) -> hv.core.overlay.Overlay:
-    """
-    This function creates a plot using Holoviews and Pandas DataFrame.
+# def plot_dataframe(*args) -> hv.core.overlay.Overlay:
+#     """
+#     This function creates a plot using Holoviews and Pandas DataFrame.
 
-    :param *args: Positional arguments required for the function.
-                  The arguments must be provided in the following order:
-        1. df (pd.DataFrame): The DataFrame containing the data to be plotted.
-        2. title (str): The title of the plot.
-        3. legend_values (list): The values for the legend.
-        4. xlabel (str): The label for the x-axis.
-        5. ylabel (str): The label for the y-axis.
-        6. figsize (tuple): The figure size as a tuple of width and height.
-        7. line_style (str): The line style for the plot.
-        8. color_palette (str): The color palette to use.
+#     :param *args: Positional arguments required for the function.
+#                   The arguments must be provided in the following order:
+#         1. df (pd.DataFrame): The DataFrame containing the data to be plotted.
+#         2. title (str): The title of the plot.
+#         3. legend_values (list): The values for the legend.
+#         4. xlabel (str): The label for the x-axis.
+#         5. ylabel (str): The label for the y-axis.
+#         6. figsize (tuple): The figure size as a tuple of width and height.
+#         7. line_style (str): The line style for the plot.
+#         8. color_palette (str): The color palette to use.
 
-    :type *args: variable arguments
+#     :type *args: variable arguments
 
-    :raises ValueError: If the number of arguments is not equal to 8.
+#     :raises ValueError: If the number of arguments is not equal to 8.
 
-    :returns: A Holoviews Overlay object representing the plot.
-    """
+#     :returns: A Holoviews Overlay object representing the plot.
+#     """
+#     import holoviews as hv
+#     from holoviews import opts
 
-    # Assign positional arguments to variables
-    if len(args) != 8:
-        raise ValueError(
-            "The following eight arguments are required: df, title, legend_values, xlabel, "
-            "ylabel, figsize, line_style, color_palette")
+#     # Assign positional arguments to variables
+#     if len(args) != 8:
+#         raise ValueError(
+#             "The following eight arguments are required: df, title, legend_values, xlabel, "
+#             "ylabel, figsize, line_style, color_palette")
 
-    df: pd.DataFrame
-    title: str
-    legend_values: list
-    xlabel: str
-    ylabel: str
-    figsize: tuple
-    line_style: str
-    color_palette: str
+#     df: pd.DataFrame
+#     title: str
+#     legend_values: list
+#     xlabel: str
+#     ylabel: str
+#     figsize: tuple
+#     line_style: str
+#     color_palette: str
 
-    df, title, legend_values, xlabel, ylabel, figsize, line_style, color_palette = args
+#     df, title, legend_values, xlabel, ylabel, figsize, line_style, color_palette = args
 
-    # Convert the dataframe to a Holoviews Dataset
-    dataset = hv.Dataset(df, kdims=[xlabel], vdims=list(df.columns))
+#     # Convert the dataframe to a Holoviews Dataset
+#     dataset = hv.Dataset(df, kdims=[xlabel], vdims=list(df.columns))
 
-    # Define the style options
-    style_opts = opts.Curve(line_width=2, line_style=line_style)
+#     # Define the style options
+#     style_opts = opts.Curve(line_width=2, line_style=line_style)
 
-    # Generate the color palette
-    color_palette = hv.plotting.util.process_cmap(color_palette, categorical=True)
-    color_cycle = color_palette[0:len(df.columns)]
+#     # Generate the color palette
+#     color_palette = hv.plotting.util.process_cmap(color_palette, categorical=True)
+#     color_cycle = color_palette[0:len(df.columns)]
 
-    # Create the plot
-    myplot = dataset.to(hv.Curve, xlabel, list(df.columns), label=legend_values).opts(
-        opts.Curve(color=color_cycle, **style_opts), opts.Overlay(legend_position='right'),
-        opts.Curve(width=figsize[0], height=figsize[1]), title=title, xlabel=xlabel, ylabel=ylabel
-    )
+#     # Create the plot
+#     myplot = dataset.to(hv.Curve, xlabel, list(df.columns), label=legend_values).opts(
+#         opts.Curve(color=color_cycle, **style_opts), opts.Overlay(legend_position='right'),
+#         opts.Curve(width=figsize[0], height=figsize[1]), title=title, xlabel=xlabel, ylabel=ylabel
+#     )
 
-    return myplot
+#     return myplot
 
 
 def plot_all_files(plot_control_yaml: str, model_path: str, year: int, filetype: str = 'png',
@@ -463,3 +463,52 @@ def tiny_multi_plot(df, **kwargs):
     fig = multi_plot(df, **kwargs)
     return fig
 
+
+
+def hv_plot_time_series(df: pd.DataFrame, colors=None):
+    """
+    Plots multiple time series curves with customizable options using holoviews.
+
+    Parameters:
+    - dataframe (pandas DataFrame): A single DataFrame containing multiple columns of time series data.
+    - colors (list): A list of colors to be applied to each curve. If not provided, default colors will be used.
+
+    Returns:
+    - holoviews.core.overlay.NdOverlay: The HoloViews NdOverlay object containing the plotted curves.
+    """
+    import holoviews as hv
+    from holoviews import opts
+    hv.extension('bokeh')
+
+    curves = []
+
+    # Generate default colors if not provided
+    if not colors:
+        colors = hv.plotting.util.generate_palette(len(dataframe.columns) - 1)
+
+    # Convert the 'timestamp' column to datetime type
+    dataframe['timestamp'] = pd.to_datetime(dataframe['timestamp'])
+
+    for i, column in enumerate(dataframe.columns[1:]):
+        # Create a HoloViews Curve plot for each column
+        curve = hv.Curve(dataframe, 'timestamp', column).opts(
+            opts.Curve(width=800, height=400, line_color=colors[i], line_width=2, tools=['hover'])
+        )
+
+        curves.append(curve)
+
+    # Overlay curves using an NdOverlay
+    overlay = hv.NdOverlay({column: curve for column, curve in zip(dataframe.columns[1:], curves)}).opts(tools=['hover'])
+
+    # Display the plot
+    return overlay
+
+# Example usage
+
+# Create a sample dataframe with multiple columns
+dataframe = pd.DataFrame({
+    'timestamp': ['2023-06-01', '2023-06-02', '2023-06-03', '2023-06-04'],
+    'value1': [10, 15, 8, 12],
+    'value2': [5, 9, 11, 7],
+    'value3': [3, 6, 9, 12]
+})

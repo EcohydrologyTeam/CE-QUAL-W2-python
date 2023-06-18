@@ -578,11 +578,11 @@ class CeQualW2Viewer(qtw.QMainWindow):
                 elif FILE_TYPE == 'SQLITE':
                     self.data = w2.read_sqlite(self.file_path)
                 elif FILE_TYPE == 'EXCEL':
-                    self.data = pd.read_excel(self.file_path)
-                    first_column_name = self.data.columns[0]
-                    self.data.rename(columns={f'{first_column_name}': 'Date'}, inplace=True)
-                    self.data['Date'] = pd.to_datetime(self.data['Date'], format='%m/%d/%Y %H:%M')
-                    self.data.set_index('Date', inplace=True)
+                    self.data = w2.read_excel(self.file_path)
+                    # first_column_name = self.data.columns[0]
+                    # self.data.rename(columns={f'{first_column_name}': 'Date'}, inplace=True)
+                    # self.data['Date'] = pd.to_datetime(self.data['Date'], format='%m/%d/%Y %H:%M')
+                    # self.data.set_index('Date', inplace=True)
             except IOError:
                 self.show_warning_dialog(f'An error occurred while opening {self.filename}')
                 file_dialog.close()
