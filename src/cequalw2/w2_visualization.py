@@ -164,17 +164,13 @@ def plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     if not legend_values:
         legend_values = df.columns
 
-    # axes.legend(lines, legend_values, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=len(df.columns))
-    # ax.legend(legend_values, loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=len(df.columns))
-
     # Set the legend below the bottom axis
-    num_legend_cols = 7  # Number of columns in the legend
+    num_legend_cols = 8  # Number of columns in the legend
     num_legend_entries = len(df.columns)
     num_legend_rows = (num_legend_entries + num_legend_cols - 1) // num_legend_cols
-    # legend_height = 0.15 * num_legend_rows  # Adjust the height based on the number of rows
     legend_height = -0.025 * num_legend_rows  # Adjust the height based on the number of rows
     ax.legend(lines, legend_values, loc='upper center', bbox_to_anchor=(0.5, legend_height), ncol=num_legend_cols,
-        fontsize=8)
+        fontsize=9)
     ax.set_height = 0.05 * num_legend_rows
 
     # Set tight layout. This resolves a lot of layout issues.
@@ -242,15 +238,17 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     if title:
         plt.subplots_adjust(top=0.99)
 
+    # Get the colors
     if not colors:
         colors = get_colors(df, palette, min_colors=6)
 
+    # Set the color cycle
     ax.set_prop_cycle("color", colors)
 
     # Calculate the number subplots
     num_subplots = len(df.columns)
 
-    # Plot the data
+    # Set the keyword arguments for the plot
     kwargs['fig'] = fig
     kwargs['ax'] = ax
     kwargs['subplots'] = subplots
@@ -259,6 +257,8 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     kwargs['figsize'] = figsize
     kwargs['style'] = style
     kwargs['legend'] = False
+
+    # Create the plot
     # axes = df.plot(fig=fig, ax=ax, subplots=subplots, sharex=sharex, xlabel=xlabel, figsize=figsize, style=style, legend=False)
     axes = df.plot(**kwargs)
 
@@ -274,7 +274,8 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     for subplot_axis, ylabel in zip(axes, ylabels):
         subplot_axis.set_ylabel(ylabel)
 
-    fig.tight_layout()  # This resolves a lot of layout issues
+    # Set tight layout. This resolves a lot of layout issues.
+    fig.tight_layout()
     return fig
 
 

@@ -615,7 +615,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
         # Create the figure and canvas
         self.figure.clear()
-        plot_scale_factor = 2.0
+        plot_scale_factor = 1.5
         canvas_height = plot_scale_factor * self.default_fig_height
         w2.plot(self.data, fig=self.figure, figsize=(self.default_fig_width, self.default_fig_height))
         self.resize_canvas(self.default_fig_width, canvas_height)
