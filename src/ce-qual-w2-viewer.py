@@ -75,7 +75,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         self.stats_database_path = None
         self.table_name = 'data'
         self.default_fig_width = 12
-        self.default_fig_height = 6
+        self.default_fig_height = 4
 
         # Create a menu bar
         menubar = self.menuBar()

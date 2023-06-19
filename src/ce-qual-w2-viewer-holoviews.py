@@ -77,6 +77,20 @@ class CE_QUAL_W2_Viewer:
     def __init__(self, df):
         self.df = df
 
+        self.methods = OrderedDict()
+        self.methods['Hourly Mean'] = self.df.resample('H').mean()
+        self.methods['Hourly Max'] = self.df.resample('H').max()
+        self.methods['Hourly Min'] = self.df.resample('H').min()
+        self.methods['Daily Mean'] = self.df.resample('D').mean()
+        self.methods['Daily Max'] = self.df.resample('D').max()
+        self.methods['Daily Min'] = self.df.resample('D').min()
+        self.methods['Weekly Mean'] = self.df.resample('W').mean()
+        self.methods['Weekly Max'] = self.df.resample('W').max()
+        self.methods['Weekly Min'] = self.df.resample('W').min()
+        self.methods['Monthly Mean'] = self.df.resample('M').mean()
+        self.methods['Monthly Max'] = self.df.resample('M').max()
+        self.methods['Monthly Min'] = self.df.resample('M').min()
+
         # %% Formatting
 
         # Set theme
@@ -159,8 +173,7 @@ class CE_QUAL_W2_Viewer:
         self.data_dropdown = pn.widgets.Select(options=list(self.curves.keys()), width=200)
 
         # Create a dropdown widget for selecting analysis and processing methods
-        self.analysis_dropdown = pn.widgets.Select(options=['Daily Mean', 'Daily Max', 'Daily Min'], width=200)
-
+        self.analysis_dropdown = pn.widgets.Select(options=list(self.methods.keys()), width=200)
 
         # Get the index of the df.columns list
         index = df.columns.tolist().index(self.data_dropdown.value)
@@ -241,7 +254,8 @@ class CE_QUAL_W2_Viewer:
         <hr>
         '''
 
-        self.processed_data_tab_title_alert = pn.pane.Alert(self.processed_data_tab_title, alert_type='light', align='center')
+        self.processed_data_tab_title_alert = pn.pane.Alert(self.processed_data_tab_title,
+            alert_type='light', align='center')
 
         self.processed_data_tab = pn.Column(
             self.processed_data_tab_title_alert,
@@ -284,18 +298,7 @@ class CE_QUAL_W2_Viewer:
     # Define a callback function to update the processed data table when the analysis dropdown value changes
     def update_processed_data_table(self, event):
         selected_analysis = self.analysis_dropdown.value
-        if selected_analysis == 'Daily Mean':
-            self.processed_data_table.object = self.df.resample('D').mean()
-        elif selected_analysis == 'Daily Max':
-            self.processed_data_table.object = self.df.resample('D').max()
-        elif selected_analysis == 'Daily Min':
-            self.processed_data_table.object = self.df.resample('D').min()
-        if selected_analysis == 'Hourly Mean':
-            self.processed_data_table.object = self.df.resample('H').mean()
-        elif selected_analysis == 'Hourly Max':
-            self.processed_data_table.object = self.df.resample('H').max()
-        elif selected_analysis == 'Hourly Min':
-            self.processed_data_table.object = self.df.resample('H').min()
+        self.processed_data_table.object = methods[selected_analysis]
 
 # %%
 # Test the app
