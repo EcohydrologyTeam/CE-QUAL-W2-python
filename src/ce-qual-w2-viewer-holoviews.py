@@ -1,13 +1,38 @@
 # %% Import packages
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
-import datetime as dt
+import holoviews as hv
 import panel as pn
 from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
-pn.extension()
+from bokeh.models import HoverTool
 import cequalw2 as w2
+
+pn.extension()
+
+# %%
+# Cycle through a list of colors
+def color_cycle(colors, num_colors):
+    """Cycle through a list of colors"""
+    for i in range(num_colors):
+        yield colors[i % len(colors)]
+
+def hv_plot(df):
+    # Create a HoloViews Curve element for each data column
+    curves = {}
+    for column in df.columns[1:]:
+        curve = hv.Curve(df, 'Date', column).opts(width=1400, height=600)
+        curves[column] = curve
+
+    # Create a HoverTool to display tooltips. Show the values of the Date column and the selected column
+    hover_tool = HoverTool(
+        tooltips=[('Date', '@Date{%Y-%m-%d}'), ('Value', '$y')], formatters={"@Date": "datetime"}
+    )
+
+    # HoverTool(tooltips=[('date', '@DateTime{%F}')], formatters={'@DateTime': 'datetime'})
+    tooltips = [hover_tool]
+
+    return curves, tooltips
+
 
 # %% Load the budget spreadsheet (a copy of the original spreadsheet)
 # df = w2.read_excel('/Users/todd/GitHub/ecohydrology/CE-QUAL-W2/examples_precomputed/Spokane River/_aaa.xlsx')
@@ -15,13 +40,6 @@ import cequalw2 as w2
 infile = '/Users/todd/GitHub/ecohydrology/CE-QUAL-W2/examples_precomputed/Spokane River/tsr_1_seg2.csv'
 header_rows = w2.get_data_columns_csv(infile)
 df = w2.read(infile, 2001, header_rows)
-print(df.columns)
-
-# # Remove the Date column
-# df.index = df['Date']
-# df = df.drop(columns=['Date'])
-float_cols = df.columns
-
 
 # %% Formatting
 
@@ -34,6 +52,7 @@ float_format = NumberFormatter(format='0.00', text_align='right')
 # %% Specify formatting
 
 # Specify column formatters
+float_cols = df.columns
 bokeh_formatters = {col: float_format for col in float_cols}
 
 # Text alignment. Note: alignments for currency and percentages were specified in bokeh_formatters
@@ -56,7 +75,7 @@ header_align = {col: 'center' for col in df.columns}
 background_color = '#f5fff5'
 
 # Specify the app dimensions
-app_width = 1800
+app_width = 1400
 app_height = 600
 
 # Create the data table using a Tabulator widget
@@ -72,6 +91,34 @@ data_table = pn.widgets.Tabulator(
     height=app_height
 )
 
+# # %%
+# # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
+# columns = df.columns.tolist()
+# plot_columns = columns[2:27]
+# # colors = list(color_cycle(sns.color_palette('colorblind', num_colors), num_colors))
+# colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'magenta', 'yellow', 'black']
+# num_colors = len(plot_columns)
+# colors = list(color_cycle(colors, num_colors))
+# # plot = w2.hv_plot(df[plot_columns], colors=colors)
+# plot = w2.hv_multi_plot(df[plot_columns])
+
+# Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
+curves, tooltips = hv_plot(df)
+
+# Create a dropdown widget for selecting data columns
+dropdown = pn.widgets.Select(options=list(curves.keys()), width=200)
+
+# Define a callback function to update the plot when the dropdown value changes
+def update_plot(event):
+    selected_column = dropdown.value
+    plot.object = curves[selected_column]
+
+# Create a panel with the plot and the dropdown widget
+plot = pn.pane.HoloViews(curves[dropdown.value])
+plot.object.opts(tools=tooltips)  # Add the HoverTool to the plot
+dropdown.param.watch(update_plot, 'value')
+
+# %%
 # Create the Data tab
 data_tab = pn.Column(
     '## CE-QUAL-W2 Viewer',
@@ -89,6 +136,8 @@ data_tab = pn.Column(
 # Create a plot tab
 plot_tab = pn.Column(
     '## Plot',
+    dropdown,
+    plot,
     background=background_color,
     sizing_mode='stretch_both',
     margin=(25, 0, 0, 0),
@@ -99,26 +148,13 @@ plot_tab = pn.Column(
     align='center',
 )
 
-# Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
-plot = w2.hv_plot_time_series(df, colors=len(df.columns*['blue']))
-
-
-# Add the plot to the plot tab
-plot_tab.append(
-    pn.pane.HoloViews(
-        plot,
-        sizing_mode='stretch_both',
-        align='center',
-        width=app_width,
-        height=app_height,
-    )
-)
-
-# Create the app and add tabs
+# Create the app and add the tabs
 tabs = pn.Tabs(
-    ('Data', data_tab)
+    ('Data', data_tab), 
+    ('Plot', plot_tab)
 )
 
 # Serve the app
 tabs.show()
+
 # %%

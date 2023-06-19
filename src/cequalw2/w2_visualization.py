@@ -464,13 +464,57 @@ def tiny_multi_plot(df, **kwargs):
     return fig
 
 
+def hv_multi_plot(df: pd.DataFrame, **kwargs):
+    """
+    Create a multi-plot using Holoviews.
 
-def hv_plot_time_series(df: pd.DataFrame, colors=None):
+    This function creates a multi-plot using the specified DataFrame and additional keyword arguments.
+    """
+
+    import holoviews as hv
+    import hvplot.pandas
+    import panel as pn
+    from holoviews import opts
+    hv.extension('bokeh')
+
+    # Parse keyword arguments
+    plot_width = kwargs.get('plot_width', 1400)
+    plot_height = kwargs.get('plot_height', 600)
+    line_color = kwargs.get('line_color', 'blue')
+    line_width = kwargs.get('line_width', 1)
+
+    # Convert the dataframe to a Holoviews Dataset
+    dataset = hv.Dataset(df, kdims=['Date'])
+
+    # Create a subplot for each column
+    subplots = []
+    for column in df.columns:
+        subplot = dataset.to(hv.Curve, 'index', column).opts(xlabel='Date', ylabel=column).opts(
+            opts.Curve(width=plot_width, height=plot_height, line_color=line_color, line_width=line_width,
+                tools=['hover'])
+        )
+        subplots.append(subplot)
+
+    # Combine all subplots into a single column layout
+    layout = hv.Layout(subplots).cols(1)
+
+    # Create a tab with the Holoviews plot
+    tab = pn.panel(layout, title='Water Quality Time Series')
+
+    # Create a Panel with the tab
+    panel = pn.Tabs(('Water Quality', tab))
+
+    # Show the Panel
+    panel.show()
+
+
+def hv_plot(df: pd.DataFrame, colors=None, plot_width=1400, plot_height=600, legend_position='bottom',
+    legend_offset=(0, -1)):
     """
     Plots multiple time series curves with customizable options using holoviews.
 
     Parameters:
-    - dataframe (pandas DataFrame): A single DataFrame containing multiple columns of time series data.
+    - df (pandas DataFrame): A single DataFrame containing multiple columns of time series data.
     - colors (list): A list of colors to be applied to each curve. If not provided, default colors will be used.
 
     Returns:
@@ -484,31 +528,22 @@ def hv_plot_time_series(df: pd.DataFrame, colors=None):
 
     # Generate default colors if not provided
     if not colors:
-        colors = hv.plotting.util.generate_palette(len(dataframe.columns) - 1)
+        colors = hv.plotting.util.generate_palette(len(df.columns) - 1)
 
-    # Convert the 'timestamp' column to datetime type
-    dataframe['timestamp'] = pd.to_datetime(dataframe['timestamp'])
+    # # Convert the 'Date' column to datetime type
+    # df['Date'] = pd.to_datetime(df['Date'])
 
-    for i, column in enumerate(dataframe.columns[1:]):
+    for i, column in enumerate(df.columns):
         # Create a HoloViews Curve plot for each column
-        curve = hv.Curve(dataframe, 'timestamp', column).opts(
-            opts.Curve(width=800, height=400, line_color=colors[i], line_width=2, tools=['hover'])
+        curve = hv.Curve(df, kdims=['Date'], vdims=[column]).opts(
+            opts.Curve(width=plot_width, height=plot_height, line_color=colors[i], line_width=1, tools=['hover'])
         )
 
         curves.append(curve)
 
     # Overlay curves using an NdOverlay
-    overlay = hv.NdOverlay({column: curve for column, curve in zip(dataframe.columns[1:], curves)}).opts(tools=['hover'])
+    overlay = hv.NdOverlay({column: curve for column, curve in zip(df.columns, curves)}).opts(tools=['hover'])
+    overlay.opts(legend_position=legend_position, legend_offset=legend_offset)
 
     # Display the plot
     return overlay
-
-# Example usage
-
-# Create a sample dataframe with multiple columns
-dataframe = pd.DataFrame({
-    'timestamp': ['2023-06-01', '2023-06-02', '2023-06-03', '2023-06-04'],
-    'value1': [10, 15, 8, 12],
-    'value2': [5, 9, 11, 7],
-    'value3': [3, 6, 9, 12]
-})
