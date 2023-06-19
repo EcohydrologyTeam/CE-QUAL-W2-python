@@ -72,7 +72,6 @@ def hv_plot(df):
 
     return curves, tooltips
 
-
 class CE_QUAL_W2_Viewer:
     def __init__(self, df):
         self.df = df
@@ -90,6 +89,9 @@ class CE_QUAL_W2_Viewer:
         self.methods['Monthly Mean'] = self.df.resample('M').mean()
         self.methods['Monthly Max'] = self.df.resample('M').max()
         self.methods['Monthly Min'] = self.df.resample('M').min()
+        self.methods['Annual Mean'] = self.df.resample('Y').mean()
+        self.methods['Annual Max'] = self.df.resample('Y').max()
+        self.methods['Annual Min'] = self.df.resample('Y').min()
 
         # %% Formatting
 
