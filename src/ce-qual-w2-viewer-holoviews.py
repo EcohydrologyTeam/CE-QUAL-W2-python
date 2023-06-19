@@ -58,6 +58,15 @@ float_format = NumberFormatter(format='0.00', text_align='right')
 float_cols = df.columns
 bokeh_formatters = {col: float_format for col in float_cols}
 
+# Text alignment. Note: alignments for currency and percentages were specified in bokeh_formatters
+text_align = {
+    # 'Complete': 'center'
+}
+
+titles = {
+    # 'abc def ghi': 'abc<br>def<br>ghi'
+}
+
 header_align = {col: 'center' for col in df.columns}
 
 # %% Create the app
@@ -81,17 +90,6 @@ data_table = pn.widgets.Tabulator(
     width=app_width,
     height=app_height
 )
-
-# # %%
-# # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
-# columns = df.columns.tolist()
-# plot_columns = columns[2:27]
-# # colors = list(color_cycle(sns.color_palette('colorblind', num_colors), num_colors))
-# colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan', 'magenta', 'yellow', 'black']
-# num_colors = len(plot_columns)
-# colors = list(color_cycle(colors, num_colors))
-# # plot = w2.hv_plot(df[plot_columns], colors=colors)
-# plot = w2.hv_multi_plot(df[plot_columns])
 
 # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
 curves, tooltips = hv_plot(df)
