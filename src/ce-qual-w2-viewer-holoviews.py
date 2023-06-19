@@ -73,213 +73,234 @@ def hv_plot(df):
     return curves, tooltips
 
 
-# %% Load the budget spreadsheet (a copy of the original spreadsheet)
-# df = w2.read_excel('/Users/todd/GitHub/ecohydrology/CE-QUAL-W2/examples_precomputed/Spokane River/_aaa.xlsx')
+class CE_QUAL_W2_Viewer:
+    def __init__(self, df):
+        self.df = df
 
-infile = '/Users/todd/GitHub/ecohydrology/CE-QUAL-W2/examples_precomputed/Spokane River/tsr_1_seg2.csv'
-header_rows = w2.get_data_columns_csv(infile)
-df = w2.read(infile, 2001, header_rows)
+        # %% Formatting
 
-# %% Formatting
+        # Set theme
+        pn.widgets.Tabulator.theme = 'default'
 
-# Set theme
-pn.widgets.Tabulator.theme = 'default'
+        # Specify special column formatting
+        self.float_format = NumberFormatter(format='0.00', text_align='right')
 
-# Specify special column formatting
-float_format = NumberFormatter(format='0.00', text_align='right')
+        # %% Specify formatting
 
-# %% Specify formatting
+        # Specify column formatters
+        self.float_cols = self.df.columns
+        self.bokeh_formatters = {col: self.float_format for col in self.float_cols}
 
-# Specify column formatters
-float_cols = df.columns
-bokeh_formatters = {col: float_format for col in float_cols}
+        # Text alignment. Note: alignments for currency and percentages were specified in bokeh_formatters
+        text_align = {
+            # 'Complete': 'center'
+        }
 
-# Text alignment. Note: alignments for currency and percentages were specified in bokeh_formatters
-text_align = {
-    # 'Complete': 'center'
-}
+        titles = {
+            # 'abc def ghi': 'abc<br>def<br>ghi'
+        }
 
-titles = {
-    # 'abc def ghi': 'abc<br>def<br>ghi'
-}
+        header_align = {col: 'center' for col in df.columns}
 
-header_align = {col: 'center' for col in df.columns}
+        # %% Create the app
 
-# %% Create the app
+        # Specify background color
+        # self.background_color = '#f5fff5'
+        self.background_color = '#fafafa'
 
-# Specify background color
-# background_color = '#f5fff5'
-background_color = '#fafafa'
+        # Specify the app dimensions
+        self.app_width = 1400
+        self.app_height = 600
 
-# Specify the app dimensions
-app_width = 1400
-app_height = 600
+        # Create the data table using a Tabulator widget
+        self.data_table = pn.widgets.Tabulator(
+            self.df,
+            formatters=self.bokeh_formatters,
+            text_align=text_align,
+            frozen_columns=['Item'],
+            show_index=True,
+            titles=titles,
+            header_align=header_align,
+            width=self.app_width,
+            height=self.app_height
+        )
 
-# Create the data table using a Tabulator widget
-data_table = pn.widgets.Tabulator(
-    df,
-    formatters=bokeh_formatters,
-    text_align=text_align,
-    frozen_columns=['Item'],
-    show_index=True,
-    titles=titles,
-    header_align=header_align,
-    width=app_width,
-    height=app_height
-)
+        # Create the stats table using a Tabulator widget
+        self.stats_table = pn.widgets.Tabulator(
+            self.df.describe(),
+            formatters=self.bokeh_formatters,
+            text_align=text_align,
+            frozen_columns=['Item'],
+            show_index=True,
+            titles=titles,
+            header_align=header_align,
+            width=self.app_width,
+            height=300
+        )
 
-# Create the stats table using a Tabulator widget
-stats_table = pn.widgets.Tabulator(
-    df.describe(),
-    formatters=bokeh_formatters,
-    text_align=text_align,
-    frozen_columns=['Item'],
-    show_index=True,
-    titles=titles,
-    header_align=header_align,
-    width=app_width,
-    height=300
-)
+        # Create the processed data table using a Tabulator widget
+        # For now, just compute the daily mean
+        self.processed_data_table = pn.widgets.Tabulator(
+            self.df.resample('D').mean(),
+            formatters=self.bokeh_formatters,
+            text_align=text_align,
+            frozen_columns=['Item'],
+            show_index=True,
+            titles=titles,
+            header_align=header_align,
+            width=self.app_width,
+            height=300
+        )
 
-# Create the processed data table using a Tabulator widget
-# For now, just compute the daily mean
-processed_data_table = pn.widgets.Tabulator(
-    df.resample('D').mean(),
-    formatters=bokeh_formatters,
-    text_align=text_align,
-    frozen_columns=['Item'],
-    show_index=True,
-    titles=titles,
-    header_align=header_align,
-    width=app_width,
-    height=300
-)
+        # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
+        self.curves, self.tooltips = hv_plot(self.df)
 
-# Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
-curves, tooltips = hv_plot(df)
+        # Create a dropdown widget for selecting data columns
+        self.data_dropdown = pn.widgets.Select(options=list(self.curves.keys()), width=200)
 
-# Create a dropdown widget for selecting data columns
-dropdown = pn.widgets.Select(options=list(curves.keys()), width=200)
+        # Create a dropdown widget for selecting analysis and processing methods
+        self.analysis_dropdown = pn.widgets.Select(options=['Daily Mean', 'Daily Max', 'Daily Min'], width=200)
 
-# Define a callback function to update the plot when the dropdown value changes
-def update_plot(event):
-    selected_column = dropdown.value
-    index = df.columns.tolist().index(dropdown.value)
-    curve = curves[selected_column]
-    tip = tooltips[selected_column]
-    curve.opts(tools=[tip])
-    plot.object = curve
 
-# Get the index of the df.columns list using dropdown.value
-index = df.columns.tolist().index(dropdown.value)
+        # Get the index of the df.columns list
+        index = df.columns.tolist().index(self.data_dropdown.value)
 
-# Create a panel with the plot and the dropdown widget
-selected_column = dropdown.value
-print('selected_column = ', selected_column)
-plot = pn.pane.HoloViews(curves[selected_column])
-tip = tooltips[selected_column]
-plot.object.opts(tools=[tip])  # Add the HoverTool to the plot
-dropdown.param.watch(update_plot, 'value')
+        # Create a panel with the plot and the dropdown widget
+        selected_column = self.data_dropdown.value
+        self.plot = pn.pane.HoloViews(self.curves[selected_column])
+        tip = self.tooltips[selected_column]
+        self.plot.object.opts(tools=[tip])  # Add the HoverTool to the plot
+        self.data_dropdown.param.watch(self.update_plot, 'value')
+
+        # Create the Data tab
+        self.data_tab_title = '''
+        <h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Data</font></h1>
+        <hr>
+        '''
+
+        self.data_tab_title_alert = pn.pane.Alert(self.data_tab_title, alert_type='light', align='center')
+
+        self.data_tab = pn.Column(
+            self.data_tab_title_alert,
+            self.data_table,
+            background=self.background_color,
+            sizing_mode='stretch_both',
+            margin=(0, 0, 0, 0),
+            padding=(0, 0, 0, 0),
+            css_classes=['panel-widget-box'],
+            width=self.app_width,
+            height=self.app_height,
+            align='center',
+        )
+
+        # Create the Stats tab
+        self.stats_tab_title = '''
+        <h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Statistics</font></h1>
+        <hr>
+        '''
+
+        self.stats_tab_title_alert = pn.pane.Alert(self.stats_tab_title, alert_type='light', align='center')
+
+        self.stats_tab = pn.Column(
+            self.stats_tab_title_alert,
+            self.stats_table,
+            background=self.background_color,
+            sizing_mode='stretch_both',
+            margin=(0, 0, 0, 0),
+            padding=(0, 0, 0, 0),
+            css_classes=['panel-widget-box'],
+            width=self.app_width,
+            height=200,
+        )
+
+        # Create a plot tab
+        self.plot_tab_title = '''
+        <h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Plots</font></h1>
+        <hr>
+        '''
+
+        self.plot_tab_title_alert = pn.pane.Alert(self.plot_tab_title, alert_type='light', align='center')
+
+        self.plot_tab = pn.Column(
+            self.plot_tab_title_alert,
+            self.data_dropdown,
+            self.plot,
+            background=self.background_color,
+            sizing_mode='stretch_both',
+            margin=(25, 0, 0, 0),
+            padding=(0, 0, 0, 0),
+            css_classes=['panel-widget-box'],
+            width=self.app_width,
+            height=self.app_height,
+            align='center'
+        )
+
+        # Create the Processed Data tab
+        self.processed_data_tab_title = '''
+        <h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Processed Data</font></h1>
+        <hr>
+        '''
+
+        self.processed_data_tab_title_alert = pn.pane.Alert(self.processed_data_tab_title, alert_type='light', align='center')
+
+        self.processed_data_tab = pn.Column(
+            self.processed_data_tab_title_alert,
+            self.analysis_dropdown,
+            self.processed_data_table,
+            background=self.background_color,
+            sizing_mode='stretch_both',
+            margin=(0, 0, 0, 0),
+            padding=(0, 0, 0, 0),
+            css_classes=['panel-widget-box'],
+            width=self.app_width,
+            height=self.app_height,
+        )
+
+        # Create the app and add the tabs
+        self.tabs = pn.Tabs(
+            ('Data', self.data_tab), 
+            ('Stats', self.stats_tab),
+            ('Plot', self.plot_tab),
+            ('Processed', self.processed_data_tab), 
+            tabs_location='above',
+            # background='blue',
+            # sizing_mode='stretch_both',
+            margin=(0, 0, 0, 0),
+            css_classes=['panel-widget-box'],
+        )
+
+        # Serve the app
+        self.tabs.show()
+
+    # Define a callback function to update the plot when the data dropdown value changes
+    def update_plot(self, event):
+        selected_column = self.data_dropdown.value
+        index = self.df.columns.tolist().index(self.data_dropdown.value)
+        curve = self.curves[selected_column]
+        tip = self.tooltips[selected_column]
+        curve.opts(tools=[tip])
+        self.plot.object = curve
+
+    # Define a callback function to update the processed data table when the analysis dropdown value changes
+    def update_processed_data_table(self, event):
+        selected_analysis = self.analysis_dropdown.value
+        if selected_analysis == 'Daily Mean':
+            self.processed_data_table.object = self.df.resample('D').mean()
+        elif selected_analysis == 'Daily Max':
+            self.processed_data_table.object = self.df.resample('D').max()
+        elif selected_analysis == 'Daily Min':
+            self.processed_data_table.object = self.df.resample('D').min()
+        if selected_analysis == 'Hourly Mean':
+            self.processed_data_table.object = self.df.resample('H').mean()
+        elif selected_analysis == 'Hourly Max':
+            self.processed_data_table.object = self.df.resample('H').max()
+        elif selected_analysis == 'Hourly Min':
+            self.processed_data_table.object = self.df.resample('H').min()
 
 # %%
-
-# Create the Data tab
-data_tab_title = '''
-<h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Data</font></h1>
-<hr>
-'''
-
-data_tab_title_alert = pn.pane.Alert(data_tab_title, alert_type='light', align='center')
-
-data_tab = pn.Column(
-    data_tab_title_alert,
-    data_table,
-    background=background_color,
-    sizing_mode='stretch_both',
-    margin=(0, 0, 0, 0),
-    padding=(0, 0, 0, 0),
-    css_classes=['panel-widget-box'],
-    width=app_width,
-    height=app_height,
-    align='center',
-)
-
-# Create the Stats tab
-stats_tab_title = '''
-<h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Statistics</font></h1>
-<hr>
-'''
-
-stats_tab_title_alert = pn.pane.Alert(stats_tab_title, alert_type='light', align='center')
-
-stats_tab = pn.Column(
-    stats_tab_title_alert,
-    stats_table,
-    background=background_color,
-    sizing_mode='stretch_both',
-    margin=(0, 0, 0, 0),
-    padding=(0, 0, 0, 0),
-    css_classes=['panel-widget-box'],
-    width=app_width,
-    height=200,
-)
-
-# Create a plot tab
-plot_tab_title = '''
-<h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Plots</font></h1>
-<hr>
-'''
-
-plot_tab_title_alert = pn.pane.Alert(plot_tab_title, alert_type='light', align='center')
-
-plot_tab = pn.Column(
-    plot_tab_title_alert,
-    dropdown,
-    plot,
-    background=background_color,
-    sizing_mode='stretch_both',
-    margin=(25, 0, 0, 0),
-    padding=(0, 0, 0, 0),
-    css_classes=['panel-widget-box'],
-    width=app_width,
-    height=app_height,
-    align='center'
-)
-
-# Create the Processed Data tab
-processed_data_tab_title = '''
-<h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Processed Data</font></h1>
-<hr>
-'''
-
-processed_data_tab_title_alert = pn.pane.Alert(processed_data_tab_title, alert_type='light', align='center')
-
-processed_data_tab = pn.Column(
-    processed_data_tab_title_alert,
-    processed_data_table,
-    background=background_color,
-    sizing_mode='stretch_both',
-    margin=(0, 0, 0, 0),
-    padding=(0, 0, 0, 0),
-    css_classes=['panel-widget-box'],
-    width=app_width,
-    height=app_height,
-)
-
-# Create the app and add the tabs
-tabs = pn.Tabs(
-    ('Data', data_tab), 
-    ('Stats', stats_tab),
-    ('Plot', plot_tab),
-    ('Processed', processed_data_tab), 
-    tabs_location='above',
-    # background='blue',
-    # sizing_mode='stretch_both',
-    margin=(0, 0, 0, 0),
-    css_classes=['panel-widget-box'],
-)
-
-# Serve the app
-tabs.show()
-
-# %%
+# Test the app
+if __name__ == '__main__':
+    infile = '/Users/todd/GitHub/ecohydrology/CE-QUAL-W2/examples_precomputed/Spokane River/tsr_1_seg2.csv'
+    header_rows = w2.get_data_columns_csv(infile)
+    df = w2.read(infile, 2001, header_rows)
+    CE_QUAL_W2_Viewer(df)
