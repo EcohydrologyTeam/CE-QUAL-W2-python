@@ -18,7 +18,8 @@ css = """
   width: 100px;
   horizontal-align: center;
   padding: 5px, 5px, 5px, 5px;
-  margin: 2px;
+  margin: 1px;
+  border: 1px solid black;
 }
 
 .bk.bk-tab:not(bk-active) {
@@ -28,7 +29,8 @@ css = """
   width: 100px;
   horizontal-align: center;
   padding: 5px, 5px, 5px, 5px;
-  margin: 2px;
+  margin: 1px;
+  border: 1px solid black;
 }
 
 """
@@ -139,6 +141,20 @@ stats_table = pn.widgets.Tabulator(
     height=300
 )
 
+# Create the processed data table using a Tabulator widget
+# For now, just compute the daily mean
+processed_data_table = pn.widgets.Tabulator(
+    df.resample('D').mean(),
+    formatters=bokeh_formatters,
+    text_align=text_align,
+    frozen_columns=['Item'],
+    show_index=True,
+    titles=titles,
+    header_align=header_align,
+    width=app_width,
+    height=300
+)
+
 # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
 curves, tooltips = hv_plot(df)
 
@@ -167,7 +183,6 @@ dropdown.param.watch(update_plot, 'value')
 
 # %%
 
-
 # Create the Data tab
 data_tab_title = '''
 <h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Data</font></h1>
@@ -181,7 +196,7 @@ data_tab = pn.Column(
     data_table,
     background=background_color,
     sizing_mode='stretch_both',
-    margin=(25, 0, 0, 0),
+    margin=(0, 0, 0, 0),
     padding=(0, 0, 0, 0),
     css_classes=['panel-widget-box'],
     width=app_width,
@@ -189,6 +204,7 @@ data_tab = pn.Column(
     align='center',
 )
 
+# Create the Stats tab
 stats_tab_title = '''
 <h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Statistics</font></h1>
 <hr>
@@ -201,12 +217,11 @@ stats_tab = pn.Column(
     stats_table,
     background=background_color,
     sizing_mode='stretch_both',
-    margin=(25, 0, 0, 0),
+    margin=(0, 0, 0, 0),
     padding=(0, 0, 0, 0),
     css_classes=['panel-widget-box'],
     width=app_width,
-    height=app_height,
-    align='center',
+    height=200,
 )
 
 # Create a plot tab
@@ -214,8 +229,11 @@ plot_tab_title = '''
 <h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Plots</font></h1>
 <hr>
 '''
+
+plot_tab_title_alert = pn.pane.Alert(plot_tab_title, alert_type='light', align='center')
+
 plot_tab = pn.Column(
-    plot_tab_title,
+    plot_tab_title_alert,
     dropdown,
     plot,
     background=background_color,
@@ -225,7 +243,27 @@ plot_tab = pn.Column(
     css_classes=['panel-widget-box'],
     width=app_width,
     height=app_height,
-    align='center',
+    align='center'
+)
+
+# Create the Processed Data tab
+processed_data_tab_title = '''
+<h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Processed Data</font></h1>
+<hr>
+'''
+
+processed_data_tab_title_alert = pn.pane.Alert(processed_data_tab_title, alert_type='light', align='center')
+
+processed_data_tab = pn.Column(
+    processed_data_tab_title_alert,
+    processed_data_table,
+    background=background_color,
+    sizing_mode='stretch_both',
+    margin=(0, 0, 0, 0),
+    padding=(0, 0, 0, 0),
+    css_classes=['panel-widget-box'],
+    width=app_width,
+    height=app_height,
 )
 
 # Create the app and add the tabs
@@ -233,9 +271,10 @@ tabs = pn.Tabs(
     ('Data', data_tab), 
     ('Stats', stats_tab),
     ('Plot', plot_tab),
+    ('Processed', processed_data_tab), 
     tabs_location='above',
     # background='blue',
-    sizing_mode='stretch_both',
+    # sizing_mode='stretch_both',
     margin=(0, 0, 0, 0),
     css_classes=['panel-widget-box'],
 )
