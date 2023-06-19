@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 import holoviews as hv
 import panel as pn
+from collections import OrderedDict
 from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
 from bokeh.models import HoverTool
 import cequalw2 as w2
@@ -18,18 +19,20 @@ def color_cycle(colors, num_colors):
 
 def hv_plot(df):
     # Create a HoloViews Curve element for each data column
-    curves = {}
-    for column in df.columns[1:]:
+    curves = OrderedDict()
+    tooltips = OrderedDict()
+
+    for column in df.columns:
         curve = hv.Curve(df, 'Date', column).opts(width=1400, height=600)
         curves[column] = curve
 
-    # Create a HoverTool to display tooltips. Show the values of the Date column and the selected column
-    hover_tool = HoverTool(
-        tooltips=[('Date', '@Date{%Y-%m-%d}'), ('Value', '$y')], formatters={"@Date": "datetime"}
-    )
+        # Create a HoverTool to display tooltips. Show the values of the Date column and the selected column
+        hover_tool = HoverTool(
+            # tooltips=[('Date', '@Date{%Y-%m-%d}'), ('Value', '$y')], formatters={"@Date": "datetime"}
+            tooltips=[('Date', '@Date{%Y-%m-%d}'), (column, '$y')], formatters={"@Date": "datetime"}
+        )
 
-    # HoverTool(tooltips=[('date', '@DateTime{%F}')], formatters={'@DateTime': 'datetime'})
-    tooltips = [hover_tool]
+        tooltips[column] = hover_tool
 
     return curves, tooltips
 
@@ -54,18 +57,6 @@ float_format = NumberFormatter(format='0.00', text_align='right')
 # Specify column formatters
 float_cols = df.columns
 bokeh_formatters = {col: float_format for col in float_cols}
-
-# Text alignment. Note: alignments for currency and percentages were specified in bokeh_formatters
-text_align = {
-    # 'Complete': 'center',
-    # 'Progress': 'left',
-}
-
-# For the headers that are too long, create titles with wrapped lines
-titles = {
-    # 'abc def ghi': 'abc<br>def<br>ghi',
-    # 'def ghi jkl': 'def<br>ghi<br>jkl'
-}
 
 header_align = {col: 'center' for col in df.columns}
 
@@ -111,11 +102,30 @@ dropdown = pn.widgets.Select(options=list(curves.keys()), width=200)
 # Define a callback function to update the plot when the dropdown value changes
 def update_plot(event):
     selected_column = dropdown.value
-    plot.object = curves[selected_column]
+    index = df.columns.tolist().index(dropdown.value)
+    curve = curves[selected_column]
+    tip = tooltips[selected_column]
+    curve.opts(tools=[tip])
+    plot.object = curve
+    # plot.object.opts(tools=[tip])  # Add the HoverTool to the plot
+    print('plot.object = ', plot.object)
+    print('tip = ', tip)
+    print()
+
+
+    print('selected_column = ', selected_column)
+    print('index = ', index)
+    print(df.columns.tolist()[index])
+
+# Get the index of the df.columns list using dropdown.value
+index = df.columns.tolist().index(dropdown.value)
 
 # Create a panel with the plot and the dropdown widget
-plot = pn.pane.HoloViews(curves[dropdown.value])
-plot.object.opts(tools=tooltips)  # Add the HoverTool to the plot
+selected_column = dropdown.value
+print('selected_column = ', selected_column)
+plot = pn.pane.HoloViews(curves[selected_column])
+tip = tooltips[selected_column]
+plot.object.opts(tools=[tip])  # Add the HoverTool to the plot
 dropdown.param.watch(update_plot, 'value')
 
 # %%
