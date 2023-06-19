@@ -8,7 +8,36 @@ from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
 from bokeh.models import HoverTool
 import cequalw2 as w2
 
-pn.extension()
+hv.extension('bokeh')
+
+css = """
+.bk-root .bk-tabs-header .bk-tab.bk-active {
+  background-color: #00aedb;
+  color: black;
+  font-size: 18px;
+  width: 100px;
+  horizontal-align: center;
+  padding: 5px, 5px, 5px, 5px;
+  margin: 2px;
+}
+
+.bk.bk-tab:not(bk-active) {
+  background-color: gold;
+  color: black;
+  font-size: 18px;
+  width: 100px;
+  horizontal-align: center;
+  padding: 5px, 5px, 5px, 5px;
+  margin: 2px;
+}
+
+"""
+
+# q: What shade of green goes best with gold?
+# a: https://www.color-hex.com/color-palette/700
+
+
+pn.extension(raw_css=[css])
 
 # %%
 # Cycle through a list of colors
@@ -23,8 +52,11 @@ def hv_plot(df):
     tooltips = OrderedDict()
 
     for column in df.columns:
+        # Create a HoloViews Curve element for each data column
         curve = hv.Curve(df, 'Date', column).opts(width=1400, height=600)
-        curves[column] = curve
+
+        # Add the grid style to the curve
+        curve.opts(show_grid=True, show_legend=True)
 
         # Create a HoverTool to display tooltips. Show the values of the Date column and the selected column
         hover_tool = HoverTool(
@@ -32,6 +64,8 @@ def hv_plot(df):
             tooltips=[('Date', '@Date{%Y-%m-%d}'), (column, '$y')], formatters={"@Date": "datetime"}
         )
 
+        # Add the curve and hover tool to the dictionaries
+        curves[column] = curve
         tooltips[column] = hover_tool
 
     return curves, tooltips
@@ -72,7 +106,8 @@ header_align = {col: 'center' for col in df.columns}
 # %% Create the app
 
 # Specify background color
-background_color = '#f5fff5'
+# background_color = '#f5fff5'
+background_color = '#fafafa'
 
 # Specify the app dimensions
 app_width = 1400
@@ -91,6 +126,19 @@ data_table = pn.widgets.Tabulator(
     height=app_height
 )
 
+# Create the stats table using a Tabulator widget
+stats_table = pn.widgets.Tabulator(
+    df.describe(),
+    formatters=bokeh_formatters,
+    text_align=text_align,
+    frozen_columns=['Item'],
+    show_index=True,
+    titles=titles,
+    header_align=header_align,
+    width=app_width,
+    height=300
+)
+
 # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
 curves, tooltips = hv_plot(df)
 
@@ -105,15 +153,6 @@ def update_plot(event):
     tip = tooltips[selected_column]
     curve.opts(tools=[tip])
     plot.object = curve
-    # plot.object.opts(tools=[tip])  # Add the HoverTool to the plot
-    print('plot.object = ', plot.object)
-    print('tip = ', tip)
-    print()
-
-
-    print('selected_column = ', selected_column)
-    print('index = ', index)
-    print(df.columns.tolist()[index])
 
 # Get the index of the df.columns list using dropdown.value
 index = df.columns.tolist().index(dropdown.value)
@@ -127,9 +166,18 @@ plot.object.opts(tools=[tip])  # Add the HoverTool to the plot
 dropdown.param.watch(update_plot, 'value')
 
 # %%
+
+
 # Create the Data tab
+data_tab_title = '''
+<h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Data</font></h1>
+<hr>
+'''
+
+data_tab_title_alert = pn.pane.Alert(data_tab_title, alert_type='light', align='center')
+
 data_tab = pn.Column(
-    '## CE-QUAL-W2 Viewer',
+    data_tab_title_alert,
     data_table,
     background=background_color,
     sizing_mode='stretch_both',
@@ -141,9 +189,33 @@ data_tab = pn.Column(
     align='center',
 )
 
+stats_tab_title = '''
+<h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Statistics</font></h1>
+<hr>
+'''
+
+stats_tab_title_alert = pn.pane.Alert(stats_tab_title, alert_type='light', align='center')
+
+stats_tab = pn.Column(
+    stats_tab_title_alert,
+    stats_table,
+    background=background_color,
+    sizing_mode='stretch_both',
+    margin=(25, 0, 0, 0),
+    padding=(0, 0, 0, 0),
+    css_classes=['panel-widget-box'],
+    width=app_width,
+    height=app_height,
+    align='center',
+)
+
 # Create a plot tab
+plot_tab_title = '''
+<h1><font color="dodgerblue">ClearWater Insights: </font><font color="#7eab55">Plots</font></h1>
+<hr>
+'''
 plot_tab = pn.Column(
-    '## Plot',
+    plot_tab_title,
     dropdown,
     plot,
     background=background_color,
@@ -159,7 +231,13 @@ plot_tab = pn.Column(
 # Create the app and add the tabs
 tabs = pn.Tabs(
     ('Data', data_tab), 
-    ('Plot', plot_tab)
+    ('Stats', stats_tab),
+    ('Plot', plot_tab),
+    tabs_location='above',
+    # background='blue',
+    sizing_mode='stretch_both',
+    margin=(0, 0, 0, 0),
+    css_classes=['panel-widget-box'],
 )
 
 # Serve the app
