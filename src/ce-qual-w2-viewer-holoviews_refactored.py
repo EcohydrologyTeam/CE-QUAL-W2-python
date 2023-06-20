@@ -1,11 +1,15 @@
 # %% Import packages
+import os
+import glob
+import csv
 import pandas as pd
 import seaborn as sns
 import holoviews as hv
 import panel as pn
 from collections import OrderedDict
 from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
-from bokeh.models import HoverTool, DatetimeTickFormatter
+import tkinter as tk
+from tkinter import filedialog
 import cequalw2 as w2
 
 hv.extension('bokeh')
@@ -33,12 +37,13 @@ css = """
   horizontal-align: center;
   padding: 5px, 5px, 5px, 5px;
   margin: 1px;
-  border: 1px solid black;
 }
-
 """
 
-pn.extension(raw_css=[css])
+pn.extension('tabulator', raw_css=[css])
+# pn.extension('tabulator', 'terminal', 'ipywidgets', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
+# pn.extension('tabulator', 'terminal', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
+
 
 class AquaView:
     def __init__(self):
@@ -68,16 +73,15 @@ class AquaView:
         # Create a dropdown widget for selecting analysis and processing methods
         self.analysis_dropdown = pn.widgets.Select(options=list(self.methods.keys()), width=200)
 
-    def create_plot_panel(self, df: pd.DataFrame):
-        # Create plot panel
-
-        # Note: data dropdown list needs to be created first for this function to work
-
+    def create_plot(self):
         # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
         self.curves, self.tooltips = w2.hv_plot(self.df, width=self.app_width, height=self.app_height)
 
+    def create_plot_widget(self):
+        # Create plot widget
+
         # Get the index of the df.columns list
-        index = df.columns.tolist().index(self.data_dropdown.value)
+        index = self.df.columns.tolist().index(self.data_dropdown.value)
 
         # Create a panel with the plot and the dropdown widget
         selected_column = self.data_dropdown.value
@@ -88,63 +92,29 @@ class AquaView:
         self.analysis_dropdown.param.watch(self.update_processed_data_table, 'value')
 
     def create_data_tab(self):
-        # Create the Data tab
-        self.data_tab = pn.Column(
-            self.data_table,
-            background=self.background_color,
-            sizing_mode='stretch_both',
-            margin=(0, 0, 0, 0),
-            padding=(0, 0, 0, 0),
-            css_classes=['panel-widget-box'],
-            width=self.app_width,
-            height=self.app_height,
-        )
+        ''' Create the Data tab '''
+        self.data_tab.clear()
+        self.data_tab.append(self.data_table)
 
     def create_stats_tab(self):
-        # Create the Stats tab
-        self.stats_tab = pn.Column(
-            self.stats_table,
-            background=self.background_color,
-            sizing_mode='stretch_both',
-            margin=(0, 0, 0, 0),
-            padding=(0, 0, 0, 0),
-            css_classes=['panel-widget-box'],
-            width=self.app_width,
-            height=200,
-        )
+        ''' Create the Stats tab '''
+        self.stats_tab.clear()
+        self.stats_tab.append(self.stats_table)
 
     def create_plot_tab(self):
-        # Create a plot tab
-        self.plot_tab = pn.Column(
-            self.data_dropdown,
-            self.plot,
-            background=self.background_color,
-            sizing_mode='stretch_both',
-            margin=(25, 0, 0, 0),
-            padding=(0, 0, 0, 0),
-            css_classes=['panel-widget-box'],
-            width=self.app_width,
-            height=self.app_height,
-            align='center'
-        )
+        ''' Create the Plot tab '''
+        self.plot_tab.clear()
+        self.plot_tab.append(self.data_dropdown)
+        self.plot_tab.append(self.plot)
 
     def create_processed_tab(self):
-        # Create Processed tab
-        self.processed_data_tab = pn.Column(
-            self.analysis_dropdown,
-            self.processed_data_table,
-            background=self.background_color,
-            sizing_mode='stretch_both',
-            margin=(0, 0, 0, 0),
-            padding=(0, 0, 0, 0),
-            css_classes=['panel-widget-box'],
-            width=self.app_width,
-            height=self.app_height,
-        )
+        ''' Create Processed tab '''
+        self.processed_data_tab.clear()
+        self.processed_data_tab.append(self.analysis_dropdown)
+        self.processed_data_tab.append(self.processed_data_table)
 
-    def create_data_table(self, df: pd.DataFrame):
+    def create_data_table(self):
         # Create the data table using a Tabulator widget
-        self.df = df
         # Specify column formatters
         self.float_cols = self.df.columns
         self.bokeh_formatters = {col: self.float_format for col in self.float_cols}
@@ -158,53 +128,50 @@ class AquaView:
             # 'abc def ghi': 'abc<br>def<br>ghi'
         }
 
-        self.header_align = {col: 'center' for col in df.columns}
+        self.header_align = {col: 'center' for col in self.df.columns}
 
         self.data_table = pn.widgets.Tabulator(
             self.df,
             formatters=self.bokeh_formatters,
-            text_align=text_align,
+            text_align=self.text_align,
             frozen_columns=['Date'],
             show_index=True,
-            titles=titles,
-            header_align=header_align,
+            titles=self.titles,
+            header_align=self.header_align,
             width=self.app_width,
             height=self.app_height
         )
 
-    def create_stats_table(self, df: pd.DataFrame):
+    def create_stats_table(self):
         # Create the stats table using a Tabulator widget
-        self.stats_df = df
         # Compute summary statistics
-        self.df_stats = df.describe()
+        self.df_stats = self.df.describe()
         self.df_stats.index.name = 'Statistic'
         self.stats_table = pn.widgets.Tabulator(
             self.df_stats,
             formatters=self.bokeh_formatters,
-            text_align=text_align,
+            text_align=self.text_align,
             frozen_columns=['Statistic'],
             show_index=True,
-            titles=titles,
-            header_align=header_align,
+            titles=self.titles,
+            header_align=self.header_align,
             width=self.app_width,
             height=250,
             background=self.background_color,
         )
 
-    def create_processed_data_table(self, df: pd.DataFrame):
+    def create_processed_data_table(self):
         # Create the processed data table using a Tabulator widget
         # Create dictionary of analysis and processing methods
-        self.df = df
-        self.set_methods()
         self.df_processed = self.methods['Hourly Mean']
         self.processed_data_table = pn.widgets.Tabulator(
             self.df_processed,
             formatters=self.bokeh_formatters,
-            text_align=text_align,
+            text_align=self.text_align,
             frozen_columns=['Date'],
             show_index=True,
-            titles=titles,
-            header_align=header_align,
+            titles=self.titles,
+            header_align=self.header_align,
             width=self.app_width,
             height=self.app_height,
             background=self.background_color
@@ -249,7 +216,6 @@ class AquaView:
         for i, row in enumerate(rows):
             if row[0].upper() == 'TMSTRT':
                 self.year = int(rows[i + 1][2])
-                self.start_year_input.setText(str(self.year))
 
     def parse_year_npt(self, w2_control_file_path):
         """
@@ -346,9 +312,18 @@ class AquaView:
         self.filename = text
 
     def browse_file(self, event):
-        self.file_path = self.file_input.value
+        root = tk.Tk()
+        root.withdraw()                                        
+        root.call('wm', 'attributes', '.', '-topmost', True)   
+        self.file_path = filedialog.askopenfilename(multiple=False)    
+
+        print('file_path = ', self.file_path)
         self.directory, self.filename = os.path.split(self.file_path)
+        print('directory = ', self.directory)
+        print('filename = ', self.filename)
         basefilename, extension = os.path.splitext(self.filename)
+        print('basefilename = ', basefilename)
+        print('extension = ', extension)
 
         if extension.lower() in ['.npt', '.opt']:
             self.data_columns = w2.get_data_columns_fixed_width(self.file_path)
@@ -361,9 +336,8 @@ class AquaView:
         elif extension.lower() == '.xlsx' or extension.lower() == '.xls':
             FILE_TYPE = 'EXCEL'
         else:
-            file_dialog.close()
             # self.show_warning_dialog('Only *.csv, *.npt, *.opt, and *.db files are supported.')
-            print('Only *.csv, *.npt, *.opt, and *.db files are supported.')
+            print('Only *.csv, *.npt, *.opt, *.xlsx, and *.db files are supported.')
             return
 
         self.get_model_year()
@@ -375,25 +349,33 @@ class AquaView:
                 self.df = w2.read_sqlite(self.file_path)
             elif FILE_TYPE == 'EXCEL':
                 self.df = w2.read_excel(self.file_path)
+
+            # Create plot (create this before the dropdown lists)
+            self.create_plot()
+
+            # Create methods
+            self.set_methods()
+
+            # Create dropdown lists (create these before creating the plot panel)
+            self.create_data_dropdown_widget()
+            self.create_analysis_dropdown_widget()
+
+            # Create tables and plot panel
+            self.create_plot_widget()
+            self.create_data_table()
+            self.create_stats_table()
+            self.create_processed_data_table()
+
+            # Create new tabs
+            self.create_data_tab()
+            self.create_stats_tab()
+            self.create_plot_tab()
+            self.create_processed_tab()
+
         except IOError:
             # self.show_warning_dialog(f'An error occurred while opening {self.filename}')
             print(f'An error occurred while opening {self.filename}')
-
-        # Create tables and plot panel
-        self.create_data_table(self.df)
-        self.create_stats_table(self.df)
-        self.create_processed_data_table(self.df)
-        self.create_plot_panel(self.df)
-
-        # Create dropdown lists
-        self.create_data_dropdown_widget()
-        self.create_analysis_dropdown_widget()
-
-        # Create new tabs
-        self.create_data_tab()
-        self.create_stats_tab()
-        self.create_plot_tab()
-        self.create_processed_tab()
+            return
 
     def set_methods(self):
         # Specify the analysis and processing methods
@@ -422,8 +404,9 @@ class AquaView:
         self.methods['Cumulative Min'] = self.df.cummin()
 
     def create_empty_tab(self):
+        empty_data = hv.Curve([])
         tab = pn.Column(
-            '',
+            empty_data,
             background=self.background_color,
             sizing_mode='stretch_both',
             margin=(0, 0, 0, 0),
@@ -460,8 +443,12 @@ class AquaView:
         Upload a File:
         """
 
-        self.file_input = pn.widgets.FileInput(sizing_mode='stretch_width')
-        self.file_input.param.watch(self.browse_file, 'value')
+        # self.file_input = pn.widgets.FileInput(sizing_mode='stretch_width')
+        # self.file_Input.param.watch(self.browse_file, 'value')
+
+        self.file_button = pn.widgets.Button(name="Load file")
+        self.file_button.on_click(self.browse_file)
+        self.file_button.servable()
 
         # Create sidebar
         self.sidebar = pn.layout.WidgetBox(
@@ -469,7 +456,7 @@ class AquaView:
                 sidebar_text,
                 margin=(0, 10)
             ),
-            self.file_input,
+            self.file_button,
             max_width=350,
             height=1000,
             sizing_mode='stretch_width',
