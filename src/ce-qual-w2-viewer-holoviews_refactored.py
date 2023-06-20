@@ -38,18 +38,21 @@ css = """
   padding: 5px;
   margin: 1px;
 }
+
+.hv-Tabulator {
+    height: 600px; /* Set a fixed height for the table */
+    overflow-y: auto; /* Enable vertical scrolling */
+}
 """
 # .bk-root .bk-tabs-header .bk-tab.bk-active {
-#   border: 1px solid black;
+# 
+# border: 1px solid black;
+#
 
 # pn.extension('tabulator', raw_css=[css])
 pn.extension('tabulator', 'ipywidgets', raw_css=[css])
 # pn.extension('tabulator', 'terminal', 'ipywidgets', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
 # pn.extension('tabulator', 'terminal', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
-
-# Define a function to run the Tkinter main loop in a separate thread
-def run_tkinter():
-    root.mainloop()
 
 class AquaView:
     def __init__(self):
@@ -97,87 +100,99 @@ class AquaView:
         self.data_dropdown.param.watch(self.update_plot, 'value')
         self.analysis_dropdown.param.watch(self.update_processed_data_table, 'value')
 
-    def create_data_tab(self):
+    def update_data_tab(self):
         ''' Create the Data tab '''
         self.data_tab.clear()
         self.data_tab.append(self.data_table)
 
-    def create_stats_tab(self):
+    def update_stats_tab(self):
         ''' Create the Stats tab '''
         self.stats_tab.clear()
         self.stats_tab.append(self.stats_table)
 
-    def create_plot_tab(self):
+    def update_plot_tab(self):
         ''' Create the Plot tab '''
         self.plot_tab.clear()
         self.plot_tab.append(self.data_dropdown)
         self.plot_tab.append(self.plot)
 
-    def create_processed_tab(self):
+    def update_processed_tab(self):
         ''' Create Processed tab '''
         self.processed_data_tab.clear()
         self.processed_data_tab.append(self.analysis_dropdown)
         self.processed_data_tab.append(self.processed_data_table)
 
     def create_data_table(self):
-        # Create the data table using a Tabulator widget
+        ''' Create the data table using a Tabulator widget '''
+
         # Specify column formatters
         self.float_cols = self.df.columns
         self.bokeh_formatters = {col: self.float_format for col in self.float_cols}
 
-        # Text alignment. Note: alignments for currency and percentages were specified in bokeh_formatters
-        self.text_align = {
-            # 'Complete': 'center'
-        }
+        # Specify column formatters
+        text_align = { }
+        titles = { }
+        header_align = {col: 'center' for col in self.df.columns}
 
-        self.titles = {
-            # 'abc def ghi': 'abc<br>def<br>ghi'
-        }
-
-        self.header_align = {col: 'center' for col in self.df.columns}
-
+        # Create the data table using a Tabulator widget
         self.data_table = pn.widgets.Tabulator(
             self.df,
             formatters=self.bokeh_formatters,
-            text_align=self.text_align,
+            text_align=text_align,
             frozen_columns=['Date'],
             show_index=True,
-            titles=self.titles,
-            header_align=self.header_align,
+            titles=titles,
+            header_align=header_align,
             width=self.app_width,
             height=self.app_height
         )
 
     def create_stats_table(self):
-        # Create the stats table using a Tabulator widget
+        ''' Create the stats table using a Tabulator widget '''
+
         # Compute summary statistics
         self.df_stats = self.df.describe()
         self.df_stats.index.name = 'Statistic'
+
+        # Specify column formatters
+        text_align = { }
+        titles = { }
+        header_align = {col: 'center' for col in self.df_stats.columns}
+
+        # Create the stats table using a Tabulator widget
         self.stats_table = pn.widgets.Tabulator(
             self.df_stats,
             formatters=self.bokeh_formatters,
-            text_align=self.text_align,
+            text_align=text_align,
             frozen_columns=['Statistic'],
             show_index=True,
-            titles=self.titles,
-            header_align=self.header_align,
+            titles=titles,
+            header_align=header_align,
             width=self.app_width,
             height=250,
             background=self.background_color,
         )
 
     def create_processed_data_table(self):
-        # Create the processed data table using a Tabulator widget
-        # Create dictionary of analysis and processing methods
+        ''' Create the processed data table using a Tabulator widget '''
+
+        # Set the default processed data table
         self.df_processed = self.methods['Hourly Mean']
+
+        # Specify column formatters
+        text_align = { }
+        titles = { }
+        header_align = {col: 'center' for col in self.df_processed.columns}
+
+        # Create the processed data table using a Tabulator widget
         self.processed_data_table = pn.widgets.Tabulator(
             self.df_processed,
             formatters=self.bokeh_formatters,
-            text_align=self.text_align,
+            text_align=text_align,
             frozen_columns=['Date'],
             show_index=True,
-            titles=self.titles,
-            header_align=self.header_align,
+            titles=titles,
+            header_align=header_align,
             width=self.app_width,
             height=self.app_height,
             background=self.background_color
@@ -195,10 +210,8 @@ class AquaView:
 
     # Define a callback function to update the processed data table when the analysis dropdown value changes
     def update_processed_data_table(self, event):
-        print('update_processed_data_table() called')
         selected_analysis = self.analysis_dropdown.value
         self.df_processed = self.methods[selected_analysis]
-        print(self.df_processed)
         # self.processed_data_table.object = methods[selected_analysis]
         self.processed_data_table.value = self.df_processed
 
@@ -318,6 +331,7 @@ class AquaView:
         self.filename = text
 
     def browse_file(self, event):
+        self.root.lift()  # Bring the Tkinter dialog to the foreground
         self.file_path = filedialog.askopenfilename(multiple=False)    
         self.root.quit()
 
@@ -371,10 +385,10 @@ class AquaView:
             self.create_processed_data_table()
 
             # Create new tabs
-            self.create_data_tab()
-            self.create_stats_tab()
-            self.create_plot_tab()
-            self.create_processed_tab()
+            self.update_data_tab()
+            self.update_stats_tab()
+            self.update_plot_tab()
+            self.update_processed_tab()
 
         except IOError:
             # self.show_warning_dialog(f'An error occurred while opening {self.filename}')
@@ -429,6 +443,10 @@ class AquaView:
         self.stats_tab = self.create_empty_tab()
         self.plot_tab = self.create_empty_tab()
         self.processed_data_tab = self.create_empty_tab()
+
+    # Define a function to run the Tkinter main loop in a separate thread
+    def run_tkinter(self):
+        self.root.mainloop()
 
     def create_sidebar(self):
         # Alternative name: Prismatica
@@ -489,7 +507,7 @@ class AquaView:
         self.main = pn.Row(self.sidebar, self.tabs)
 
         # Start the Tkinter main loop in a separate thread
-        thread = threading.Thread(target=run_tkinter)
+        thread = threading.Thread(target=self.run_tkinter)
         thread.daemon = True
         thread.start()
 
@@ -500,7 +518,6 @@ class AquaView:
 
         # Serve the app
         self.main.show()
-
 
 
 # Test the app
