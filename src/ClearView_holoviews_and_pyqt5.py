@@ -534,9 +534,5 @@ class ClearView:
 
 # Test the app
 if __name__ == '__main__':
-    # infile = '/Users/todd/GitHub/ecohydrology/CE-QUAL-W2/examples_precomputed/Spokane River/tsr_1_seg2.csv'
-    # header_rows = w2.get_data_columns_csv(infile)
-    # df = w2.read(infile, 2001, header_rows)
-    # CE_QUAL_W2_Viewer(df)
     clearview = ClearView()
     clearview.create_app()

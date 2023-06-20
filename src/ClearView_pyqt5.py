@@ -1,4 +1,3 @@
-import cequalw2 as w2
 import os
 import sys
 import csv
@@ -13,8 +12,8 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 import PyQt5.QtCore as qtc
 import PyQt5.QtWidgets as qtw
 import PyQt5.QtGui as qtg
-
 sys.path.append('.')
+import cequalw2 as w2
 
 
 class MyTableWidget(qtw.QTableWidget):
@@ -60,10 +59,10 @@ class MyTableWidget(qtw.QTableWidget):
             super().keyPressEvent(event)
 
 
-class CeQualW2Viewer(qtw.QMainWindow):
+class ClearView(qtw.QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('CE-QUAL-W2 Viewer')
+        self.setWindowTitle('ClearView')
         self.setGeometry(0, 0, 1500, 900)
         self.PLOT_TYPE = 'plot'
 
@@ -246,7 +245,7 @@ class CeQualW2Viewer(qtw.QMainWindow):
         # Add a system tray icon
         self.tray_icon = qtw.QSystemTrayIcon(self)
         self.tray_icon.setIcon(qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png'))
-        self.tray_icon.setToolTip('CE-QUAL-W2 Viewer')
+        self.tray_icon.setToolTip('ClearView')
         self.tray_icon.setVisible(True)
         self.tray_icon.show()
 
@@ -839,6 +838,6 @@ class CeQualW2Viewer(qtw.QMainWindow):
 
 if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
-    window = CeQualW2Viewer()
+    window = ClearView()
     window.show()
     sys.exit(app.exec_())
