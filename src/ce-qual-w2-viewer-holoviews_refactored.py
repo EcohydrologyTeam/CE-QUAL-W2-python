@@ -38,14 +38,7 @@ css = """
 
 """
 
-# q: What shade of green goes best with gold?
-# a: https://www.color-hex.com/color-palette/700
-
-
 pn.extension(raw_css=[css])
-
-# %%
-
 
 class CE_QUAL_W2_Viewer:
     def __init__(self):
@@ -67,8 +60,6 @@ class CE_QUAL_W2_Viewer:
     def set_formatting(self):
         # Specify special column formatting
         self.float_format = NumberFormatter(format='0.00', text_align='right')
-
-        # %% Specify formatting
 
     def create_data_dropdown_widget(self):
         # Create a dropdown widget for selecting data columns
@@ -190,10 +181,10 @@ class CE_QUAL_W2_Viewer:
     def create_app(self):
         # Create the app and add the tabs
         self.tabs = pn.Tabs(
-            ('Data', self.data_tab), 
+            ('Data', self.data_tab),
             ('Stats', self.stats_tab),
             ('Plot', self.plot_tab),
-            ('Processed', self.processed_data_tab), 
+            ('Processed', self.processed_data_tab),
             tabs_location='above',
             # background='blue',
             # sizing_mode='stretch_both',
@@ -236,9 +227,6 @@ class CE_QUAL_W2_Viewer:
             width=self.app_width,
             height=self.app_height
         )
-
-        # Set the value of the widget in the Data tab
-        # TODO
 
     def create_stats_table(self, df: pd.DataFrame):
         # Create the stats table using a Tabulator widget
@@ -489,7 +477,7 @@ class CE_QUAL_W2_Viewer:
         self.methods['Cumulative Max'] = self.df.cummax()
         self.methods['Cumulative Min'] = self.df.cummin()
 
-# %%
+
 # Test the app
 if __name__ == '__main__':
     # infile = '/Users/todd/GitHub/ecohydrology/CE-QUAL-W2/examples_precomputed/Spokane River/tsr_1_seg2.csv'
