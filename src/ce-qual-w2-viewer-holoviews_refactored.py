@@ -40,7 +40,7 @@ css = """
 
 pn.extension(raw_css=[css])
 
-class CE_QUAL_W2_Viewer:
+class AquaView:
     def __init__(self):
         self.data_database_path = None
         self.stats_database_path = None
@@ -57,7 +57,6 @@ class CE_QUAL_W2_Viewer:
         # Set theme
         pn.widgets.Tabulator.theme = 'default'
 
-    def set_formatting(self):
         # Specify special column formatting
         self.float_format = NumberFormatter(format='0.00', text_align='right')
 
@@ -142,61 +141,6 @@ class CE_QUAL_W2_Viewer:
             width=self.app_width,
             height=self.app_height,
         )
-
-    def create_sidebar(self):
-        # Alternative name: Prismatica
-
-        sidebar_text = """
-        <h2><font color="dodgerblue">AquaView</font></h2>
-        <h3><font color="#7eab55">A Comprehensive Tool for Water Quality and Environmental Data Analysis</font></h3>
-        <hr>
-
-        AquaView is a tool for viewing and analyzing water quality and environmental time series data. Designed to work with model input and output data, sensor data, and laboratory measurements, AquaView seamlessly reads and writes multiple data formats, providing compatibility and flexibility with a variety of new and legacy models, sensors, analysis tools, and workflows.
-
-        The user interface of AquaView is designed with simplicity and usability in mind. Its plotting component allows you to generate informative plots, enabling the identification of trends, patterns, and anomalies within your time series data. AquaView provides a tabular display, facilitating easy access and interpretation. AquaView's summary statistics provides a concise summary of your data. This feature allows you to evaluate key statistical measures, facilitating data-driven analysis and decision-making.
-
-        AquaView streamlines data analysis and time series processing. Leveraging advanced algorithms and statistical techniques, this tool enables exploring data and calculating relevant metrics to derive valuable insights, such as identifying pollution sources, detecting changes in water quality over time, and deriving a deeper understanding of environmental data.
-
-        The aim of AquaView is to streamline workflows and enhance productivity. By integrating data visualization, analysis, and statistical summaries, AquaView enables making informed decisions and effectively communicating findings.
-
-        Upload a File:
-        """
-
-        self.file_input = pn.widgets.FileInput(sizing_mode='stretch_width')
-        self.file_input.param.watch(self.browse_file, 'value')
-
-        # Create sidebar
-        self.sidebar = pn.layout.WidgetBox(
-            pn.pane.Markdown(
-                sidebar_text,
-                margin=(0, 10)
-            ),
-            self.file_input,
-            max_width=350,
-            height=1000,
-            sizing_mode='stretch_width',
-            scroll=True
-        ).servable(area='sidebar')
-
-    def create_app(self):
-        # Create the app and add the tabs
-        self.tabs = pn.Tabs(
-            ('Data', self.data_tab),
-            ('Stats', self.stats_tab),
-            ('Plot', self.plot_tab),
-            ('Processed', self.processed_data_tab),
-            tabs_location='above',
-            # background='blue',
-            # sizing_mode='stretch_both',
-            margin=(0, 0, 0, 0),
-            css_classes=['panel-widget-box'],
-        ).servable(title='ClearWater Insights')
-
-        # Create Main Layout
-        self.main = pn.Row(self.sidebar, self.tabs)
-
-        # Serve the app
-        self.main.show()
 
     def create_data_table(self, df: pd.DataFrame):
         # Create the data table using a Tabulator widget
@@ -394,18 +338,6 @@ class CE_QUAL_W2_Viewer:
         """
         Updates the filename attribute with the provided text.
 
-        This method updates the filename attribute (`self.filename`) with the given text value. The filename attribute represents
-        the name of a file associated with the class or object.
-
-        Args:
-            text (str): The new filename text.
-        """
-        self.filename = text
-
-    def update_filename(self, text):
-        """
-        Updates the filename attribute with the provided text.
-
         This method sets the filename attribute (`self.filename`) to the given text value.
 
         Args:
@@ -447,9 +379,21 @@ class CE_QUAL_W2_Viewer:
             # self.show_warning_dialog(f'An error occurred while opening {self.filename}')
             print(f'An error occurred while opening {self.filename}')
 
+        # Create tables and plot panel
         self.create_data_table(self.df)
         self.create_stats_table(self.df)
         self.create_processed_data_table(self.df)
+        self.create_plot_panel(self.df)
+
+        # Create dropdown lists
+        self.create_data_dropdown_widget()
+        self.create_analysis_dropdown_widget()
+
+        # Create new tabs
+        self.create_data_tab()
+        self.create_stats_tab()
+        self.create_plot_tab()
+        self.create_processed_tab()
 
     def set_methods(self):
         # Specify the analysis and processing methods
@@ -477,6 +421,83 @@ class CE_QUAL_W2_Viewer:
         self.methods['Cumulative Max'] = self.df.cummax()
         self.methods['Cumulative Min'] = self.df.cummin()
 
+    def create_empty_tab(self):
+        tab = pn.Column(
+            '',
+            background=self.background_color,
+            sizing_mode='stretch_both',
+            margin=(0, 0, 0, 0),
+            padding=(0, 0, 0, 0),
+            css_classes=['panel-widget-box'],
+            width=self.app_width,
+            height=self.app_height,
+        )
+        return tab
+
+    def create_empty_tabs(self):
+        # Create empty tabs
+        self.data_tab = self.create_empty_tab()
+        self.stats_tab = self.create_empty_tab()
+        self.plot_tab = self.create_empty_tab()
+        self.processed_data_tab = self.create_empty_tab()
+
+    def create_sidebar(self):
+        # Alternative name: Prismatica
+
+        sidebar_text = """
+        <h2><font color="dodgerblue">AquaView</font></h2>
+        <h3><font color="#7eab55">A Comprehensive Tool for Water Quality and Environmental Data Analysis</font></h3>
+        <hr>
+
+        AquaView is a tool for viewing and analyzing water quality and environmental time series data. Designed to work with model input and output data, sensor data, and laboratory measurements, AquaView seamlessly reads and writes multiple data formats, providing compatibility and flexibility with a variety of new and legacy models, sensors, analysis tools, and workflows.
+
+        The user interface of AquaView is designed with simplicity and usability in mind. Its plotting component allows you to generate informative plots, enabling the identification of trends, patterns, and anomalies within your time series data. AquaView provides a tabular display, facilitating easy access and interpretation. AquaView's summary statistics provides a concise summary of your data. This feature allows you to evaluate key statistical measures, facilitating data-driven analysis and decision-making.
+
+        AquaView streamlines data analysis and time series processing. Leveraging advanced algorithms and statistical techniques, this tool enables exploring data and calculating relevant metrics to derive valuable insights, such as identifying pollution sources, detecting changes in water quality over time, and deriving a deeper understanding of environmental data.
+
+        The aim of AquaView is to streamline workflows and enhance productivity. By integrating data visualization, analysis, and statistical summaries, AquaView enables making informed decisions and effectively communicating findings.
+
+        Upload a File:
+        """
+
+        self.file_input = pn.widgets.FileInput(sizing_mode='stretch_width')
+        self.file_input.param.watch(self.browse_file, 'value')
+
+        # Create sidebar
+        self.sidebar = pn.layout.WidgetBox(
+            pn.pane.Markdown(
+                sidebar_text,
+                margin=(0, 10)
+            ),
+            self.file_input,
+            max_width=350,
+            height=1000,
+            sizing_mode='stretch_width',
+            scroll=True
+        ).servable(area='sidebar')
+
+    def create_app(self):
+        # Create the app and add the tabs
+        self.create_sidebar()
+        self.create_empty_tabs()
+        self.tabs = pn.Tabs(
+            ('Data', self.data_tab),
+            ('Stats', self.stats_tab),
+            ('Plot', self.plot_tab),
+            ('Processed', self.processed_data_tab),
+            tabs_location='above',
+            # background='blue',
+            # sizing_mode='stretch_both',
+            margin=(0, 0, 0, 0),
+            css_classes=['panel-widget-box'],
+        ).servable(title='ClearWater Insights')
+
+        # Create Main Layout
+        self.main = pn.Row(self.sidebar, self.tabs)
+
+        # Serve the app
+        self.main.show()
+
 
 # Test the app
 if __name__ == '__main__':
@@ -484,4 +505,5 @@ if __name__ == '__main__':
     # header_rows = w2.get_data_columns_csv(infile)
     # df = w2.read(infile, 2001, header_rows)
     # CE_QUAL_W2_Viewer(df)
-    CE_QUAL_W2_Viewer()
+    aqua_view = AquaView()
+    aqua_view.create_app()
