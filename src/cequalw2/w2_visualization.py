@@ -508,42 +508,91 @@ def hv_multi_plot(df: pd.DataFrame, **kwargs):
     panel.show()
 
 
-def hv_plot(df: pd.DataFrame, colors=None, plot_width=1400, plot_height=600, legend_position='bottom',
-    legend_offset=(0, -1)):
-    """
-    Plots multiple time series curves with customizable options using holoviews.
+# def hv_plot(df: pd.DataFrame, colors=None, plot_width=1400, plot_height=600, legend_position='bottom',
+#     legend_offset=(0, -1)):
+#     """
+#     Plots multiple time series curves with customizable options using holoviews.
+# 
+#     Parameters:
+#     - df (pandas DataFrame): A single DataFrame containing multiple columns of time series data.
+#     - colors (list): A list of colors to be applied to each curve. If not provided, default colors will be used.
+# 
+#     Returns:
+#     - holoviews.core.overlay.NdOverlay: The HoloViews NdOverlay object containing the plotted curves.
+#     """
+#     import holoviews as hv
+#     from holoviews import opts
+#     hv.extension('bokeh')
+# 
+#     curves = []
+# 
+#     # Generate default colors if not provided
+#     if not colors:
+#         colors = hv.plotting.util.generate_palette(len(df.columns) - 1)
+# 
+#     # # Convert the 'Date' column to datetime type
+#     # df['Date'] = pd.to_datetime(df['Date'])
+# 
+#     for i, column in enumerate(df.columns):
+#         # Create a HoloViews Curve plot for each column
+#         curve = hv.Curve(df, kdims=['Date'], vdims=[column]).opts(
+#             opts.Curve(width=plot_width, height=plot_height, line_color=colors[i], line_width=1, tools=['hover'])
+#         )
+# 
+#         curves.append(curve)
+# 
+#     # Overlay curves using an NdOverlay
+#     overlay = hv.NdOverlay({column: curve for column, curve in zip(df.columns, curves)}).opts(tools=['hover'])
+#     overlay.opts(legend_position=legend_position, legend_offset=legend_offset)
+# 
+#     # Display the plot
+#     return overlay
 
-    Parameters:
-    - df (pandas DataFrame): A single DataFrame containing multiple columns of time series data.
-    - colors (list): A list of colors to be applied to each curve. If not provided, default colors will be used.
+def color_cycle(colors: List[str], num_colors: int):
+    """Cycle through a list of colors"""
+    for i in range(num_colors):
+        yield colors[i % len(colors)]
 
-    Returns:
-    - holoviews.core.overlay.NdOverlay: The HoloViews NdOverlay object containing the plotted curves.
-    """
-    import holoviews as hv
-    from holoviews import opts
-    hv.extension('bokeh')
+def hv_plot(df: pd.DataFrame, width=1200, height=600, bgcolor='lightgray', line_color='blue',
+    fontsize={'xlabel': 11, 'ylabel': 11, 'xticks': 10, 'yticks': 10}):
 
-    curves = []
+    # Create a HoloViews Curve element for each data column
+    curves = OrderedDict()
+    tooltips = OrderedDict()
 
-    # Generate default colors if not provided
-    if not colors:
-        colors = hv.plotting.util.generate_palette(len(df.columns) - 1)
+    # Specify format for the date axis
 
-    # # Convert the 'Date' column to datetime type
-    # df['Date'] = pd.to_datetime(df['Date'])
-
-    for i, column in enumerate(df.columns):
-        # Create a HoloViews Curve plot for each column
-        curve = hv.Curve(df, kdims=['Date'], vdims=[column]).opts(
-            opts.Curve(width=plot_width, height=plot_height, line_color=colors[i], line_width=1, tools=['hover'])
+    for column in df.columns:
+        # Create a HoloViews Curve element for each data column
+        curve = hv.Curve(df, 'Date', column).opts(
+            width=width,
+            height=height,
+            # bgcolor='black',
+            line_color='dodgerblue',
+            fontsize=fontsize
         )
 
-        curves.append(curve)
+        date_axis_formatter = DatetimeTickFormatter(
+            minutes=["%H:%M"],
+            hours=["%H:%M"],
+            days=["%d %b %Y"],
+            months=["%d %b %Y"],
+            years=["%d %b %Y"]
+        )
 
-    # Overlay curves using an NdOverlay
-    overlay = hv.NdOverlay({column: curve for column, curve in zip(df.columns, curves)}).opts(tools=['hover'])
-    overlay.opts(legend_position=legend_position, legend_offset=legend_offset)
+        curve.opts(
+            show_grid=True,
+            show_legend=True,
+            xformatter=date_axis_formatter
+        )
 
-    # Display the plot
-    return overlay
+        # Create a HoverTool to display tooltips. Show the values of the Date column and the selected column
+        hover_tool = HoverTool(
+            tooltips=[('Date', '@Date{%d %b %Y %H:%M}'), (column, '$y')], formatters={"@Date": "datetime"}
+        )
+
+        # Add the curve and hover tool to the dictionaries
+        curves[column] = curve
+        tooltips[column] = hover_tool
+
+    return curves, tooltips
