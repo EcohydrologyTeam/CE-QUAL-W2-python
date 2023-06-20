@@ -8,9 +8,9 @@ import holoviews as hv
 import panel as pn
 from collections import OrderedDict
 from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
-import tkinter as tk
 from tkinter import filedialog
 import threading
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 import cequalw2 as w2
 
 # import PyQt5.QtCore as qtc
@@ -48,15 +48,8 @@ css = """
     overflow-y: auto; /* Enable vertical scrolling */
 }
 """
-# .bk-root .bk-tabs-header .bk-tab.bk-active {
-# 
-# border: 1px solid black;
-#
 
-# pn.extension('tabulator', raw_css=[css])
 pn.extension('tabulator', 'ipywidgets', raw_css=[css])
-# pn.extension('tabulator', 'terminal', 'ipywidgets', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
-# pn.extension('tabulator', 'terminal', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
 
 class ClearView:
     def __init__(self):
@@ -181,7 +174,7 @@ class ClearView:
         ''' Create the processed data table using a Tabulator widget '''
 
         # Set the default processed data table
-        self.df_processed = self.methods['Hourly Mean']
+        self.df_processed = self.methods['Hourly Mean']()
 
         # Specify column formatters
         text_align = { }
@@ -215,8 +208,8 @@ class ClearView:
     # Define a callback function to update the processed data table when the analysis dropdown value changes
     def update_processed_data_table(self, event):
         selected_analysis = self.analysis_dropdown.value
-        self.df_processed = self.methods[selected_analysis]
-        # self.processed_data_table.object = methods[selected_analysis]
+        self.df_processed = self.methods[selected_analysis]()
+        # self.processed_data_table.object = methods[selected_analysis]()
         self.processed_data_table.value = self.df_processed
 
     def parse_year_csv(self, w2_control_file_path):
@@ -335,10 +328,6 @@ class ClearView:
         self.filename = text
 
     def browse_file(self, event):
-        # self.root.lift()  # Bring the Tkinter dialog to the foreground
-        # self.file_path = filedialog.askopenfilename(multiple=False)    
-        # self.root.quit()
-
         # Open a PyQt5 file dialog
         file_dialog = qtw.QFileDialog(self.dialog_app.activeModalWidget())
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
@@ -413,27 +402,39 @@ class ClearView:
         # Specify the analysis and processing methods
         self.methods = OrderedDict()
         # Compute hourly mean, interpolating to fill missing values
-        self.methods['Hourly Mean'] = self.df.resample('H').mean().interpolate()
-        self.methods['Hourly Max'] = self.df.resample('H').max().interpolate()
-        self.methods['Hourly Min'] = self.df.resample('H').min().interpolate()
-        self.methods['Daily Mean'] = self.df.resample('D').mean().interpolate()
-        self.methods['Daily Max'] = self.df.resample('D').max().interpolate()
-        self.methods['Daily Min'] = self.df.resample('D').min().interpolate()
-        self.methods['Weekly Mean'] = self.df.resample('W').mean().interpolate()
-        self.methods['Weekly Max'] = self.df.resample('W').max().interpolate()
-        self.methods['Weekly Min'] = self.df.resample('W').min().interpolate()
-        self.methods['Monthly Mean'] = self.df.resample('M').mean().interpolate()
-        self.methods['Monthly Max'] = self.df.resample('M').max().interpolate()
-        self.methods['Monthly Min'] = self.df.resample('M').min().interpolate()
-        self.methods['Annual Mean'] = self.df.resample('Y').mean().interpolate()
-        self.methods['Annual Max'] = self.df.resample('Y').max().interpolate()
-        self.methods['Annual Min'] = self.df.resample('Y').min().interpolate()
-        self.methods['Decadal Mean'] = self.df.resample('10Y').mean().interpolate()
-        self.methods['Decadal Max'] = self.df.resample('10Y').max().interpolate()
-        self.methods['Decadal Min'] = self.df.resample('10Y').min().interpolate()
-        self.methods['Cumulative Sum'] = self.df.cumsum()
-        self.methods['Cumulative Max'] = self.df.cummax()
-        self.methods['Cumulative Min'] = self.df.cummin()
+        self.methods['Hourly Mean'] = lambda: self.df.resample('H').mean().interpolate()
+        self.methods['Hourly Max'] = lambda: self.df.resample('H').max().interpolate()
+        self.methods['Hourly Min'] = lambda: self.df.resample('H').min().interpolate()
+        self.methods['Daily Mean'] = lambda: self.df.resample('D').mean().interpolate()
+        self.methods['Daily Max'] = lambda: self.df.resample('D').max().interpolate()
+        self.methods['Daily Min'] = lambda: self.df.resample('D').min().interpolate()
+        self.methods['Weekly Mean'] = lambda: self.df.resample('W').mean().interpolate()
+        self.methods['Weekly Max'] = lambda: self.df.resample('W').max().interpolate()
+        self.methods['Weekly Min'] = lambda: self.df.resample('W').min().interpolate()
+        self.methods['Monthly Mean'] = lambda: self.df.resample('M').mean().interpolate()
+        self.methods['Monthly Max'] = lambda: self.df.resample('M').max().interpolate()
+        self.methods['Monthly Min'] = lambda: self.df.resample('M').min().interpolate()
+        self.methods['Annual Mean'] = lambda: self.df.resample('Y').mean().interpolate()
+        self.methods['Annual Max'] = lambda: self.df.resample('Y').max().interpolate()
+        self.methods['Annual Min'] = lambda: self.df.resample('Y').min().interpolate()
+        self.methods['Decadal Mean'] = lambda: self.df.resample('10Y').mean().interpolate()
+        self.methods['Decadal Max'] = lambda: self.df.resample('10Y').max().interpolate()
+        self.methods['Decadal Min'] = lambda: self.df.resample('10Y').min().interpolate()
+        self.methods['Cumulative Sum'] = lambda: self.df.cumsum()
+        self.methods['Cumulative Max'] = lambda: self.df.cummax()
+        self.methods['Cumulative Min'] = lambda: self.df.cummin()
+        # Compute moving averages
+        # self.methods['7-Days Moving Average'] = lambda: self.df.rolling(window=7).mean()
+        # self.methods['24-Hour Moving Average'] = lambda: self.df.rolling(window=24).mean()
+        # Compute exponentially weighted moving averages
+        # self.methods['24-hour EWMA'] = lambda: self.df.ewm(span=24).mean()
+        # self.methods['7-day EWMA'] = lambda: self.df.ewm(span=7).mean()
+
+        # # Compute exponential smoothing 
+        # model = ExponentialSmoothing(self.df, trend='add', seasonal=None)
+        # result = model.fit()
+        # df['Exponential Smoothing'] = result.fittedvalues
+
 
     def create_empty_tab(self):
         # empty_data = hv.Curve([])
@@ -443,10 +444,8 @@ class ClearView:
             background=self.background_color,
             sizing_mode='stretch_both',
             margin=(0, 0, 0, 0),
-            padding=(0, 0, 0, 0),
             css_classes=['panel-widget-box'],
-            width=self.app_width,
-            height=self.app_height,
+            # height=self.app_height,
             scroll=True
         )
         return tab
@@ -457,10 +456,6 @@ class ClearView:
         self.stats_tab = self.create_empty_tab()
         self.plot_tab = self.create_empty_tab()
         self.processed_data_tab = self.create_empty_tab()
-
-    # Define a function to run the Tkinter main loop in a separate thread
-    def run_tkinter(self):
-        self.root.mainloop()
 
     def create_sidebar(self):
         # Alternative name: Prismatica
@@ -478,11 +473,13 @@ class ClearView:
 
         The aim of ClearView is to streamline workflows and enhance productivity. By integrating data visualization, analysis, and statistical summaries, ClearView enables making informed decisions and effectively communicating findings.
 
-        Upload a File:
+        <hr>
+
+        <h4>Open a File:</h4>
         """
 
-        # self.file_input = pn.widgets.FileInput(sizing_mode='stretch_width')
-        # self.file_Input.param.watch(self.browse_file, 'value')
+        # create an html tag with dodgerblue color and bold text
+        # pn.pane.HTML('<font color="dodgerblue"><b>Upload a File:</b></font>')
 
         # Create a button to trigger file selection
         self.file_button = pn.widgets.Button(name="Browse", button_type="primary")
@@ -519,11 +516,6 @@ class ClearView:
 
         # Create Main Layout
         self.main = pn.Row(self.sidebar, self.tabs)
-
-        # Start the Tkinter main loop in a separate thread
-        thread = threading.Thread(target=self.run_tkinter)
-        thread.daemon = True
-        thread.start()
 
         # Create a PyQt5 application
         self.dialog_app = qtw.QApplication([])
