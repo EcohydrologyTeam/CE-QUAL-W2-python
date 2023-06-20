@@ -10,6 +10,7 @@ from collections import OrderedDict
 from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
 import tkinter as tk
 from tkinter import filedialog
+import threading
 import cequalw2 as w2
 
 hv.extension('bokeh')
@@ -18,15 +19,14 @@ hv.extension('bokeh')
 hv.renderer('bokeh').theme = 'night_sky'
 
 css = """
-.bk-root .bk-tabs-header .bk-tab.bk-active {
+.bk.bk-tab.bk-active {
   background-color: #00aedb;
   color: black;
   font-size: 14px;
   width: 100px;
-  horizontal-align: center;
-  padding: 5px, 5px, 5px, 5px;
+  text-align: center;
+  padding: 5px;
   margin: 1px;
-  border: 1px solid black;
 }
 
 .bk.bk-tab:not(bk-active) {
@@ -34,16 +34,22 @@ css = """
   color: black;
   font-size: 14px;
   width: 100px;
-  horizontal-align: center;
-  padding: 5px, 5px, 5px, 5px;
+  text-align: center;
+  padding: 5px;
   margin: 1px;
 }
 """
+# .bk-root .bk-tabs-header .bk-tab.bk-active {
+#   border: 1px solid black;
 
-pn.extension('tabulator', raw_css=[css])
+# pn.extension('tabulator', raw_css=[css])
+pn.extension('tabulator', 'ipywidgets', raw_css=[css])
 # pn.extension('tabulator', 'terminal', 'ipywidgets', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
 # pn.extension('tabulator', 'terminal', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
 
+# Define a function to run the Tkinter main loop in a separate thread
+def run_tkinter():
+    root.mainloop()
 
 class AquaView:
     def __init__(self):
@@ -312,10 +318,8 @@ class AquaView:
         self.filename = text
 
     def browse_file(self, event):
-        root = tk.Tk()
-        root.withdraw()                                        
-        root.call('wm', 'attributes', '.', '-topmost', True)   
         self.file_path = filedialog.askopenfilename(multiple=False)    
+        self.root.quit()
 
         print('file_path = ', self.file_path)
         self.directory, self.filename = os.path.split(self.file_path)
@@ -404,7 +408,8 @@ class AquaView:
         self.methods['Cumulative Min'] = self.df.cummin()
 
     def create_empty_tab(self):
-        empty_data = hv.Curve([])
+        # empty_data = hv.Curve([])
+        empty_data = ''
         tab = pn.Column(
             empty_data,
             background=self.background_color,
@@ -414,6 +419,7 @@ class AquaView:
             css_classes=['panel-widget-box'],
             width=self.app_width,
             height=self.app_height,
+            scroll=True
         )
         return tab
 
@@ -482,8 +488,19 @@ class AquaView:
         # Create Main Layout
         self.main = pn.Row(self.sidebar, self.tabs)
 
+        # Start the Tkinter main loop in a separate thread
+        thread = threading.Thread(target=run_tkinter)
+        thread.daemon = True
+        thread.start()
+
+        # Create a Tkinter dialog to browse for a file
+        self.root = tk.Tk()
+        self.root.withdraw()
+        self.root.call('wm', 'attributes', '.', '-topmost', True)   
+
         # Serve the app
         self.main.show()
+
 
 
 # Test the app
