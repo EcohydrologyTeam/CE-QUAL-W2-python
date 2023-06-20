@@ -54,7 +54,7 @@ pn.extension('tabulator', 'ipywidgets', raw_css=[css])
 # pn.extension('tabulator', 'terminal', 'ipywidgets', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
 # pn.extension('tabulator', 'terminal', raw_css=[css], sizing_mode='stretch_width', loading_spinner='dots')
 
-class AquaView:
+class ClearView:
     def __init__(self):
         self.data_database_path = None
         self.stats_database_path = None
@@ -452,17 +452,17 @@ class AquaView:
         # Alternative name: Prismatica
 
         sidebar_text = """
-        <h2><font color="dodgerblue">AquaView</font></h2>
+        <h2><font color="dodgerblue">ClearView</font></h2>
         <h3><font color="#7eab55">A Comprehensive Tool for Water Quality and Environmental Data Analysis</font></h3>
         <hr>
 
-        AquaView is a tool for viewing and analyzing water quality and environmental time series data. Designed to work with model input and output data, sensor data, and laboratory measurements, AquaView seamlessly reads and writes multiple data formats, providing compatibility and flexibility with a variety of new and legacy models, sensors, analysis tools, and workflows.
+        ClearView is a tool for viewing and analyzing water quality and environmental time series data. Designed to work with model input and output data, sensor data, and laboratory measurements, ClearView seamlessly reads and writes multiple data formats, providing compatibility and flexibility with a variety of new and legacy models, sensors, analysis tools, and workflows.
 
-        The user interface of AquaView is designed with simplicity and usability in mind. Its plotting component allows you to generate informative plots, enabling the identification of trends, patterns, and anomalies within your time series data. AquaView provides a tabular display, facilitating easy access and interpretation. AquaView's summary statistics provides a concise summary of your data. This feature allows you to evaluate key statistical measures, facilitating data-driven analysis and decision-making.
+        The user interface of ClearView is designed with simplicity and usability in mind. Its plotting component allows you to generate informative plots, enabling the identification of trends, patterns, and anomalies within your time series data. ClearView provides a tabular display, facilitating easy access and interpretation. ClearView's summary statistics provides a concise summary of your data. This feature allows you to evaluate key statistical measures, facilitating data-driven analysis and decision-making.
 
-        AquaView streamlines data analysis and time series processing. Leveraging advanced algorithms and statistical techniques, this tool enables exploring data and calculating relevant metrics to derive valuable insights, such as identifying pollution sources, detecting changes in water quality over time, and deriving a deeper understanding of environmental data.
+        ClearView streamlines data analysis and time series processing. Leveraging advanced algorithms and statistical techniques, this tool enables exploring data and calculating relevant metrics to derive valuable insights, such as identifying pollution sources, detecting changes in water quality over time, and deriving a deeper understanding of environmental data.
 
-        The aim of AquaView is to streamline workflows and enhance productivity. By integrating data visualization, analysis, and statistical summaries, AquaView enables making informed decisions and effectively communicating findings.
+        The aim of ClearView is to streamline workflows and enhance productivity. By integrating data visualization, analysis, and statistical summaries, ClearView enables making informed decisions and effectively communicating findings.
 
         Upload a File:
         """
@@ -526,5 +526,5 @@ if __name__ == '__main__':
     # header_rows = w2.get_data_columns_csv(infile)
     # df = w2.read(infile, 2001, header_rows)
     # CE_QUAL_W2_Viewer(df)
-    aqua_view = AquaView()
-    aqua_view.create_app()
+    clearview = ClearView()
+    clearview.create_app()
