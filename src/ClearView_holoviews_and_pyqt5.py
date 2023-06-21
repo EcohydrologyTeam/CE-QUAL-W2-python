@@ -77,7 +77,7 @@ class ClearView:
 
     def create_analysis_dropdown_widget(self):
         # Create a dropdown widget for selecting analysis and processing methods
-        self.analysis_dropdown = pn.widgets.Select(options=list(self.methods.keys()), width=200)
+        self.analysis_dropdown = pn.widgets.Select(options=list(self.time_series_methods.keys()), width=200)
 
     def create_plot(self):
         # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
@@ -113,11 +113,11 @@ class ClearView:
         self.plot_tab.append(self.data_dropdown)
         self.plot_tab.append(self.plot)
 
-    def update_processed_tab(self):
-        ''' Create Processed tab '''
-        self.processed_data_tab.clear()
-        self.processed_data_tab.append(self.analysis_dropdown)
-        self.processed_data_tab.append(self.processed_data_table)
+    def update_methods_tab(self):
+        ''' Create Methods tab '''
+        self.methods_tab.clear()
+        self.methods_tab.append(self.analysis_dropdown)
+        self.methods_tab.append(self.processed_data_table)
 
     def create_data_table(self):
         ''' Create the data table using a Tabulator widget '''
@@ -174,7 +174,7 @@ class ClearView:
         ''' Create the processed data table using a Tabulator widget '''
 
         # Set the default processed data table
-        self.df_processed = self.methods['Hourly Mean']()
+        self.df_processed = self.time_series_methods['Hourly Mean'](self.df)
 
         # Specify column formatters
         text_align = { }
@@ -208,8 +208,7 @@ class ClearView:
     # Define a callback function to update the processed data table when the analysis dropdown value changes
     def update_processed_data_table(self, event):
         selected_analysis = self.analysis_dropdown.value
-        self.df_processed = self.methods[selected_analysis]()
-        # self.processed_data_table.object = methods[selected_analysis]()
+        self.df_processed = self.time_series_methods[selected_analysis](self.df)
         self.processed_data_table.value = self.df_processed
 
     def parse_year_csv(self, w2_control_file_path):
@@ -374,8 +373,8 @@ class ClearView:
                 # Create plot (create this before the dropdown lists)
                 self.create_plot()
 
-                # Create methods
-                self.set_methods()
+                # Create time series methods
+                self.set_time_series_methods()
 
                 # Create dropdown lists (create these before creating the plot panel)
                 self.create_data_dropdown_widget()
@@ -391,50 +390,49 @@ class ClearView:
                 self.update_data_tab()
                 self.update_stats_tab()
                 self.update_plot_tab()
-                self.update_processed_tab()
+                self.update_methods_tab()
 
             except IOError:
                 # self.show_warning_dialog(f'An error occurred while opening {self.filename}')
                 print(f'An error occurred while opening {self.filename}')
                 return
 
-    def set_methods(self):
-        # Specify the analysis and processing methods
-        self.methods = OrderedDict()
+    def set_time_series_methods(self):
+        # Specify the time series math and stats methods
+        self.time_series_methods = OrderedDict()
         # Compute hourly mean, interpolating to fill missing values
-        self.methods['Hourly Mean'] = lambda: self.df.resample('H').mean().interpolate()
-        self.methods['Hourly Max'] = lambda: self.df.resample('H').max().interpolate()
-        self.methods['Hourly Min'] = lambda: self.df.resample('H').min().interpolate()
-        self.methods['Daily Mean'] = lambda: self.df.resample('D').mean().interpolate()
-        self.methods['Daily Max'] = lambda: self.df.resample('D').max().interpolate()
-        self.methods['Daily Min'] = lambda: self.df.resample('D').min().interpolate()
-        self.methods['Weekly Mean'] = lambda: self.df.resample('W').mean().interpolate()
-        self.methods['Weekly Max'] = lambda: self.df.resample('W').max().interpolate()
-        self.methods['Weekly Min'] = lambda: self.df.resample('W').min().interpolate()
-        self.methods['Monthly Mean'] = lambda: self.df.resample('M').mean().interpolate()
-        self.methods['Monthly Max'] = lambda: self.df.resample('M').max().interpolate()
-        self.methods['Monthly Min'] = lambda: self.df.resample('M').min().interpolate()
-        self.methods['Annual Mean'] = lambda: self.df.resample('Y').mean().interpolate()
-        self.methods['Annual Max'] = lambda: self.df.resample('Y').max().interpolate()
-        self.methods['Annual Min'] = lambda: self.df.resample('Y').min().interpolate()
-        self.methods['Decadal Mean'] = lambda: self.df.resample('10Y').mean().interpolate()
-        self.methods['Decadal Max'] = lambda: self.df.resample('10Y').max().interpolate()
-        self.methods['Decadal Min'] = lambda: self.df.resample('10Y').min().interpolate()
-        self.methods['Cumulative Sum'] = lambda: self.df.cumsum()
-        self.methods['Cumulative Max'] = lambda: self.df.cummax()
-        self.methods['Cumulative Min'] = lambda: self.df.cummin()
+        self.time_series_methods['Hourly Mean']    = lambda df: df.resample('H').mean().interpolate()
+        self.time_series_methods['Hourly Max']     = lambda df: df.resample('H').max().interpolate()
+        self.time_series_methods['Hourly Min']     = lambda df: df.resample('H').min().interpolate()
+        self.time_series_methods['Daily Mean']     = lambda df: df.resample('D').mean().interpolate()
+        self.time_series_methods['Daily Max']      = lambda df: df.resample('D').max().interpolate()
+        self.time_series_methods['Daily Min']      = lambda df: df.resample('D').min().interpolate()
+        self.time_series_methods['Weekly Mean']    = lambda df: df.resample('W').mean().interpolate()
+        self.time_series_methods['Weekly Max']     = lambda df: df.resample('W').max().interpolate()
+        self.time_series_methods['Weekly Min']     = lambda df: df.resample('W').min().interpolate()
+        self.time_series_methods['Monthly Mean']   = lambda df: df.resample('M').mean().interpolate()
+        self.time_series_methods['Monthly Max']    = lambda df: df.resample('M').max().interpolate()
+        self.time_series_methods['Monthly Min']    = lambda df: df.resample('M').min().interpolate()
+        self.time_series_methods['Annual Mean']    = lambda df: df.resample('Y').mean().interpolate()
+        self.time_series_methods['Annual Max']     = lambda df: df.resample('Y').max().interpolate()
+        self.time_series_methods['Annual Min']     = lambda df: df.resample('Y').min().interpolate()
+        self.time_series_methods['Decadal Mean']   = lambda df: df.resample('10Y').mean().interpolate()
+        self.time_series_methods['Decadal Max']    = lambda df: df.resample('10Y').max().interpolate()
+        self.time_series_methods['Decadal Min']    = lambda df: df.resample('10Y').min().interpolate()
+        self.time_series_methods['Cumulative Sum'] = lambda df: df.cumsum()
+        self.time_series_methods['Cumulative Max'] = lambda df: df.cummax()
+        self.time_series_methods['Cumulative Min'] = lambda df: df.cummin()
         # Compute moving averages
-        # self.methods['7-Days Moving Average'] = lambda: self.df.rolling(window=7).mean()
-        # self.methods['24-Hour Moving Average'] = lambda: self.df.rolling(window=24).mean()
+        # self.time_series_methods['7-Days Moving Average']  = lambda df: df.rolling(window=7).mean()
+        # self.time_series_methods['24-Hour Moving Average'] = lambda df: df.rolling(window=24).mean()
         # Compute exponentially weighted moving averages
-        # self.methods['24-hour EWMA'] = lambda: self.df.ewm(span=24).mean()
-        # self.methods['7-day EWMA'] = lambda: self.df.ewm(span=7).mean()
+        # self.time_series_methods['24-hour EWMA'] = lambda df: df.ewm(span=24).mean()
+        # self.time_series_methods['7-day EWMA']   = lambda df: df.ewm(span=7).mean()
 
         # # Compute exponential smoothing 
-        # model = ExponentialSmoothing(self.df, trend='add', seasonal=None)
+        # model = ExponentialSmoothing(df, trend='add', seasonal=None)
         # result = model.fit()
         # df['Exponential Smoothing'] = result.fittedvalues
-
 
     def create_empty_tab(self):
         # empty_data = hv.Curve([])
@@ -455,7 +453,7 @@ class ClearView:
         self.data_tab = self.create_empty_tab()
         self.stats_tab = self.create_empty_tab()
         self.plot_tab = self.create_empty_tab()
-        self.processed_data_tab = self.create_empty_tab()
+        self.methods_tab = self.create_empty_tab()
 
     def create_sidebar(self):
         # Alternative name: Prismatica
@@ -506,7 +504,7 @@ class ClearView:
             ('Data', self.data_tab),
             ('Stats', self.stats_tab),
             ('Plot', self.plot_tab),
-            ('Processed', self.processed_data_tab),
+            ('Methods', self.methods_tab),
             tabs_location='above',
             # background='blue',
             # sizing_mode='stretch_both',
