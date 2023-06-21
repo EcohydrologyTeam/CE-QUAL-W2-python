@@ -434,6 +434,72 @@ class ClearView:
         # result = model.fit()
         # df['Exponential Smoothing'] = result.fittedvalues
 
+    def save_to_sqlite(self, df: pd.DataFrame, database_path: str):
+        """
+        Saves the data to an SQLite database.
+
+        This method saves the data stored in the `data` attribute to an SQLite database file specified by the `data_database_path` attribute.
+        The table name is set as the `filename` attribute.
+        If the database file already exists, the table with the same name is replaced.
+        The data is saved with the index included as a column.
+
+        Note:
+            - The `data` attribute must be set with the data before calling this method.
+            - The `data_database_path` attribute must be properly set with the path to the SQLite database file.
+        """
+        self.table_name, _ = os.path.splitext(self.filename)
+        con = sqlite3.connect(database_path)
+        df.to_sql(self.table_name, con, if_exists="replace", index=True)
+        con.close()
+
+    def save_data(self):
+        """
+        Saves the data to a selected file as an SQLite database.
+
+        This method allows the user to select a file path to save the data as an SQLite database.
+        If a valid file path is selected and the `data` attribute is not `None`, the following steps are performed:
+        1. The `data_database_path` attribute is set to the selected file path.
+        2. The `save_to_sqlite` method is called to save the data to the SQLite database file.
+        3. The statistics table is updated after saving the data.
+
+        Note:
+            - The `data` attribute must be set with the data before calling this method.
+        """
+        default_filename = self.file_path + '.db'
+        options = qtw.QFileDialog.Options()
+        # options |= qtw.QFileDialog.DontUseNativeDialog
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+                                                           "SQLite Files (*.db);; All Files (*)", options=options)
+        if not returned_path:
+            return
+
+        self.data_database_path = returned_path
+
+        if self.data_database_path and self.df is not None:
+            self.save_to_sqlite(self.data, self.data_database_path)
+
+    def save_stats(self):
+        """
+        Saves statistics to an SQLite database file.
+
+        Prompts the user to select a file path for saving the statistics and
+        saves the statistics to the chosen file path.
+
+        :return: None
+        """
+
+        default_filename = self.file_path + '_stats.db'
+        options = qtw.QFileDialog.Options()
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+                                                        "SQLite Files (*.db);; All Files (*)", options=options)
+        if not returned_path:
+            return
+
+        self.stats_database_path = returned_path
+
+        if self.stats_database_path and self.df_stats is not None:
+            self.save_to_sqlite(self.stats, self.stats_database_path)
+
     def create_empty_tab(self):
         # empty_data = hv.Curve([])
         empty_data = ''
