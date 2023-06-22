@@ -12,6 +12,8 @@ from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
 from tkinter import filedialog
 import threading
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from openpyxl import Workbook
+from openpyxl.styles import Border, Side
 import cequalw2 as w2
 
 # import PyQt5.QtCore as qtc
@@ -51,6 +53,46 @@ css = """
 """
 
 pn.extension('tabulator', 'ipywidgets', raw_css=[css])
+
+
+def write_dataframe_to_excel(df, filename, index=True, sheet_name='Sheet1'):
+    # Create an Excel writer using openpyxl
+    writer = pd.ExcelWriter(filename, engine='openpyxl')
+
+    # Write the DataFrame to the Excel file
+    df.to_excel(writer, index=index, sheet_name=sheet_name)
+
+    # Access the workbook and sheet
+    workbook = writer.book
+    worksheet = writer.sheets[sheet_name]
+
+    # Remove the default borders around cells
+    no_border = Border()
+
+    # Remove borders for row headers
+    for cell in worksheet['1']:
+        cell.border = no_border
+
+    # Remove borders for column headers
+    for cell in worksheet['A']:
+        cell.border = no_border
+
+    # Auto-size column widths
+    for column in worksheet.columns:
+        max_length = 0
+        column = [cell for cell in column]
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        worksheet.column_dimensions[column[0].column_letter].width = adjusted_width
+
+    # Save the workbook
+    writer.save()
+
 
 class ClearView:
     def __init__(self):
@@ -132,8 +174,8 @@ class ClearView:
         self.bokeh_formatters = {col: self.float_format for col in self.float_cols}
 
         # Specify column formatters
-        text_align = { }
-        titles = { }
+        text_align = {}
+        titles = {}
         header_align = {col: 'center' for col in self.df.columns}
 
         # Create the data table using a Tabulator widget
@@ -157,8 +199,8 @@ class ClearView:
         self.df_stats.index.name = 'Statistic'
 
         # Specify column formatters
-        text_align = { }
-        titles = { }
+        text_align = {}
+        titles = {}
         header_align = {col: 'center' for col in self.df_stats.columns}
 
         # Create the stats table using a Tabulator widget
@@ -182,8 +224,8 @@ class ClearView:
         self.df_processed = self.time_series_methods['Hourly Mean'](self.df)
 
         # Specify column formatters
-        text_align = { }
-        titles = { }
+        text_align = {}
+        titles = {}
         header_align = {col: 'center' for col in self.df_processed.columns}
 
         # Create the processed data table using a Tabulator widget
@@ -341,7 +383,7 @@ class ClearView:
         file_dialog = qtw.QFileDialog(self.open_dialog_app.activeModalWidget())
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
         file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)',
-            'OPT Files (*.opt)', 'Excel Files (*.xlsx *.xls)', 'SQLite Files (*.db)'])
+                                    'OPT Files (*.opt)', 'Excel Files (*.xlsx *.xls)', 'SQLite Files (*.db)'])
         if file_dialog.exec_():
             self.file_path = file_dialog.selectedFiles()[0]
             self.directory, self.filename = os.path.split(self.file_path)
@@ -411,24 +453,24 @@ class ClearView:
         # Specify the time series math and stats methods
         self.time_series_methods = OrderedDict()
         # Compute hourly mean, interpolating to fill missing values
-        self.time_series_methods['Hourly Mean']    = lambda df: df.resample('H').mean().interpolate()
-        self.time_series_methods['Hourly Max']     = lambda df: df.resample('H').max().interpolate()
-        self.time_series_methods['Hourly Min']     = lambda df: df.resample('H').min().interpolate()
-        self.time_series_methods['Daily Mean']     = lambda df: df.resample('D').mean().interpolate()
-        self.time_series_methods['Daily Max']      = lambda df: df.resample('D').max().interpolate()
-        self.time_series_methods['Daily Min']      = lambda df: df.resample('D').min().interpolate()
-        self.time_series_methods['Weekly Mean']    = lambda df: df.resample('W').mean().interpolate()
-        self.time_series_methods['Weekly Max']     = lambda df: df.resample('W').max().interpolate()
-        self.time_series_methods['Weekly Min']     = lambda df: df.resample('W').min().interpolate()
-        self.time_series_methods['Monthly Mean']   = lambda df: df.resample('M').mean().interpolate()
-        self.time_series_methods['Monthly Max']    = lambda df: df.resample('M').max().interpolate()
-        self.time_series_methods['Monthly Min']    = lambda df: df.resample('M').min().interpolate()
-        self.time_series_methods['Annual Mean']    = lambda df: df.resample('Y').mean().interpolate()
-        self.time_series_methods['Annual Max']     = lambda df: df.resample('Y').max().interpolate()
-        self.time_series_methods['Annual Min']     = lambda df: df.resample('Y').min().interpolate()
-        self.time_series_methods['Decadal Mean']   = lambda df: df.resample('10Y').mean().interpolate()
-        self.time_series_methods['Decadal Max']    = lambda df: df.resample('10Y').max().interpolate()
-        self.time_series_methods['Decadal Min']    = lambda df: df.resample('10Y').min().interpolate()
+        self.time_series_methods['Hourly Mean'] = lambda df: df.resample('H').mean().interpolate()
+        self.time_series_methods['Hourly Max'] = lambda df: df.resample('H').max().interpolate()
+        self.time_series_methods['Hourly Min'] = lambda df: df.resample('H').min().interpolate()
+        self.time_series_methods['Daily Mean'] = lambda df: df.resample('D').mean().interpolate()
+        self.time_series_methods['Daily Max'] = lambda df: df.resample('D').max().interpolate()
+        self.time_series_methods['Daily Min'] = lambda df: df.resample('D').min().interpolate()
+        self.time_series_methods['Weekly Mean'] = lambda df: df.resample('W').mean().interpolate()
+        self.time_series_methods['Weekly Max'] = lambda df: df.resample('W').max().interpolate()
+        self.time_series_methods['Weekly Min'] = lambda df: df.resample('W').min().interpolate()
+        self.time_series_methods['Monthly Mean'] = lambda df: df.resample('M').mean().interpolate()
+        self.time_series_methods['Monthly Max'] = lambda df: df.resample('M').max().interpolate()
+        self.time_series_methods['Monthly Min'] = lambda df: df.resample('M').min().interpolate()
+        self.time_series_methods['Annual Mean'] = lambda df: df.resample('Y').mean().interpolate()
+        self.time_series_methods['Annual Max'] = lambda df: df.resample('Y').max().interpolate()
+        self.time_series_methods['Annual Min'] = lambda df: df.resample('Y').min().interpolate()
+        self.time_series_methods['Decadal Mean'] = lambda df: df.resample('10Y').mean().interpolate()
+        self.time_series_methods['Decadal Max'] = lambda df: df.resample('10Y').max().interpolate()
+        self.time_series_methods['Decadal Min'] = lambda df: df.resample('10Y').min().interpolate()
         self.time_series_methods['Cumulative Sum'] = lambda df: df.cumsum()
         self.time_series_methods['Cumulative Max'] = lambda df: df.cummax()
         self.time_series_methods['Cumulative Min'] = lambda df: df.cummin()
@@ -439,7 +481,7 @@ class ClearView:
         # self.time_series_methods['24-hour EWMA'] = lambda df: df.ewm(span=24).mean()
         # self.time_series_methods['7-day EWMA']   = lambda df: df.ewm(span=7).mean()
 
-        # # Compute exponential smoothing 
+        # # Compute exponential smoothing
         # model = ExponentialSmoothing(df, trend='add', seasonal=None)
         # result = model.fit()
         # df['Exponential Smoothing'] = result.fittedvalues
@@ -475,24 +517,23 @@ class ClearView:
         Note:
             - The `data` attribute must be set with the data before calling this method.
         """
-        default_filename = self.file_path + '.db'
+        default_filename = self.file_path + '.xlsx'
         options = qtw.QFileDialog.Options()
         # options |= qtw.QFileDialog.DontUseNativeDialog
-        returned_path, _ = qtw.QFileDialog.getSaveFileName(self.save_original_data_dialog_app.activeModalWidget(),
-                                                           'Save As', default_filename,
-                                                           'SQLite Files (*.db);; Excel Files (*.xlsx)', options=options)
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(
+            self.save_original_data_dialog_app.activeModalWidget(),
+            'Save As', default_filename, 'Excel Files (*.xlsx);; SQLite Files (*.db)', options=options)
         if not returned_path:
             return
 
         self.original_data_path = returned_path
 
         if self.original_data_path and self.df is not None:
-            self.save_to_sqlite(self.df, self.original_data_path)
-        if self.original_data_path and self.df is not None:
+            if self.original_data_path.endswith('.xlsx'):
+                # self.df.to_excel(self.original_data_path, index=True)
+                write_dataframe_to_excel(self.df, self.original_data_path, index=True, sheet_name='Original Data')
             if self.original_data_path.endswith('.db'):
                 self.save_to_sqlite(self.df, self.original_data_path)
-            if self.original_data_path.endswith('.xlsx'):
-                self.df.to_excel(self.original_data_path, index=True)
 
     def save_processed_data(self, event):
         """
@@ -507,22 +548,23 @@ class ClearView:
         Note:
             - The `data` attribute must be set with the data before calling this method.
         """
-        default_filename = self.file_path + '.db'
+        default_filename = self.file_path + '_processed.xlsx'
         options = qtw.QFileDialog.Options()
         # options |= qtw.QFileDialog.DontUseNativeDialog
-        returned_path, _ = qtw.QFileDialog.getSaveFileName(self.save_processed_data_dialog_app.activeModalWidget(),
-                                                           'Save As', default_filename,
-                                                           'SQLite Files (*.db);; Excel Files (*.xlsx)', options=options)
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(
+            self.save_processed_data_dialog_app.activeModalWidget(),
+            'Save As', default_filename, 'Excel Files (*.xlsx);; SQLite Files (*.db)', options=options)
         if not returned_path:
             return
 
         self.processed_data_path = returned_path
 
         if self.processed_data_path and self.df_processed is not None:
+            if self.processed_data_path.endswith('.xlsx'):
+                # self.df_processed.to_excel(self.processed_data_path, index=True)
+                write_dataframe_to_excel(self.df_processed, self.processed_data_path, index=True, sheet_name='Processed Data')
             if self.processed_data_path.endswith('.db'):
                 self.save_to_sqlite(self.df_processed, self.processed_data_path)
-            if self.processed_data_path.endswith('.xlsx'):
-                self.df_processed.to_excel(self.processed_data_path, index=True)
 
     def save_stats(self, event):
         """
@@ -534,21 +576,21 @@ class ClearView:
         :return: None
         """
 
-        default_filename = self.file_path + '_stats.db'
+        default_filename = self.file_path + '_stats.xlsx'
         options = qtw.QFileDialog.Options()
-        returned_path, _ = qtw.QFileDialog.getSaveFileName(self.save_stats_dialog_app.activeModalWidget(),
-                                                        'Save As', default_filename,
-                                                        'SQLite Files (*.db);; Excel Files (*.xlsx)', options=options)
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self.save_stats_dialog_app.activeModalWidget(
+        ), 'Save As', default_filename, 'Excel Files (*.xlsx);; SQLite Files (*.db)', options=options)
         if not returned_path:
             return
 
         self.stats_data_path = returned_path
 
         if self.stats_data_path and self.df_stats is not None:
+            if self.stats_data_path.endswith('.xlsx'):
+                # self.df_stats.to_excel(self.stats_data_path, index=True)
+                write_dataframe_to_excel(self.df_stats, self.stats_data_path, index=True, sheet_name='Summary Stats')
             if self.stats_data_path.endswith('.db'):
                 self.save_to_sqlite(self.df_stats, self.stats_data_path)
-            if self.stats_data_path.endswith('.xlsx'):
-                self.df_stats.to_excel(self.stats_data_path, index=True)
 
     def create_empty_tab(self):
         # empty_data = hv.Curve([])
