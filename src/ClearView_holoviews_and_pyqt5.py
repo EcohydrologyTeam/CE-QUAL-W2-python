@@ -328,7 +328,7 @@ class ClearView:
 
     def browse_file(self, event):
         # Open a PyQt5 file dialog
-        file_dialog = qtw.QFileDialog(self.dialog_app.activeModalWidget())
+        file_dialog = qtw.QFileDialog(self.open_dialog_app.activeModalWidget())
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
         file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)',
             'OPT Files (*.opt)', 'Excel Files (*.xlsx *.xls)', 'SQLite Files (*.db)'])
@@ -452,7 +452,7 @@ class ClearView:
         df.to_sql(self.table_name, con, if_exists="replace", index=True)
         con.close()
 
-    def save_data(self):
+    def save_data(self, event):
         """
         Saves the data to a selected file as an SQLite database.
 
@@ -468,7 +468,7 @@ class ClearView:
         default_filename = self.file_path + '.db'
         options = qtw.QFileDialog.Options()
         # options |= qtw.QFileDialog.DontUseNativeDialog
-        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self.save_original_data_dialog_app, "Save As", default_filename,
                                                            "SQLite Files (*.db);; All Files (*)", options=options)
         if not returned_path:
             return
@@ -476,9 +476,35 @@ class ClearView:
         self.data_database_path = returned_path
 
         if self.data_database_path and self.df is not None:
-            self.save_to_sqlite(self.data, self.data_database_path)
+            self.save_to_sqlite(self.df, self.data_database_path)
 
-    def save_stats(self):
+    def save_processed_data(self, event):
+        """
+        Saves the processed data to a selected file as an SQLite database.
+
+        This method allows the user to select a file path to save the data as an SQLite database.
+        If a valid file path is selected and the `data` attribute is not `None`, the following steps are performed:
+        1. The `data_database_path` attribute is set to the selected file path.
+        2. The `save_to_sqlite` method is called to save the data to the SQLite database file.
+        3. The statistics table is updated after saving the data.
+
+        Note:
+            - The `data` attribute must be set with the data before calling this method.
+        """
+        default_filename = self.file_path + '.db'
+        options = qtw.QFileDialog.Options()
+        # options |= qtw.QFileDialog.DontUseNativeDialog
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self.save_processed_data_dialog_app, "Save As", default_filename,
+                                                           "SQLite Files (*.db);; All Files (*)", options=options)
+        if not returned_path:
+            return
+
+        self.processed_data_database_path = returned_path
+
+        if self.data_database_path and self.df_processed is not None:
+            self.save_to_sqlite(self.df_processed, self.processed_data_database_path)
+
+    def save_stats(self, event):
         """
         Saves statistics to an SQLite database file.
 
@@ -490,7 +516,7 @@ class ClearView:
 
         default_filename = self.file_path + '_stats.db'
         options = qtw.QFileDialog.Options()
-        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
+        returned_path, _ = qtw.QFileDialog.getSaveFileName(self.save_stats_dialog_app, "Save As", default_filename,
                                                         "SQLite Files (*.db);; All Files (*)", options=options)
         if not returned_path:
             return
@@ -498,7 +524,7 @@ class ClearView:
         self.stats_database_path = returned_path
 
         if self.stats_database_path and self.df_stats is not None:
-            self.save_to_sqlite(self.stats, self.stats_database_path)
+            self.save_to_sqlite(self.df_stats, self.stats_database_path)
 
     def create_empty_tab(self):
         # empty_data = hv.Curve([])
@@ -548,6 +574,12 @@ class ClearView:
         # Create a button to trigger file selection
         self.file_button = pn.widgets.Button(name="Browse", button_type="primary")
         self.file_button.on_click(self.browse_file)
+        self.save_original_data_button = pn.widgets.Button(name="Save Original Data", button_type="primary")
+        self.save_original_data_button.on_click(self.save_data)
+        self.save_stats_button = pn.widgets.Button(name="Save Stats", button_type="primary")
+        self.save_stats_button.on_click(self.save_stats)
+        self.save_processed_data_button = pn.widgets.Button(name="Save Processed Data", button_type="primary")
+        self.save_processed_data_button.on_click(self.save_processed_data)
 
         # Create sidebar
         self.sidebar = pn.layout.WidgetBox(
@@ -556,6 +588,9 @@ class ClearView:
                 margin=(0, 10)
             ),
             self.file_button,
+            # self.save_original_data_button,
+            # self.save_stats_button,
+            # self.save_processed_data_button,
             max_width=350,
             height=1000,
             sizing_mode='stretch_width',
@@ -582,7 +617,10 @@ class ClearView:
         self.main = pn.Row(self.sidebar, self.tabs)
 
         # Create a PyQt5 application
-        self.dialog_app = qtw.QApplication([])
+        self.open_dialog_app = qtw.QApplication([])
+        self.save_original_data_dialog_app = qtw.QApplication([])
+        self.save_stats_dialog_app = qtw.QApplication([])
+        self.save_processed_data_dialog_app = qtw.QApplication([])
 
         # Serve the app
         self.main.show()
