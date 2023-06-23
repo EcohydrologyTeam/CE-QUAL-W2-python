@@ -130,30 +130,31 @@ class ClearView:
         ''' Create a dropdown widget for selecting analysis and processing methods '''
         self.analysis_dropdown = pn.widgets.Select(options=list(self.time_series_methods.keys()), width=200)
 
-    def create_theme_dropdown_widget(self):
-        ''' Create a dropdown widget for selecting the theme '''
-        self.theme_dropdown = pn.widgets.Select(options=self.bokeh_themes, width=200)
-
     def create_plot(self):
         ''' Create a holoviews plot of the data '''
         hv.renderer('bokeh').theme = self.selected_theme
         self.curves, self.tooltips = w2.hv_plot(self.df, width=self.app_width, height=self.app_height)
 
-    def recreate_plot(self, event):
-        ''' Create a holoviews plot of the data '''
-        # Get and set the selected theme
-        self.selected_theme = self.theme_dropdown.value
-        hv.renderer('bokeh').theme = self.selected_theme
-        # Create a new plot
-        self.curves, self.tooltips = w2.hv_plot(self.df, width=self.app_width, height=self.app_height)
-        # Get the currently selected column
-        selected_column = self.data_dropdown.value
-        index = self.df.columns.tolist().index(self.data_dropdown.value)
-        # Update the plot
-        curve = self.curves[selected_column]
-        tip = self.tooltips[selected_column]
-        curve.opts(tools=[tip])
-        self.plot.object = curve
+    # def create_theme_dropdown_widget(self):
+    #     ''' Create a dropdown widget for selecting the theme '''
+    #     self.theme_dropdown = pn.widgets.Select(options=self.bokeh_themes, width=200)
+
+    # def recreate_plot(self, event):
+    #     ''' Create a holoviews plot of the data '''
+    #     # Get and set the selected theme
+    #     self.selected_theme = self.theme_dropdown.value
+    #     hv.renderer('bokeh').theme = self.selected_theme
+    #     # Create a new plot
+    #     self.curves, self.tooltips = w2.hv_plot(self.df, width=self.app_width, height=self.app_height)
+    #     # Get the currently selected column
+    #     selected_column = self.data_dropdown.value
+    #     index = self.df.columns.tolist().index(self.data_dropdown.value)
+    #     # Update the plot
+    #     curve = self.curves[selected_column]
+    #     tip = self.tooltips[selected_column]
+    #     curve.opts(tools=[tip])
+    #     print('Setting plot object in recreate')
+    #     self.plot.object = curve
 
     def create_plot_widget(self):
         ''' Create plot widget '''
@@ -165,7 +166,7 @@ class ClearView:
         self.plot = pn.pane.HoloViews(self.curves[selected_column])
         tip = self.tooltips[selected_column]
         self.plot.object.opts(tools=[tip])  # Add the HoverTool to the plot
-        self.theme_dropdown.param.watch(self.recreate_plot, 'value')
+        # self.theme_dropdown.param.watch(self.recreate_plot, 'value')
         self.data_dropdown.param.watch(self.update_plot, 'value')
         self.analysis_dropdown.param.watch(self.update_processed_data_table, 'value')
 
@@ -185,7 +186,7 @@ class ClearView:
         ''' Create the Plot tab '''
         self.plot_tab.clear()
         self.plot_tab.append(self.data_dropdown)
-        self.plot_tab.append(self.theme_dropdown)
+        # self.plot_tab.append(self.theme_dropdown)
         self.plot_tab.append(self.plot)
 
     def update_methods_tab(self):
@@ -456,7 +457,7 @@ class ClearView:
                     self.df = w2.read_excel(self.file_path)
 
                 # Create theme dropdown list
-                self.create_theme_dropdown_widget()
+                # self.create_theme_dropdown_widget()
 
                 # Create plot (create this before the dropdown lists)
                 self.create_plot()
