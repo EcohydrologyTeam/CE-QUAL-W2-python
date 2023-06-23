@@ -1,29 +1,27 @@
-# %% Import packages
-import os
-import glob
+# Built-in modules
 import csv
+import glob
+import os
+import sqlite3
+import threading
+
+# Third-party modules
+from collections import OrderedDict
+from tkinter import filedialog
+
+# Third-party modules
 import pandas as pd
 import seaborn as sns
 import holoviews as hv
 import panel as pn
-import sqlite3
-from collections import OrderedDict
 from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
-from tkinter import filedialog
-import threading
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from openpyxl import Workbook
 from openpyxl.styles import Border, Side
+import PyQt5.QtWidgets as qtw
 import cequalw2 as w2
 
-# import PyQt5.QtCore as qtc
-import PyQt5.QtWidgets as qtw
-# import PyQt5.QtGui as qtg
-
 hv.extension('bokeh')
-
-# Set the desired theme
-hv.renderer('bokeh').theme = 'night_sky'
 
 css = """
 .bk.bk-tab.bk-active {
@@ -112,24 +110,53 @@ class ClearView:
         # Set theme
         pn.widgets.Tabulator.theme = 'default'
 
+        # Bokeh themes for plots
+        self.bokeh_themes = ['default', 'caliber', 'dark_minimal', 'light_minimal', 'night_sky', 'contrast']
+
+        # Set the selected theme
+        self.selected_theme = 'night_sky'
+
+        # Set the desired theme
+        hv.renderer('bokeh').theme = self.selected_theme
+
         # Specify special column formatting
         self.float_format = NumberFormatter(format='0.00', text_align='right')
 
     def create_data_dropdown_widget(self):
-        # Create a dropdown widget for selecting data columns
+        ''' Create a dropdown widget for selecting data columns '''
         self.data_dropdown = pn.widgets.Select(options=list(self.curves.keys()), width=200)
 
     def create_analysis_dropdown_widget(self):
-        # Create a dropdown widget for selecting analysis and processing methods
+        ''' Create a dropdown widget for selecting analysis and processing methods '''
         self.analysis_dropdown = pn.widgets.Select(options=list(self.time_series_methods.keys()), width=200)
 
+    def create_theme_dropdown_widget(self):
+        ''' Create a dropdown widget for selecting the theme '''
+        self.theme_dropdown = pn.widgets.Select(options=self.bokeh_themes, width=200)
+
     def create_plot(self):
-        # Create a holoviews plot of the data. Don't use the cequalw2 module to do this. Use holoviews.
+        ''' Create a holoviews plot of the data '''
+        hv.renderer('bokeh').theme = self.selected_theme
         self.curves, self.tooltips = w2.hv_plot(self.df, width=self.app_width, height=self.app_height)
 
-    def create_plot_widget(self):
-        # Create plot widget
+    def recreate_plot(self, event):
+        ''' Create a holoviews plot of the data '''
+        # Get and set the selected theme
+        self.selected_theme = self.theme_dropdown.value
+        hv.renderer('bokeh').theme = self.selected_theme
+        # Create a new plot
+        self.curves, self.tooltips = w2.hv_plot(self.df, width=self.app_width, height=self.app_height)
+        # Get the currently selected column
+        selected_column = self.data_dropdown.value
+        index = self.df.columns.tolist().index(self.data_dropdown.value)
+        # Update the plot
+        curve = self.curves[selected_column]
+        tip = self.tooltips[selected_column]
+        curve.opts(tools=[tip])
+        self.plot.object = curve
 
+    def create_plot_widget(self):
+        ''' Create plot widget '''
         # Get the index of the df.columns list
         index = self.df.columns.tolist().index(self.data_dropdown.value)
 
@@ -138,6 +165,7 @@ class ClearView:
         self.plot = pn.pane.HoloViews(self.curves[selected_column])
         tip = self.tooltips[selected_column]
         self.plot.object.opts(tools=[tip])  # Add the HoverTool to the plot
+        self.theme_dropdown.param.watch(self.recreate_plot, 'value')
         self.data_dropdown.param.watch(self.update_plot, 'value')
         self.analysis_dropdown.param.watch(self.update_processed_data_table, 'value')
 
@@ -157,6 +185,7 @@ class ClearView:
         ''' Create the Plot tab '''
         self.plot_tab.clear()
         self.plot_tab.append(self.data_dropdown)
+        self.plot_tab.append(self.theme_dropdown)
         self.plot_tab.append(self.plot)
 
     def update_methods_tab(self):
@@ -168,27 +197,32 @@ class ClearView:
 
     def create_data_table(self):
         ''' Create the data table using a Tabulator widget '''
-
         # Specify column formatters
         self.float_cols = self.df.columns
         self.bokeh_formatters = {col: self.float_format for col in self.float_cols}
+        header_align = {col: 'center' for col in self.df.columns}
 
         # Specify column formatters
-        text_align = {}
-        titles = {}
-        header_align = {col: 'center' for col in self.df.columns}
 
         # Create the data table using a Tabulator widget
         self.data_table = pn.widgets.Tabulator(
             self.df,
-            formatters=self.bokeh_formatters,
-            text_align=text_align,
-            frozen_columns=['Date'],
-            show_index=True,
-            titles=titles,
-            header_align=header_align,
-            width=self.app_width,
-            height=self.app_height
+            configuration={
+                'formatters': self.bokeh_formatters,
+                'frozen_columns': ['Date'],
+                'show_index': True,
+                'header_align': header_align,
+                'text_align': {},
+                'titles': {},
+                'width': self.app_width,
+                'height': self.app_height,
+                'clipboard': True,
+                'clipboardPasteAction': 'replace',
+                # 'rowHeight': 20,
+                'columnDefaults': {
+                    'headerSort': False
+                }
+            }
         )
 
     def create_stats_table(self):
@@ -244,7 +278,6 @@ class ClearView:
 
     # Define a callback function to update the plot when the data dropdown value changes
     def update_plot(self, event):
-        print('update_plot() called')
         selected_column = self.data_dropdown.value
         index = self.df.columns.tolist().index(self.data_dropdown.value)
         curve = self.curves[selected_column]
@@ -422,6 +455,9 @@ class ClearView:
                 elif FILE_TYPE == 'EXCEL':
                     self.df = w2.read_excel(self.file_path)
 
+                # Create theme dropdown list
+                self.create_theme_dropdown_widget()
+
                 # Create plot (create this before the dropdown lists)
                 self.create_plot()
 
@@ -448,6 +484,7 @@ class ClearView:
                 # self.show_warning_dialog(f'An error occurred while opening {self.filename}')
                 print(f'An error occurred while opening {self.filename}')
                 return
+        file_dialog.close()
 
     def set_time_series_methods(self):
         # Specify the time series math and stats methods
@@ -562,7 +599,8 @@ class ClearView:
         if self.processed_data_path and self.df_processed is not None:
             if self.processed_data_path.endswith('.xlsx'):
                 # self.df_processed.to_excel(self.processed_data_path, index=True)
-                write_dataframe_to_excel(self.df_processed, self.processed_data_path, index=True, sheet_name='Processed Data')
+                write_dataframe_to_excel(self.df_processed, self.processed_data_path,
+                                         index=True, sheet_name='Processed Data')
             if self.processed_data_path.endswith('.db'):
                 self.save_to_sqlite(self.df_processed, self.processed_data_path)
 
@@ -637,7 +675,7 @@ class ClearView:
         # create an html tag with dodgerblue color and bold text
         # pn.pane.HTML('<font color="dodgerblue"><b>Upload a File:</b></font>')
 
-        # Create a button to trigger file selection
+        # Create buttons to trigger file selection
         self.file_button = pn.widgets.Button(name='Browse', button_type='primary')
         self.file_button.on_click(self.browse_file)
         self.save_original_data_button = pn.widgets.Button(name='Save Original Data', button_type='primary')
@@ -646,6 +684,10 @@ class ClearView:
         self.save_stats_button.on_click(self.save_stats)
         self.save_processed_data_button = pn.widgets.Button(name='Save Processed Data', button_type='primary')
         self.save_processed_data_button.on_click(self.save_processed_data)
+
+        # Create a plot button
+        # self.plot_button = pn.widgets.Button(name='Plot', button_type='primary')
+        # self.plot_button.on_click(self.create_plot)
 
         # Create sidebar
         self.sidebar = pn.layout.WidgetBox(
