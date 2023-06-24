@@ -124,11 +124,11 @@ class ClearView:
 
     def create_data_dropdown_widget(self):
         ''' Create a dropdown widget for selecting data columns '''
-        self.data_dropdown = pn.widgets.Select(options=list(self.curves.keys()), width=200)
+        self.data_dropdown = pn.widgets.Select(options=list(self.curves.keys()), name='Variable to Plot', width=200)
 
     def create_analysis_dropdown_widget(self):
         ''' Create a dropdown widget for selecting analysis and processing methods '''
-        self.analysis_dropdown = pn.widgets.Select(options=list(self.time_series_methods.keys()), width=200)
+        self.analysis_dropdown = pn.widgets.Select(options=list(self.time_series_methods.keys()), name='Analysis Method', width=200)
 
     def create_plot(self):
         ''' Create a holoviews plot of the data '''
