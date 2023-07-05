@@ -1,0 +1,11 @@
+[general]
+name=Time Series Plugin
+description=QGIS plugin for reading and plotting time series data from Excel.
+version=1.0
+qgisMinimumVersion=3.0
+author=Your Name
+email=your@email.com
+repository=URL to your repository
+
+[depend]
+qgis>=3.0

@@ -14,12 +14,14 @@ import pandas as pd
 import seaborn as sns
 import holoviews as hv
 import panel as pn
+from bokeh.models import CheckboxGroup, TextInput
 from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from openpyxl import Workbook
 from openpyxl.styles import Border, Side
 import PyQt5.QtWidgets as qtw
 import cequalw2 as w2
+import datetime
 
 hv.extension('bokeh')
 
@@ -106,6 +108,9 @@ class ClearView:
         # Specify the app dimensions
         self.app_width = 1200
         self.app_height = 700
+
+        # Start Year for CE-QUAL-W2 plots
+        self.start_year = datetime.datetime.today().year
 
         # Set theme
         pn.widgets.Tabulator.theme = 'default'
@@ -407,13 +412,8 @@ class ClearView:
         """
         self.filename = text
 
-    def browse_file(self, event):
-        # Open a PyQt5 file dialog
-        # file_dialog = qtw.getOpenFileName(
-        #     caption='Open File',
-        #     directory=self.directory,
-        #     filter='All Files (*.*)'
-        # )
+    def open_file(self, event):
+        '''Open a file for viewing and analysis'''
         file_dialog = qtw.QFileDialog(self.open_dialog_app.activeModalWidget())
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
         file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)',
@@ -651,15 +651,10 @@ class ClearView:
         self.stats_tab = self.create_empty_tab()
         self.plot_tab = self.create_empty_tab()
         self.methods_tab = self.create_empty_tab()
+        self.about_tab = self.create_empty_tab()
 
-    def create_sidebar(self):
-        # Alternative name: Prismatica
-
-        sidebar_text = """
-        <h2><font color="dodgerblue">ClearView</font></h2>
-        <h3><font color="#7eab55">A Comprehensive Tool for Water Quality and Environmental Data Analysis</font></h3>
-        <hr>
-
+        # Text for About tab
+        about_text = """
         ClearView is a tool for viewing and analyzing water quality and environmental time series data. Designed to work with model input and output data, sensor data, and laboratory measurements, ClearView seamlessly reads and writes multiple data formats, providing compatibility and flexibility with a variety of new and legacy models, sensors, analysis tools, and workflows.
 
         The user interface of ClearView is designed with simplicity and usability in mind. Its plotting component allows you to generate informative plots, enabling the identification of trends, patterns, and anomalies within your time series data. ClearView provides a tabular display, facilitating easy access and interpretation. ClearView's summary statistics provides a concise summary of your data. This feature allows you to evaluate key statistical measures, facilitating data-driven analysis and decision-making.
@@ -670,7 +665,35 @@ class ClearView:
 
         <hr>
 
-        <h4>Open a File:</h4>
+        <b>Author:</b>
+
+        Todd E. Steissberg, PhD, PE<br>
+        Ecohydrology Team<br>
+        Environmental Laboratory<br>
+        U.S. Army Engineer Research and Development Center (ERDC)<br>
+        Email: Todd.E.Steissberg@usace.army.mil
+
+        <b>Version:</b> 1.0
+
+        <b>Date:</b> June 30, 2023
+        """
+
+        self.about_tab.append(about_text)
+        
+    def update_date_system(self, event):
+        '''Enable/disable the text input field based on dropdown selection'''
+        if self.date_system_dropdown.value == 'Day of Year':
+            self.start_year_input.disabled = False
+            self.date_system = 'Day of Year'
+        elif self.date_system_dropdown.value == 'Standard Calendar':
+            self.start_year_input.disabled = True
+            self.date_system = 'Standard Calendar'
+
+    def create_sidebar(self):
+        sidebar_text = """
+        <h2><font color="dodgerblue">ClearView</font>
+        <h3><font color="#7eab55">Environmental Visualization & Analysis</font></h3>
+        <hr>
         """
 
         # create an html tag with dodgerblue color and bold text
@@ -678,7 +701,7 @@ class ClearView:
 
         # Create buttons to trigger file selection
         self.file_button = pn.widgets.Button(name='Browse', button_type='primary')
-        self.file_button.on_click(self.browse_file)
+        self.file_button.on_click(self.open_file)
         self.save_original_data_button = pn.widgets.Button(name='Save Original Data', button_type='primary')
         self.save_original_data_button.on_click(self.save_data)
         self.save_stats_button = pn.widgets.Button(name='Save Stats', button_type='primary')
@@ -686,9 +709,30 @@ class ClearView:
         self.save_processed_data_button = pn.widgets.Button(name='Save Processed Data', button_type='primary')
         self.save_processed_data_button.on_click(self.save_processed_data)
 
-        # Create a plot button
-        # self.plot_button = pn.widgets.Button(name='Plot', button_type='primary')
-        # self.plot_button.on_click(self.create_plot)
+        self.w2_find_start_year = CheckboxGroup(labels=['Use W2 control file to set Start Year'], active=[0], width=100)
+        self.date_system_dropdown = pn.widgets.Select(options=['Day of Year', 'Standard Calendar'], name='Date System', width=200)
+        self.start_year_input = TextInput(value=str(self.start_year), title='Start Year', disabled=False)
+        self.date_system_dropdown.param.watch(self.update_date_system, 'value')
+
+        # Create HoloViews Div elements for the text labels
+        w2_find_start_year_label = "<span style='color: black; font-size: 14px; font-weight: normal'>CE-QUAL-W2 Options:</span>"
+        browse_button_label = "<span style='color: black; font-size: 14px; font-weight: normal'>Open a File:</span>"
+
+        # Create two sub-panels for the sidebar
+        subpanel1 = pn.layout.WidgetBox(
+            w2_find_start_year_label,
+            self.start_year_input,
+            self.w2_find_start_year,
+            sizing_mode='stretch_width',
+            max_width=300,
+        )
+
+        subpanel2 = pn.layout.WidgetBox(
+            browse_button_label,
+            self.file_button,
+            sizing_mode='stretch_width',
+            max_width=300,
+        )
 
         # Create sidebar
         self.sidebar = pn.layout.WidgetBox(
@@ -696,8 +740,11 @@ class ClearView:
                 sidebar_text,
                 margin=(0, 10)
             ),
-            self.file_button,
-            max_width=350,
+            self.date_system_dropdown,
+            subpanel1,
+            "",
+            subpanel2,
+            max_width=320,
             height=1000,
             sizing_mode='stretch_width',
             scroll=True
@@ -712,6 +759,7 @@ class ClearView:
             ('Stats', self.stats_tab),
             ('Plot', self.plot_tab),
             ('Methods', self.methods_tab),
+            ('About', self.about_tab),
             tabs_location='above',
             # background='blue',
             # sizing_mode='stretch_both',

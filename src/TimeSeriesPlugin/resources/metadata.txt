@@ -1,0 +1,8 @@
+[general]
+name=Time Series Plugin
+description=QGIS plugin for reading and plotting time series data from Excel.
+version=1.0
+
+[qgis_plugin]
+type=python
+module=timeseries_plugin.timeseries_plugin:TimeSeriesPlugin
