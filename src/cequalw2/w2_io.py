@@ -380,7 +380,10 @@ def read_excel(file_path: str, **kwargs):
     :return: Dataframe of the time series in the input file.
     :rtype: pd.DataFrame
     """
-    df = pd.read_excel(file_path)
+    # Get keyword arguments
+    skiprows = kwargs.get('skiprows', 3)
+
+    df = pd.read_excel(file_path, skiprows=skiprows)
     first_column_name = df.columns[0]
     df.rename(columns={f'{first_column_name}': 'Date'}, inplace=True)
     df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y %H:%M')
