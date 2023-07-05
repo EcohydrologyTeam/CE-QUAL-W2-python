@@ -101,6 +101,9 @@ class ClearView:
         self.stats_data_path = None
         self.table_name = 'data'
 
+        # Set default number of rows to skip when reading input files
+        self.skiprows = 3
+
         # Specify background color
         # self.background_color = '#f5fff5'
         self.background_color = '#fafafa'
@@ -316,7 +319,7 @@ class ClearView:
                 rows.append(row)
         for i, row in enumerate(rows):
             if row[0].upper() == 'TMSTRT':
-                self.year = int(rows[i + 1][2])
+                self.start_year = int(rows[i + 1][2])
 
     def parse_year_npt(self, w2_control_file_path):
         """
@@ -338,8 +341,8 @@ class ClearView:
             if line.startswith('TMSTR') or line.startswith('TIME'):
                 data_line = lines[i + 1]
                 year_str = data_line[24:].strip()
-                self.year = int(year_str)
-                self.start_year_input.setText(str(self.year))
+                self.start_year = int(year_str)
+                self.start_year_input.setText(str(self.start_year))
 
     def get_model_year(self):
         """
@@ -390,16 +393,16 @@ class ClearView:
         """
         Updates the year attribute based on the provided text.
 
-        This method attempts to convert the `text` parameter to an integer and assigns it to the year attribute (`self.year`).
+        This method attempts to convert the `text` parameter to an integer and assigns it to the year attribute (`self.start_year`).
         If the conversion fails due to a `ValueError`, the year attribute is set to the default year value (`self.DEFAULT_YEAR`).
 
         Args:
             text (str): The text representing the new year value.
         """
         try:
-            self.year = int(text)
+            self.start_year = int(text)
         except ValueError:
-            self.year = self.DEFAULT_YEAR
+            self.start_year = self.DEFAULT_YEAR
 
     def update_filename(self, text):
         """
@@ -446,15 +449,22 @@ class ClearView:
                 print('Only *.csv, *.npt, *.opt, *.xlsx, and *.db files are supported.')
                 return
 
-            self.get_model_year()
+            if self.w2_find_start_year_checkbox.value == True:
+                self.get_model_year()
+                self.start_year_input.value = str(self.start_year)
+            else:
+                self.start_year = int(self.start_year_input.value)
+
+            # Get current value from the skiprows field
+            self.skiprows = int(self.skiprows_input.value)
 
             try:
                 if FILE_TYPE == 'ASCII':
-                    self.df = w2.read(self.file_path, self.year, self.data_columns)
+                    self.df = w2.read(self.file_path, self.start_year, self.data_columns, skiprows=self.skiprows)
                 elif FILE_TYPE == 'SQLITE':
                     self.df = w2.read_sqlite(self.file_path)
                 elif FILE_TYPE == 'EXCEL':
-                    self.df = w2.read_excel(self.file_path)
+                    self.df = w2.read_excel(self.file_path, skiprows=0) # Note: skiprows is not used for Excel files, since it's too fragile
 
                 # Create theme dropdown list
                 # self.create_theme_dropdown_widget()
@@ -678,16 +688,26 @@ class ClearView:
         <b>Date:</b> June 30, 2023
         """
 
-        self.about_tab.append(about_text)
+        about_panel = pn.layout.WidgetBox(
+            about_text,
+            sizing_mode='stretch_width',
+            max_width=700,
+        )
+
+        self.about_tab.append(about_panel)
         
     def update_date_system(self, event):
         '''Enable/disable the text input field based on dropdown selection'''
         if self.date_system_dropdown.value == 'Day of Year':
-            self.start_year_input.disabled = False
             self.date_system = 'Day of Year'
+            self.start_year_input.disabled = False
+            self.w2_find_start_year_checkbox.disabled = False
         elif self.date_system_dropdown.value == 'Standard Calendar':
-            self.start_year_input.disabled = True
             self.date_system = 'Standard Calendar'
+            self.start_year_input.disabled = True
+            self.w2_find_start_year_checkbox.disabled = True
+        else:
+            raise ValueError('Unrecognized option in the date system dropdown list.')
 
     def create_sidebar(self):
         sidebar_text = """
@@ -709,25 +729,27 @@ class ClearView:
         self.save_processed_data_button = pn.widgets.Button(name='Save Processed Data', button_type='primary')
         self.save_processed_data_button.on_click(self.save_processed_data)
 
-        self.w2_find_start_year = CheckboxGroup(labels=['Use W2 control file to set Start Year'], active=[0], width=100)
+        self.w2_find_start_year_checkbox = pn.widgets.Checkbox(name='Use W2 control file to set Start Year', value=True)
         self.date_system_dropdown = pn.widgets.Select(options=['Day of Year', 'Standard Calendar'], name='Date System', width=200)
         self.start_year_input = TextInput(value=str(self.start_year), title='Start Year', disabled=False)
         self.date_system_dropdown.param.watch(self.update_date_system, 'value')
+        self.skiprows_input = TextInput(value=str(self.skiprows), title='Number of Rows to Skip in ASCII Files')
 
         # Create HoloViews Div elements for the text labels
-        w2_find_start_year_label = "<span style='color: black; font-size: 14px; font-weight: normal'>CE-QUAL-W2 Options:</span>"
+        w2_find_start_year_checkbox_label = "<span style='color: black; font-size: 14px; font-weight: normal'>CE-QUAL-W2 Options:</span>"
         browse_button_label = "<span style='color: black; font-size: 14px; font-weight: normal'>Open a File:</span>"
 
         # Create two sub-panels for the sidebar
-        subpanel1 = pn.layout.WidgetBox(
-            w2_find_start_year_label,
+        w2_subpanel = pn.layout.WidgetBox(
+            w2_find_start_year_checkbox_label,
+            self.w2_find_start_year_checkbox,
             self.start_year_input,
-            self.w2_find_start_year,
+            self.skiprows_input,
             sizing_mode='stretch_width',
             max_width=300,
         )
 
-        subpanel2 = pn.layout.WidgetBox(
+        browse_subpanel = pn.layout.WidgetBox(
             browse_button_label,
             self.file_button,
             sizing_mode='stretch_width',
@@ -741,9 +763,9 @@ class ClearView:
                 margin=(0, 10)
             ),
             self.date_system_dropdown,
-            subpanel1,
+            w2_subpanel,
             "",
-            subpanel2,
+            browse_subpanel,
             max_width=320,
             height=1000,
             sizing_mode='stretch_width',
