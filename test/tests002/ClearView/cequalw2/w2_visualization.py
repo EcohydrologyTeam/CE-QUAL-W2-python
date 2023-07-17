@@ -251,18 +251,17 @@ def multi_plot(df: pd.DataFrame, **kwargs) -> plt.Figure:
     num_subplots = len(df.columns)
 
     # Set the keyword arguments for the plot
-    pandas_kwargs = {}
-    pandas_kwargs['fig'] = fig
-    pandas_kwargs['ax'] = ax
-    pandas_kwargs['subplots'] = subplots
-    pandas_kwargs['sharex'] = sharex
-    pandas_kwargs['xlabel'] = xlabel
-    pandas_kwargs['figsize'] = figsize
-    pandas_kwargs['style'] = style
-    pandas_kwargs['legend'] = False
+    kwargs['fig'] = fig
+    kwargs['ax'] = ax
+    kwargs['subplots'] = subplots
+    kwargs['sharex'] = sharex
+    kwargs['xlabel'] = xlabel
+    kwargs['figsize'] = figsize
+    kwargs['style'] = style
+    kwargs['legend'] = False
 
     # Create the plot
-    axes = df.plot(**pandas_kwargs)
+    axes = df.plot(**kwargs)
 
     # Set the title
     if title:
