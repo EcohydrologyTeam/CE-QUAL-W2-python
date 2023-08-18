@@ -27,6 +27,8 @@ class MyTableWidget(qtw.QTableWidget):
     """
 
     def __init__(self, parent):
+        # import sys, os
+        # print('Current working directory', os.path.abspath(os.getcwd()))
         super().__init__(parent)
 
     def keyPressEvent(self, event):
