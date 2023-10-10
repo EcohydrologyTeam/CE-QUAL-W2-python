@@ -7,7 +7,6 @@ import threading
 
 # Third-party modules
 from collections import OrderedDict
-from tkinter import filedialog
 
 # Third-party modules
 import pandas as pd
