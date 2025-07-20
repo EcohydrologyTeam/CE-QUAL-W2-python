@@ -1,3 +1,39 @@
+"""
+ClearView - CE-QUAL-W2 Data Visualization and Analysis Application
+
+A comprehensive PyQt6-based GUI for loading, analyzing, and visualizing CE-QUAL-W2
+water quality model output data. This application provides an intuitive interface
+for working with complex time series datasets containing 100+ water quality parameters.
+
+Features:
+- Smart Plot system with intelligent column selection
+- Multi-format data loading (CSV, NPT, OPT, Excel, HDF5, NetCDF, SQLite)  
+- Interactive plotting with pan/zoom navigation
+- Professional matplotlib toolbar integration
+- TSR (Time Series Results) file support for particle tracking
+- Data validation and quality checking
+- Export capabilities for data and visualizations
+
+Key Classes:
+- ClearView: Main application window and primary interface
+- ColumnPickerDialog: Smart column selection dialog for plotting
+- MyTableWidget: Custom table widget with enhanced navigation
+
+Architecture:
+The application uses a tabbed interface design with dedicated sections for plotting,
+statistics, data viewing, advanced analysis, validation, and filtering. The Smart Plot
+system replaces overwhelming multi-plot displays with intelligent parameter selection.
+
+This module represents the monolithic version of the ClearView application. An MVC
+version is also available with separated concerns across multiple files.
+
+Usage:
+    python main.py
+
+Author: CE-QUAL-W2 Python Development Team
+License: MIT
+"""
+
 import os
 import sys
 import csv
@@ -72,7 +108,35 @@ class MyTableWidget(qtw.QTableWidget):
 
 
 class ColumnPickerDialog(qtw.QDialog):
-    """Dialog for selecting columns to plot."""
+    """
+    Interactive dialog for intelligent column selection in time series plotting.
+    
+    This dialog provides a user-friendly interface for selecting which columns to plot
+    from large CE-QUAL-W2 datasets that may contain 100+ parameters. It features smart
+    suggestions based on common water quality parameter names and interactive filtering.
+    
+    Key Features:
+    - Smart column suggestions based on water quality parameter priorities
+    - Real-time search/filtering of available columns
+    - Multi-selection with Select All/None convenience buttons
+    - Live preview showing estimated plot dimensions
+    - Plot options for customizing visualization appearance
+    
+    The dialog automatically prioritizes common water quality parameters like temperature,
+    pH, dissolved oxygen, turbidity, flow rates, and nutrient concentrations to help
+    users quickly identify the most relevant data for analysis.
+    
+    Args:
+        dataframe (pd.DataFrame): The source DataFrame containing time series data
+        parent (QWidget, optional): Parent widget for the dialog
+        
+    Attributes:
+        dataframe (pd.DataFrame): Reference to the source data
+        selected_columns (list): Currently selected column names
+        column_list (QListWidget): UI widget for column selection
+        search_box (QLineEdit): Search/filter input field
+        preview_label (QLabel): Shows selection summary and plot preview info
+    """
     
     def __init__(self, dataframe, parent=None):
         super().__init__(parent)
@@ -82,7 +146,20 @@ class ColumnPickerDialog(qtw.QDialog):
         self.suggest_default_columns()
     
     def setup_ui(self):
-        """Set up the dialog UI."""
+        """
+        Create and configure the dialog's user interface components.
+        
+        Sets up a comprehensive column selection interface including:
+        - Title label and search functionality
+        - Multi-selection list widget for columns
+        - Action buttons (Select All/None/Suggested Selection)
+        - Plot options checkboxes (auto-scale, grid, shared X-axis)
+        - Live preview label showing selection summary
+        - OK/Cancel dialog buttons
+        
+        The layout uses vertical stacking with grouped sections for intuitive
+        navigation and a professional appearance.
+        """
         self.setWindowTitle("Select Columns to Plot")
         self.setModal(True)
         self.resize(500, 400)
@@ -160,7 +237,22 @@ class ColumnPickerDialog(qtw.QDialog):
         self.column_list.itemSelectionChanged.connect(self.update_preview)
     
     def populate_column_list(self):
-        """Populate the column list with numeric columns."""
+        """
+        Populate the column selection list with numeric columns from the DataFrame.
+        
+        Filters the source DataFrame to include only numeric columns suitable for
+        plotting, excluding non-numeric data like text identifiers or categorical
+        variables. Each column is added as a selectable list item with the column
+        name as both display text and stored data.
+        
+        Only numeric columns are included because:
+        - Time series plotting requires numeric Y-axis values
+        - Text/categorical columns would cause plotting errors
+        - Provides cleaner user interface without invalid options
+        
+        Side Effects:
+            Clears and repopulates the column_list widget with numeric columns only.
+        """
         self.column_list.clear()
         
         # Get numeric columns only
@@ -192,7 +284,37 @@ class ColumnPickerDialog(qtw.QDialog):
         self.update_preview()
     
     def suggest_default_columns(self):
-        """Suggest default columns based on common water quality parameters."""
+        """
+        Intelligently suggest default columns based on common water quality parameters.
+        
+        Implements a two-pass selection algorithm to identify the most relevant columns
+        for water quality analysis from potentially large datasets (100+ parameters):
+        
+        Pass 1: Priority-based selection
+        - Searches for columns containing water quality keywords (temp, ph, do, etc.)
+        - Prioritizes essential parameters like temperature, dissolved oxygen, pH
+        - Limits selection to 4 columns maximum for optimal plot readability
+        
+        Pass 2: Fallback selection
+        - If insufficient priority matches found (< 3 columns)
+        - Selects first available numeric columns to ensure meaningful visualization
+        - Maintains minimum of 3 columns for comparative analysis
+        
+        Priority Keywords (in order of importance):
+        - Temperature: 'temp', 'temperature'
+        - Dissolved Oxygen: 'do', 'dissolved', 'oxygen'
+        - pH and Water Chemistry: 'ph', 'turbidity'
+        - Physical Parameters: 'flow', 'depth'
+        - Nutrients: 'nitrate', 'phosphate'
+        
+        This approach ensures users get relevant water quality data by default while
+        maintaining the flexibility to modify selections as needed.
+        
+        Side Effects:
+            - Updates column selection state in the UI
+            - Triggers preview text update
+            - May modify existing user selections
+        """
         self.select_none()
         
         # Common water quality parameter names to prioritize
@@ -245,6 +367,71 @@ class ColumnPickerDialog(qtw.QDialog):
 
 
 class ClearView(qtw.QMainWindow):
+    """
+    Main application window for ClearView - CE-QUAL-W2 Data Visualization and Analysis Tool.
+    
+    ClearView is a comprehensive PyQt6-based GUI application designed for loading, analyzing,
+    and visualizing CE-QUAL-W2 water quality model output data. It provides an intuitive
+    interface for working with complex time series datasets typically containing 100+
+    water quality parameters.
+    
+    Key Capabilities:
+    - **Multi-format Data Loading**: Supports CSV, NPT, OPT, Excel, HDF5, NetCDF, and SQLite
+    - **Intelligent Plotting**: Smart column selection with water quality parameter suggestions
+    - **Interactive Analysis**: Pan, zoom, and explore time series data with professional tools
+    - **Data Validation**: Built-in quality checking and error handling for model outputs
+    - **Export Functions**: Save data tables, statistics, and plots in multiple formats
+    - **TSR File Support**: Specialized handling for Time Series Results from particle tracking
+    
+    Architecture:
+    The application follows a tabbed interface design with dedicated sections for:
+    - **Plot Tab**: Primary visualization with Smart Plot functionality
+    - **Statistics Tab**: Descriptive statistics and data summaries  
+    - **Data Tab**: Editable table view of loaded dataset
+    - **Advanced Plotting Tab**: Full-featured plotting with 12+ chart types
+    - **Validation Tab**: Data quality assessment tools
+    - **Filtering Tab**: Advanced data filtering and transformation
+    
+    Smart Plot System:
+    The centerpiece feature replaces traditional overwhelming multi-plot displays with
+    an intelligent column picker that suggests relevant water quality parameters based
+    on common CE-QUAL-W2 output patterns. This solves the "100+ parameter problem" by
+    providing curated, readable visualizations.
+    
+    PyQt6 Compatibility:
+    Fully migrated from PyQt5 to PyQt6 with custom solutions for compatibility issues
+    including matplotlib toolbar integration and proper enum handling.
+    
+    Typical Workflow:
+    1. Load CE-QUAL-W2 output file (various formats supported)
+    2. Use Smart Plot to select relevant water quality parameters
+    3. Analyze time series data with interactive navigation tools
+    4. Export results for reporting or further analysis
+    
+    Class Constants:
+        DEFAULT_WINDOW_WIDTH (int): Initial window width in pixels (1500)
+        DEFAULT_WINDOW_HEIGHT (int): Initial window height in pixels (900)
+        DEFAULT_YEAR (int): Default model year for CE-QUAL-W2 data (2023)
+        TOOLBAR_HEIGHT (int): Standard toolbar height in pixels
+        ICON_SIZE (int): Standard icon dimensions for UI elements
+        PLOT_SCALE_FACTOR (float): Scaling factor for plot dimensions
+        
+    Attributes:
+        data (pd.DataFrame): Currently loaded time series dataset
+        stats (pd.DataFrame): Statistical summary of loaded data
+        year (int): Model year extracted from CE-QUAL-W2 control files
+        file_path (str): Path to currently loaded data file
+        canvas (FigureCanvas): Matplotlib canvas for plot display
+        mpl_toolbar (NavigationToolbar): Hidden matplotlib toolbar for functionality
+        navigation_toolbar (QToolBar): Custom visual toolbar with emoji icons
+        
+    Example:
+        >>> app = qtw.QApplication([])
+        >>> window = ClearView()
+        >>> window.show()
+        >>> app.exec()
+    """
+    
     # Class constants for configuration
     DEFAULT_WINDOW_WIDTH = 1500
     DEFAULT_WINDOW_HEIGHT = 900
@@ -1077,7 +1264,55 @@ class ClearView(qtw.QMainWindow):
         return None
 
     def multi_plot(self):
-        """Show column picker dialog and create smart plots."""
+        """
+        Create intelligent multi-subplot visualizations with interactive column selection.
+        
+        This method implements the core "Smart Plot" functionality that replaces the old
+        overwhelming multi-plot system. Instead of plotting all available columns (which
+        could be 100+ parameters), it provides an intelligent interface for selecting
+        specific time series data to visualize.
+        
+        Workflow:
+        1. **Column Selection**: Opens ColumnPickerDialog with smart suggestions
+        2. **Data Filtering**: Extracts only selected columns while preserving index
+        3. **Layout Optimization**: Calculates optimal subplot dimensions and spacing
+        4. **Plot Creation**: Uses cequalw2.multi_plot() with fallback matplotlib plotting
+        5. **Canvas Update**: Refreshes display and updates statistics table
+        
+        Key Features:
+        - Interactive column picker with water quality parameter suggestions
+        - Automatic subplot height optimization based on selection count
+        - Fallback plotting if cequalw2.multi_plot() encounters issues
+        - Proper error handling with user-friendly warnings
+        - Canvas resizing to accommodate different plot sizes
+        
+        The method intelligently handles various scenarios:
+        - Large datasets (100+ columns) → Selective plotting prevents overwhelming UI
+        - Small datasets (< 10 columns) → Still provides organized selection interface
+        - Mixed data types → Filters to numeric columns only
+        - Empty selections → Graceful cancellation without errors
+        
+        Height Calculation Algorithm:
+        - Individual subplot height: 2.0-3.5 inches (adaptive based on count)
+        - Maximum total height: 12 inches (prevents oversized plots)
+        - Ensures readability while fitting in available screen space
+        
+        Returns:
+            None: Method handles UI updates directly
+            
+        Side Effects:
+            - May open ColumnPickerDialog (modal)
+            - Updates matplotlib canvas and figure
+            - Refreshes statistics table
+            - May display warning dialogs for invalid data
+            - Modifies canvas size to fit plot dimensions
+            
+        Note:
+            This method is connected to the main "Plot" toolbar button and represents
+            the primary plotting interface for the application. It replaces both the
+            old "Single Plot" and "Multi-Plot" functionality with a unified, intelligent
+            approach to data visualization.
+        """
         # Check if data is available
         if self.data is None:
             return
@@ -1132,7 +1367,29 @@ class ClearView(qtw.QMainWindow):
         self.update_stats_table()
 
     def reset_plot_view(self):
-        """Reset the plot view to show all data."""
+        """
+        Reset plot view to display all data with auto-scaled axes (Home function).
+        
+        This method implements the "Home" button functionality in the matplotlib toolbar,
+        restoring the plot to its initial state where all data points are visible with
+        appropriately scaled axes. It's equivalent to the standard matplotlib home button
+        but integrated with the custom PyQt6-compatible toolbar.
+        
+        Actions Performed:
+        1. Delegates to matplotlib's native home() functionality via hidden toolbar
+        2. Resets all plot axes to show complete data range
+        3. Clears any active pan/zoom modes
+        4. Updates toolbar button states to reflect neutral navigation state
+        
+        This is particularly useful after users have zoomed or panned the plot and want
+        to return to the full overview of their time series data.
+        
+        Side Effects:
+            - Redraws the matplotlib canvas
+            - Unchecks pan and zoom toolbar buttons
+            - Resets any stored navigation state in matplotlib
+            - May trigger canvas refresh events
+        """
         try:
             # Use matplotlib's home functionality
             self.mpl_toolbar.home()
@@ -1145,7 +1402,36 @@ class ClearView(qtw.QMainWindow):
             print(f"Warning: Could not reset plot view: {e}")
     
     def toggle_pan(self, checked):
-        """Toggle pan mode using matplotlib's navigation."""
+        """
+        Toggle pan mode for interactive plot navigation (drag to move view).
+        
+        Enables or disables matplotlib's pan functionality, allowing users to click and
+        drag on the plot to move the visible area around. This is useful for exploring
+        different sections of large time series datasets without changing the zoom level.
+        
+        The method ensures mutual exclusivity with zoom mode - activating pan will
+        automatically deactivate zoom and vice versa, following standard matplotlib
+        toolbar behavior patterns.
+        
+        Pan Mode Behavior:
+        - **Activated**: Mouse cursor changes to hand icon, click-drag moves plot view
+        - **Deactivated**: Returns to normal cursor, click-drag has no effect
+        - **Auto-deactivates**: Zoom mode if it was previously active
+        
+        Args:
+            checked (bool): True to activate pan mode, False to deactivate
+            
+        Technical Implementation:
+        Uses the hidden NavigationToolbar2QT (self.mpl_toolbar) to access matplotlib's
+        native pan functionality while maintaining the custom visual toolbar appearance.
+        The pan() method acts as a toggle - calling it once activates, calling again
+        deactivates.
+        
+        Side Effects:
+            - Changes mouse cursor behavior on plot canvas
+            - Updates zoom button state (unchecks if pan is activated)
+            - May trigger matplotlib mode change events
+        """
         try:
             if checked:
                 # Uncheck zoom and activate pan
@@ -1160,7 +1446,44 @@ class ClearView(qtw.QMainWindow):
             print(f"Warning: Pan functionality error: {e}")
     
     def toggle_zoom(self, checked):
-        """Toggle zoom mode using matplotlib's navigation."""
+        """
+        Toggle zoom mode for interactive plot magnification (drag to select zoom area).
+        
+        Enables or disables matplotlib's zoom-to-rectangle functionality, allowing users
+        to draw a rectangle around the area they want to examine in detail. This is
+        essential for analyzing specific time periods or parameter ranges in detailed
+        water quality datasets.
+        
+        The method ensures mutual exclusivity with pan mode - activating zoom will
+        automatically deactivate pan mode, following standard matplotlib toolbar
+        behavior patterns.
+        
+        Zoom Mode Behavior:
+        - **Activated**: Mouse cursor changes to crosshair, click-drag creates zoom rectangle
+        - **Rectangle Selection**: Releasing mouse button zooms to selected area
+        - **Deactivated**: Returns to normal cursor behavior
+        - **Auto-deactivates**: Pan mode if it was previously active
+        
+        Args:
+            checked (bool): True to activate zoom mode, False to deactivate
+            
+        Technical Implementation:
+        Uses the hidden NavigationToolbar2QT (self.mpl_toolbar) to access matplotlib's
+        native zoom functionality while maintaining the custom visual toolbar appearance.
+        The zoom() method acts as a toggle - calling it once activates, calling again
+        deactivates.
+        
+        Usage Tips:
+        - After zooming, use Home button (🏠) to return to full data view
+        - Multiple zoom operations can be applied sequentially
+        - Works on both X and Y axes simultaneously
+        
+        Side Effects:
+            - Changes mouse cursor behavior on plot canvas
+            - Updates pan button state (unchecks if zoom is activated)
+            - May trigger matplotlib mode change events
+            - Canvas redraws when zoom rectangle is applied
+        """
         try:
             if checked:
                 # Uncheck pan and activate zoom
