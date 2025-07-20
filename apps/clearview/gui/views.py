@@ -6,6 +6,11 @@ Handles UI elements, layouts, and user interactions.
 import os
 import pandas as pd
 import numpy as np
+import warnings
+
+# Suppress PNG profile warnings
+warnings.filterwarnings("ignore", message=".*iCCP: known incorrect sRGB profile.*")
+warnings.filterwarnings("ignore", message=".*libpng warning.*")
 
 # Set Qt API before importing matplotlib to use PyQt6
 os.environ['QT_API'] = 'pyqt6'
@@ -82,7 +87,7 @@ class ClearViewMainWindow(qtw.QMainWindow):
         
         # Set window properties
         self.setWindowTitle('ClearView')
-        self.setGeometry(0, 0, self.DEFAULT_WINDOW_WIDTH, self.DEFAULT_WINDOW_HEIGHT)
+        self.resize(self.DEFAULT_WINDOW_WIDTH, self.DEFAULT_WINDOW_HEIGHT)
         self.center_on_screen()
         
         # Initialize figure dimensions

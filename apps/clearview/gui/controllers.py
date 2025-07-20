@@ -100,7 +100,6 @@ class ClearViewController:
             self.view.show_message("No data to plot", 'warning')
             return
         
-        self._create_single_plot()
     
     def handle_multi_plot_request(self):
         """Handle multi-plot request."""
@@ -346,32 +345,6 @@ class ClearViewController:
         stats = self.model.get_statistics()
         self.view.update_stats_table(stats)
     
-    def _create_single_plot(self):
-        """Create a single plot of the data using enhanced plotting."""
-        # Get numeric columns
-        numeric_cols = list(self.model.df.select_dtypes(include=[np.number]).columns)
-        
-        if len(numeric_cols) == 0:
-            self.view.show_message("No numeric data to plot", 'warning')
-            return
-        
-        # Create a basic line plot configuration
-        from models import PlotConfiguration, PlotType
-        config = PlotConfiguration(
-            plot_type=PlotType.LINE,
-            y_columns=[numeric_cols[0]],
-            title=f'{numeric_cols[0]} vs Index',
-            xlabel='Index',
-            ylabel=numeric_cols[0],
-            grid=True,
-            legend=False
-        )
-        
-        try:
-            self.model.create_plot(config, self.view.get_figure())
-            self.view.get_canvas().draw()
-        except Exception as e:
-            self.view.show_message(f"Error creating plot: {str(e)}", 'error')
     
     def _create_multi_plot(self):
         """Create multiple subplots of the data using enhanced plotting."""

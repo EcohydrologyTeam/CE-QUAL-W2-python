@@ -71,6 +71,179 @@ class MyTableWidget(qtw.QTableWidget):
             super().keyPressEvent(event)
 
 
+class ColumnPickerDialog(qtw.QDialog):
+    """Dialog for selecting columns to plot."""
+    
+    def __init__(self, dataframe, parent=None):
+        super().__init__(parent)
+        self.dataframe = dataframe
+        self.selected_columns = []
+        self.setup_ui()
+        self.suggest_default_columns()
+    
+    def setup_ui(self):
+        """Set up the dialog UI."""
+        self.setWindowTitle("Select Columns to Plot")
+        self.setModal(True)
+        self.resize(500, 400)
+        
+        layout = qtw.QVBoxLayout(self)
+        
+        # Title
+        title_label = qtw.QLabel("Select time series for plotting:")
+        title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin-bottom: 10px;")
+        layout.addWidget(title_label)
+        
+        # Search box
+        search_layout = qtw.QHBoxLayout()
+        search_label = qtw.QLabel("Search:")
+        self.search_box = qtw.QLineEdit()
+        self.search_box.setPlaceholderText("Type to filter columns...")
+        self.search_box.textChanged.connect(self.filter_columns)
+        search_layout.addWidget(search_label)
+        search_layout.addWidget(self.search_box)
+        layout.addLayout(search_layout)
+        
+        # Column list
+        self.column_list = qtw.QListWidget()
+        self.column_list.setSelectionMode(qtw.QAbstractItemView.SelectionMode.MultiSelection)
+        self.populate_column_list()
+        layout.addWidget(self.column_list)
+        
+        # Selection buttons
+        button_layout = qtw.QHBoxLayout()
+        self.select_all_btn = qtw.QPushButton("Select All")
+        self.select_none_btn = qtw.QPushButton("Select None")
+        self.suggest_btn = qtw.QPushButton("Suggested Selection")
+        
+        self.select_all_btn.clicked.connect(self.select_all)
+        self.select_none_btn.clicked.connect(self.select_none)
+        self.suggest_btn.clicked.connect(self.suggest_default_columns)
+        
+        button_layout.addWidget(self.select_all_btn)
+        button_layout.addWidget(self.select_none_btn)
+        button_layout.addWidget(self.suggest_btn)
+        button_layout.addStretch()
+        layout.addLayout(button_layout)
+        
+        # Options
+        options_group = qtw.QGroupBox("Plot Options")
+        options_layout = qtw.QGridLayout(options_group)
+        
+        self.auto_scale_cb = qtw.QCheckBox("Auto-scale Y axes")
+        self.auto_scale_cb.setChecked(True)
+        self.show_grid_cb = qtw.QCheckBox("Show grid")
+        self.show_grid_cb.setChecked(True)
+        self.shared_x_cb = qtw.QCheckBox("Shared X-axis")
+        self.shared_x_cb.setChecked(True)
+        
+        options_layout.addWidget(self.auto_scale_cb, 0, 0)
+        options_layout.addWidget(self.show_grid_cb, 0, 1)
+        options_layout.addWidget(self.shared_x_cb, 1, 0)
+        
+        layout.addWidget(options_group)
+        
+        # Preview label
+        self.preview_label = qtw.QLabel()
+        self.preview_label.setStyleSheet("color: #666; font-style: italic;")
+        layout.addWidget(self.preview_label)
+        
+        # Dialog buttons
+        button_box = qtw.QDialogButtonBox(
+            qtw.QDialogButtonBox.StandardButton.Ok | qtw.QDialogButtonBox.StandardButton.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+        
+        # Connect selection change to update preview
+        self.column_list.itemSelectionChanged.connect(self.update_preview)
+    
+    def populate_column_list(self):
+        """Populate the column list with numeric columns."""
+        self.column_list.clear()
+        
+        # Get numeric columns only
+        numeric_columns = self.dataframe.select_dtypes(include=['number']).columns.tolist()
+        
+        for col in numeric_columns:
+            item = qtw.QListWidgetItem(col)
+            item.setData(qtc.Qt.ItemDataRole.UserRole, col)
+            self.column_list.addItem(item)
+    
+    def filter_columns(self, text):
+        """Filter columns based on search text."""
+        for i in range(self.column_list.count()):
+            item = self.column_list.item(i)
+            visible = text.lower() in item.text().lower()
+            item.setHidden(not visible)
+    
+    def select_all(self):
+        """Select all visible columns."""
+        for i in range(self.column_list.count()):
+            item = self.column_list.item(i)
+            if not item.isHidden():
+                item.setSelected(True)
+        self.update_preview()
+    
+    def select_none(self):
+        """Deselect all columns."""
+        self.column_list.clearSelection()
+        self.update_preview()
+    
+    def suggest_default_columns(self):
+        """Suggest default columns based on common water quality parameters."""
+        self.select_none()
+        
+        # Common water quality parameter names to prioritize
+        priority_terms = ['temp', 'temperature', 'ph', 'do', 'dissolved', 'oxygen', 
+                         'turbidity', 'flow', 'depth', 'nitrate', 'phosphate']
+        
+        suggested_count = 0
+        max_suggestions = 4
+        
+        # First pass: exact matches
+        for i in range(self.column_list.count()):
+            if suggested_count >= max_suggestions:
+                break
+            item = self.column_list.item(i)
+            col_name = item.text().lower()
+            
+            for term in priority_terms:
+                if term in col_name:
+                    item.setSelected(True)
+                    suggested_count += 1
+                    break
+        
+        # If we don't have enough suggestions, add first few numeric columns
+        if suggested_count < 3:
+            for i in range(min(3, self.column_list.count())):
+                item = self.column_list.item(i)
+                if not item.isSelected():
+                    item.setSelected(True)
+                    suggested_count += 1
+                    if suggested_count >= max_suggestions:
+                        break
+        
+        self.update_preview()
+    
+    def update_preview(self):
+        """Update the preview text."""
+        selected_count = len(self.column_list.selectedItems())
+        if selected_count == 0:
+            self.preview_label.setText("No columns selected")
+        else:
+            estimated_height = max(selected_count * 2.5, 6)
+            self.preview_label.setText(
+                f"Preview: {selected_count} subplot{'s' if selected_count != 1 else ''}, "
+                f"estimated height: {estimated_height:.1f} inches"
+            )
+    
+    def get_selected_columns(self):
+        """Return list of selected column names."""
+        return [item.text() for item in self.column_list.selectedItems()]
+
+
 class ClearView(qtw.QMainWindow):
     # Class constants for configuration
     DEFAULT_WINDOW_WIDTH = 1500
@@ -182,10 +355,6 @@ class ClearView(qtw.QMainWindow):
             qtw.QStyle.StandardPixmap.SP_DialogApplyButton
         )
         plot_icon = self.load_icon(
-            'icons/w2_veiwer_single_plot_icon.png',
-            qtw.QStyle.StandardPixmap.SP_ComputerIcon
-        )
-        multi_plot_icon = self.load_icon(
             'icons/w2_veiwer_multi_plot_icon.png',
             qtw.QStyle.StandardPixmap.SP_ComputerIcon
         )
@@ -219,14 +388,9 @@ class ClearView(qtw.QMainWindow):
         save_stats_action.triggered.connect(self.save_stats)
 
         # Add a plot button icon to the toolbar
-        plot_action = qtg.QAction(plot_icon, 'Single Plot', self)
+        plot_action = qtg.QAction(multi_plot_icon, 'Plot', self)
         plot_action.setShortcut('Ctrl+P')
-        plot_action.triggered.connect(self.plot)
-
-        # Add a multi-plot button icon to the toolbar
-        multi_plot_action = qtg.QAction(multi_plot_icon, 'Multi-Plot', self)
-        multi_plot_action.setShortcut('Ctrl+Shift+P')
-        multi_plot_action.triggered.connect(self.multi_plot)
+        plot_action.triggered.connect(self.multi_plot)
 
         # Add the toolbar to the main window
         self.addToolBar(self.app_toolbar)
@@ -315,7 +479,6 @@ class ClearView(qtw.QMainWindow):
         edit_menu.addAction(copy_action)
         edit_menu.addAction(paste_action)
         plot_menu.addAction(plot_action)
-        plot_menu.addAction(multi_plot_action)
 
         # Add actions to the app toolbar
         self.app_toolbar.addAction(open_action)
@@ -324,7 +487,6 @@ class ClearView(qtw.QMainWindow):
         self.app_toolbar.addAction(copy_action)
         self.app_toolbar.addAction(paste_action)
         self.app_toolbar.addAction(plot_action)
-        self.app_toolbar.addAction(multi_plot_action)
 
         # Add a system tray icon
         self.tray_icon = qtw.QSystemTrayIcon(self)
@@ -867,34 +1029,42 @@ class ClearView(qtw.QMainWindow):
 
     def clear_figure_and_canvas(self):
         self.canvas.figure.clear()
-        self.figure.clear()
-        self.figure.clf()
+        self.canvas.figure.clf()
 
-    def plot(self):
-        # Check if data is available
+    def show_column_picker_dialog(self):
+        """Show column picker dialog and return selected columns."""
         if self.data is None:
-            return
-
-        # Create the figure and canvas
-        self.clear_figure_and_canvas()
-        canvas_height = self.PLOT_SCALE_FACTOR * self.default_fig_height
-        w2.plot(self.data, fig=self.figure, figsize=(self.default_fig_width, self.default_fig_height))
-        self.resize_canvas(self.default_fig_width, canvas_height)
-
-        # Draw the canvas and create or update the statistics table
-        self.canvas.draw()
-        self.update_stats_table()
+            return None
+            
+        dialog = ColumnPickerDialog(self.data, self)
+        if dialog.exec() == qtw.QDialog.DialogCode.Accepted:
+            return dialog.get_selected_columns()
+        return None
 
     def multi_plot(self):
+        """Show column picker dialog and create smart plots."""
         # Check if data is available
         if self.data is None:
             return
 
+        # Show column picker dialog
+        selected_columns = self.show_column_picker_dialog()
+        if not selected_columns:
+            return  # User cancelled or no columns selected
+        
+        # Filter data to selected columns only
+        filtered_data = self.data[selected_columns]
+
         # Create the figure and canvas
         self.clear_figure_and_canvas()
-        num_subplots = len(self.data.columns)
-        multi_plot_fig_height = max(num_subplots * self.SUBPLOT_SCALE_FACTOR, self.default_fig_height)
-        w2.multi_plot(self.data, fig=self.figure, figsize=(self.default_fig_width, multi_plot_fig_height))
+        num_subplots = len(selected_columns)
+        
+        # Better subplot height calculation
+        subplot_height = max(2.5, min(4.0, 12.0 / num_subplots))
+        multi_plot_fig_height = max(num_subplots * subplot_height, self.default_fig_height)
+        
+        # Create plots with filtered data
+        w2.multi_plot(filtered_data, fig=self.canvas.figure, figsize=(self.default_fig_width, multi_plot_fig_height))
         self.resize_canvas(self.default_fig_width, multi_plot_fig_height)
 
         # Draw the canvas and create or update the statistics table
@@ -941,9 +1111,11 @@ class ClearView(qtw.QMainWindow):
                 else:
                     self.data.iloc[row, col - 1] = float(value)
             except ValueError:
-                print('ValueError:', row, col, value)
+                # Silently ignore conversion errors - not all cells contain numeric data
+                pass
             except IndexError:
-                print('IndexError:', row, col, value)
+                # Silently ignore index errors - table structure may be changing
+                pass
 
     def save_to_sqlite(self, df: pd.DataFrame, database_path: str):
         """
