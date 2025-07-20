@@ -653,13 +653,13 @@ class ClearViewMainWindow(qtw.QMainWindow):
         self.data_table.setHorizontalHeaderLabels(df.columns.astype(str))
         
         # Populate table
-        for i, row in df.iterrows():
+        for row_num, (index_val, row) in enumerate(df.iterrows()):
             for j, value in enumerate(row):
                 if pd.isna(value):
                     item = qtw.QTableWidgetItem("")
                 else:
                     item = qtw.QTableWidgetItem(str(value))
-                self.data_table.setItem(i, j, item)
+                self.data_table.setItem(row_num, j, item)
     
     def update_stats_table(self, stats: Dict[str, Any]):
         """Update the statistics table."""
@@ -860,13 +860,13 @@ class ClearViewMainWindow(qtw.QMainWindow):
         self.filtered_data_table.setHorizontalHeaderLabels(preview_df.columns.astype(str))
         
         # Populate table
-        for i, row in preview_df.iterrows():
+        for row_num, (index_val, row) in enumerate(preview_df.iterrows()):
             for j, value in enumerate(row):
                 if pd.isna(value):
                     item = qtw.QTableWidgetItem("")
                 else:
                     item = qtw.QTableWidgetItem(str(value))
-                self.filtered_data_table.setItem(i, j, item)
+                self.filtered_data_table.setItem(row_num, j, item)
         
         # Add info about truncation if needed
         if len(filtered_df) > 100:
