@@ -6,12 +6,21 @@ Handles UI elements, layouts, and user interactions.
 import os
 import pandas as pd
 import numpy as np
+
+# Set Qt API before importing matplotlib to use PyQt6
+os.environ['QT_API'] = 'pyqt6'
+
+# Import PyQt6 first
+import PyQt6.QtCore as qtc
+import PyQt6.QtWidgets as qtw
+import PyQt6.QtGui as qtg
+
+# Now import matplotlib with proper backend
+import matplotlib
+matplotlib.use('qtagg')  # Use the generic Qt Agg backend
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import PyQt5.QtCore as qtc
-import PyQt5.QtWidgets as qtw
-import PyQt5.QtGui as qtg
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from typing import Optional, Dict, Any, List
 from models import FilterOperator, DataFilter, ValidationResult, PlotType, PlotStyle, PlotConfiguration
 

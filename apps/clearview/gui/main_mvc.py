@@ -8,8 +8,8 @@ maintainability and extensibility.
 
 import sys
 import os
-import PyQt5.QtWidgets as qtw
-import PyQt5.QtCore as qtc
+import PyQt6.QtWidgets as qtw
+import PyQt6.QtCore as qtc
 
 from controllers import ClearViewController
 
@@ -29,7 +29,7 @@ def main():
     controller.show()
     
     # Start event loop
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == '__main__':

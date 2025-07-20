@@ -9,11 +9,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Optional, Dict, Any
-import PyQt5.QtWidgets as qtw
-import PyQt5.QtCore as qtc
+import PyQt6.QtWidgets as qtw
+import PyQt6.QtCore as qtc
 
-from .models import DataModel
-from .views import ClearViewMainWindow
+from models import DataModel
+from views import ClearViewMainWindow
 
 
 class ClearViewController:
