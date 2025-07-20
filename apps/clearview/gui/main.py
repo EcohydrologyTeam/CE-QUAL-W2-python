@@ -435,7 +435,11 @@ class ClearView(qtw.QMainWindow):
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
 
-        # Create custom matplotlib navigation toolbar for PyQt6 compatibility
+        # Create hidden matplotlib navigation toolbar for functionality
+        self.mpl_toolbar = NavigationToolbar(self.canvas, self)
+        self.mpl_toolbar.hide()  # Hide the original toolbar but keep functionality
+        
+        # Create custom visual toolbar for PyQt6 compatibility
         self.navigation_toolbar = qtw.QToolBar()
         self.navigation_toolbar.setMaximumHeight(self.TOOLBAR_HEIGHT)
         self.navigation_toolbar_background_color = '#eeffee'
@@ -1130,36 +1134,45 @@ class ClearView(qtw.QMainWindow):
     def reset_plot_view(self):
         """Reset the plot view to show all data."""
         try:
-            for ax in self.canvas.figure.get_axes():
-                ax.relim()
-                ax.autoscale()
-            self.canvas.draw()
+            # Use matplotlib's home functionality
+            self.mpl_toolbar.home()
+            
+            # Reset toolbar button states
+            self.pan_action.setChecked(False)
+            self.zoom_action.setChecked(False)
+            
         except Exception as e:
             print(f"Warning: Could not reset plot view: {e}")
     
     def toggle_pan(self, checked):
-        """Toggle pan mode."""
+        """Toggle pan mode using matplotlib's navigation."""
         try:
             if checked:
+                # Uncheck zoom and activate pan
                 self.zoom_action.setChecked(False)
-                self.canvas.toolbar_mode = 'pan'
+                # Use matplotlib's pan functionality
+                self.mpl_toolbar.pan()
             else:
-                self.canvas.toolbar_mode = 'none'
-            # Note: Full pan implementation would require matplotlib backend integration
+                # Deactivate pan mode (toggle off)
+                self.mpl_toolbar.pan()
+                    
         except Exception as e:
-            print(f"Warning: Pan mode not fully supported: {e}")
+            print(f"Warning: Pan functionality error: {e}")
     
     def toggle_zoom(self, checked):
-        """Toggle zoom mode."""
+        """Toggle zoom mode using matplotlib's navigation."""
         try:
             if checked:
+                # Uncheck pan and activate zoom
                 self.pan_action.setChecked(False)
-                self.canvas.toolbar_mode = 'zoom'
+                # Use matplotlib's zoom functionality
+                self.mpl_toolbar.zoom()
             else:
-                self.canvas.toolbar_mode = 'none'
-            # Note: Full zoom implementation would require matplotlib backend integration
+                # Deactivate zoom mode (toggle off)
+                self.mpl_toolbar.zoom()
+                    
         except Exception as e:
-            print(f"Warning: Zoom mode not fully supported: {e}")
+            print(f"Warning: Zoom functionality error: {e}")
 
     def save_figure(self):
         """Save the current figure to a file."""
