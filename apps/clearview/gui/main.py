@@ -460,8 +460,15 @@ class ClearView(qtw.QMainWindow):
         """
         if self.data is not None:
             array_data = self.data.values
-            datetime_index = self.data.index.to_series().dt.strftime('%m/%d/%Y %H:%M')
-            datetime_strings = datetime_index.tolist()
+            
+            # Handle different index types safely
+            try:
+                # Try to format as datetime if possible
+                datetime_index = self.data.index.to_series().dt.strftime('%m/%d/%Y %H:%M')
+                datetime_strings = datetime_index.tolist()
+            except AttributeError:
+                # Fall back to string representation for non-datetime indexes
+                datetime_strings = [str(idx) for idx in self.data.index]
 
             header = ['Date']
             for col in self.data.columns:
@@ -476,12 +483,12 @@ class ClearView(qtw.QMainWindow):
                 for column in range(number_columns + 1):
                     if column == 0:
                         item = qtw.QTableWidgetItem(datetime_strings[row])
-                        item.setTextAlignment(0x0082)
+                        item.setTextAlignment(qtc.Qt.AlignmentFlag.AlignCenter)
                     else:
                         value = array_data[row, column - 1]
                         value_text = f'{value:.4f}'
                         item = qtw.QTableWidgetItem(value_text)
-                        item.setTextAlignment(0x0082)
+                        item.setTextAlignment(qtc.Qt.AlignmentFlag.AlignCenter)
                     self.data_table.setItem(row, column, item)
         # Autofit the column widths
         self.data_table.resizeColumnsToContents()
@@ -704,7 +711,7 @@ class ClearView(qtw.QMainWindow):
             - The `update_data_table` and `update_stats_table` methods are called after processing the file.
         """
         file_dialog = qtw.QFileDialog(self)
-        file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
+        file_dialog.setFileMode(qtw.QFileDialog.FileMode.ExistingFile)
         file_dialog.setNameFilters([
             'All Files (*.*)', 
             'CSV Files (*.csv)', 
@@ -715,7 +722,7 @@ class ClearView(qtw.QMainWindow):
             'HDF5 Files (*.h5 *.hdf5)',
             'NetCDF Files (*.nc)'
         ])
-        if file_dialog.exec_():
+        if file_dialog.exec():
             self.file_path = file_dialog.selectedFiles()[0]
             self.directory, self.filename = os.path.split(self.file_path)
             self.filename_input.setText(self.filename)
@@ -851,7 +858,7 @@ class ClearView(qtw.QMainWindow):
         message_box.setIcon(qtw.QMessageBox.Critical)
         message_box.setWindowTitle('Error')
         message_box.setText(message)
-        message_box.exec_()
+        message_box.exec()
 
     def table_cell_changed(self, item):
         """
@@ -919,7 +926,7 @@ class ClearView(qtw.QMainWindow):
         msg_box.setIcon(qtw.QMessageBox.Information)
         msg_box.setWindowTitle('Information')
         msg_box.setText(message)
-        msg_box.exec_()
+        msg_box.exec()
 
     def save_data(self):
         """
@@ -933,8 +940,6 @@ class ClearView(qtw.QMainWindow):
             return
             
         default_filename = os.path.splitext(self.file_path)[0] if self.file_path else "data"
-        options = qtw.QFileDialog.Options()
-        
         file_filters = [
             "SQLite Files (*.db)",
             "HDF5 Files (*.h5)",
@@ -944,7 +949,7 @@ class ClearView(qtw.QMainWindow):
         ]
         
         returned_path, selected_filter = qtw.QFileDialog.getSaveFileName(
-            self, "Save Data As", default_filename, ";;".join(file_filters), options=options
+            self, "Save Data As", default_filename, ";;".join(file_filters)
         )
         
         if not returned_path:
@@ -986,9 +991,8 @@ class ClearView(qtw.QMainWindow):
         """
 
         default_filename = self.file_path + '_stats.db'
-        options = qtw.QFileDialog.Options()
         returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
-                                                        "SQLite Files (*.db);; All Files (*)", options=options)
+                                                        "SQLite Files (*.db);; All Files (*)")
         if not returned_path:
             return
 
