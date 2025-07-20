@@ -754,6 +754,24 @@ class ClearView(qtw.QMainWindow):
 
             try:
                 if FILE_TYPE == 'ASCII':
+                    # Add debugging information for CSV files
+                    if extension.lower() == '.csv':
+                        print(f"Attempting to read CSV file: {self.filename}")
+                        print(f"Expected data columns: {self.data_columns}")
+                        print(f"Number of expected columns: {len(self.data_columns)}")
+                        
+                        # Try to preview the file structure
+                        try:
+                            with open(self.file_path, 'r') as f:
+                                first_few_lines = [f.readline().strip() for _ in range(3)]
+                            print("First 3 lines of file:")
+                            for i, line in enumerate(first_few_lines):
+                                print(f"  Line {i}: {line}")
+                                if line:
+                                    print(f"    Columns in line: {len(line.split(','))}")
+                        except Exception as preview_e:
+                            print(f"Could not preview file: {preview_e}")
+                    
                     self.data = w2.read(self.file_path, self.year, self.data_columns)
                 elif FILE_TYPE == 'SQLITE':
                     self.data = w2.read_sqlite(self.file_path)
@@ -781,8 +799,33 @@ class ClearView(qtw.QMainWindow):
                 self.show_warning_dialog(f'The file {self.filename} appears to be empty')
                 return
             except pd.errors.ParserError as e:
-                self.show_warning_dialog(f'Error parsing {self.filename}: {str(e)}')
+                error_msg = f'Error parsing {self.filename}: {str(e)}'
+                if extension.lower() == '.csv':
+                    error_msg += '\n\nThis may be due to column structure mismatch. '
+                    error_msg += 'The CSV file might have a different format than expected by CE-QUAL-W2.'
+                self.show_warning_dialog(error_msg)
                 return
+            except OSError as e:
+                if 'Error reading' in str(e) and extension.lower() == '.csv':
+                    print(f"Primary CSV loader failed, trying fallback loader...")
+                    fallback_data = self.load_csv_fallback(self.file_path)
+                    
+                    if fallback_data is not None:
+                        self.data = fallback_data
+                        print(f"✓ Fallback CSV loader succeeded!")
+                        # Continue with normal processing
+                    else:
+                        error_msg = f'Error reading CSV file {self.filename}.\n\n'
+                        error_msg += 'This may be due to:\n'
+                        error_msg += '• Column structure mismatch\n'
+                        error_msg += '• Missing or extra columns\n'
+                        error_msg += '• Invalid header format\n\n'
+                        error_msg += f'Technical error: {str(e)}'
+                        self.show_warning_dialog(error_msg)
+                        return
+                else:
+                    self.show_warning_dialog(f'Error reading file {self.filename}: {str(e)}')
+                    return
             except Exception as e:
                 self.show_warning_dialog(f'An unexpected error occurred while opening {self.filename}: {str(e)}')
                 return
@@ -855,7 +898,7 @@ class ClearView(qtw.QMainWindow):
             message (str): The warning message to be displayed.
         """
         message_box = qtw.QMessageBox()
-        message_box.setIcon(qtw.QMessageBox.Critical)
+        message_box.setIcon(qtw.QMessageBox.Icon.Critical)
         message_box.setWindowTitle('Error')
         message_box.setText(message)
         message_box.exec()
@@ -923,7 +966,7 @@ class ClearView(qtw.QMainWindow):
     def show_info_dialog(self, message):
         """Display an information dialog."""
         msg_box = qtw.QMessageBox()
-        msg_box.setIcon(qtw.QMessageBox.Information)
+        msg_box.setIcon(qtw.QMessageBox.Icon.Information)
         msg_box.setWindowTitle('Information')
         msg_box.setText(message)
         msg_box.exec()
@@ -1018,6 +1061,33 @@ class ClearView(qtw.QMainWindow):
         rows = string.split('\n')
         array = [row.split('\t') for row in rows]
         return np.array(array)
+
+    def load_csv_fallback(self, file_path):
+        """
+        Fallback CSV loader that can handle files with flexible column structures.
+        
+        This method tries to load CSV files without strict column expectations,
+        which can help with TSR files or other CE-QUAL-W2 CSV outputs that might
+        have different formats.
+        """
+        try:
+            # First, try to load without any assumptions about columns
+            df = pd.read_csv(file_path)
+            print(f"Fallback loader: Successfully loaded CSV with shape {df.shape}")
+            print(f"Columns found: {list(df.columns)}")
+            
+            # Try to set the first column as index if it looks like a time/date column
+            if len(df.columns) > 1:
+                first_col = df.columns[0]
+                if any(keyword in first_col.lower() for keyword in ['time', 'date', 'jday', 'day']):
+                    df = df.set_index(first_col)
+                    print(f"Set '{first_col}' as index")
+            
+            return df
+            
+        except Exception as e:
+            print(f"Fallback CSV loader also failed: {e}")
+            return None
 
     def copy_data(self):
         """
