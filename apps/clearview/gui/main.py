@@ -63,27 +63,55 @@ class MyTableWidget(qtw.QTableWidget):
 
 
 class ClearView(qtw.QMainWindow):
+    # Class constants for configuration
+    DEFAULT_WINDOW_WIDTH = 1500
+    DEFAULT_WINDOW_HEIGHT = 900
+    DEFAULT_YEAR = 2023
+    DEFAULT_FIG_WIDTH = 12
+    DEFAULT_FIG_HEIGHT = 4
+    ICON_SIZE = 24
+    TOOLBAR_HEIGHT = 25
+    STATS_TABLE_MIN_HEIGHT = 200
+    PLOT_SCALE_FACTOR = 1.5
+    SUBPLOT_SCALE_FACTOR = 2.0
+    
+    # UI element dimensions
+    LABEL_WIDTH = 75
+    YEAR_INPUT_WIDTH = 55
+    FILENAME_INPUT_WIDTH = 400
+
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('ClearView')
-        self.setGeometry(0, 0, 1500, 900)
-        self.PLOT_TYPE = 'plot'
-
+        self.setWindowTitle('ClearView - CE-QUAL-W2 Data Viewer')
+        
+        # Center window on screen with proper sizing
+        self.resize(self.DEFAULT_WINDOW_WIDTH, self.DEFAULT_WINDOW_HEIGHT)
+        self.center_on_screen()
+        
+        # Initialize data attributes
         self.file_path = ''
         self.data = None
-        self.DEFAULT_YEAR = 2023
+        self.stats = None
         self.year = self.DEFAULT_YEAR
         self.data_database_path = None
         self.stats_database_path = None
         self.table_name = 'data'
-        self.default_fig_width = 12
-        self.default_fig_height = 4
+        self.default_fig_width = self.DEFAULT_FIG_WIDTH
+        self.default_fig_height = self.DEFAULT_FIG_HEIGHT
         
         # Set up assets directory path
         self.assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets')
         
         # Initialize UI
         self.setup_ui()
+
+    def center_on_screen(self):
+        """Center the window on the screen."""
+        screen = qtw.QApplication.desktop().screenGeometry()
+        window = self.geometry()
+        x = (screen.width() - window.width()) // 2
+        y = (screen.height() - window.height()) // 2
+        self.move(x, y)
 
     def load_icon(self, icon_path, fallback_style=None):
         """
@@ -120,7 +148,7 @@ class ClearView(qtw.QMainWindow):
         self.app_toolbar = self.addToolBar('Toolbar')
         self.app_toolbar.setToolButtonStyle(qtc.Qt.ToolButtonTextUnderIcon)
         self.app_toolbar.setMovable(False)
-        self.app_toolbar.setIconSize(qtc.QSize(24, 24))
+        self.app_toolbar.setIconSize(qtc.QSize(self.ICON_SIZE, self.ICON_SIZE))
 
         # Create app toolbar icons using safe loading
         open_icon = self.load_icon(
@@ -200,19 +228,19 @@ class ClearView(qtw.QMainWindow):
 
         # Create the start year label and text input field
         self.start_year_label = qtw.QLabel('Start Year:', self)
-        self.start_year_label.setFixedWidth(75)
+        self.start_year_label.setFixedWidth(self.LABEL_WIDTH)
         self.start_year_input = qtw.QLineEdit(self)
         self.start_year_input.setAlignment(qtc.Qt.AlignCenter)
-        self.start_year_input.setFixedWidth(55)
+        self.start_year_input.setFixedWidth(self.YEAR_INPUT_WIDTH)
         self.start_year_input.setReadOnly(False)
         self.start_year_input.setText(str(self.DEFAULT_YEAR))
         self.start_year_input.textChanged.connect(self.update_year)
 
         # Create the input filename label and text input field
         self.filename_label = qtw.QLabel('Filename:')
-        self.filename_label.setFixedWidth(75)
+        self.filename_label.setFixedWidth(self.LABEL_WIDTH)
         self.filename_input = qtw.QLineEdit(self)
-        self.filename_input.setFixedWidth(400)
+        self.filename_input.setFixedWidth(self.FILENAME_INPUT_WIDTH)
         self.filename_input.setReadOnly(True)
         self.filename_input.textChanged.connect(self.update_filename)
 
@@ -227,7 +255,7 @@ class ClearView(qtw.QMainWindow):
         # Create the statistics table
         self.stats_table = MyTableWidget(self)
         self.stats_table.setEditTriggers(qtw.QTableWidget.NoEditTriggers)
-        self.stats_table.setMinimumHeight(200)
+        self.stats_table.setMinimumHeight(self.STATS_TABLE_MIN_HEIGHT)
 
         # Create empty canvas and add a matplotlib navigation toolbar
         self.figure = plt.figure()
@@ -235,7 +263,7 @@ class ClearView(qtw.QMainWindow):
 
         # Create and customize the matplotlib navigation toolbar
         self.navigation_toolbar = NavigationToolbar(self.canvas, self)
-        self.navigation_toolbar.setMaximumHeight(25)
+        self.navigation_toolbar.setMaximumHeight(self.TOOLBAR_HEIGHT)
         self.navigation_toolbar_background_color = '#eeffee'
         self.navigation_toolbar.setStyleSheet(f'background-color: {self.navigation_toolbar_background_color}; font-size: 14px; color: black;')
 
@@ -565,6 +593,88 @@ class ClearView(qtw.QMainWindow):
         """
         self.filename = text
 
+    def load_excel_file(self, file_path):
+        """
+        Load data from Excel file with sheet selection support.
+        
+        Args:
+            file_path (str): Path to Excel file
+            
+        Returns:
+            pd.DataFrame: Loaded data
+        """
+        try:
+            # Try to read the first sheet first
+            xl_file = pd.ExcelFile(file_path)
+            
+            if len(xl_file.sheet_names) == 1:
+                # Single sheet, load directly
+                return pd.read_excel(file_path, index_col=0, parse_dates=True)
+            else:
+                # Multiple sheets, let user choose (for now, use first sheet)
+                # TODO: Add sheet selection dialog
+                sheet_name = xl_file.sheet_names[0]
+                return pd.read_excel(file_path, sheet_name=sheet_name, index_col=0, parse_dates=True)
+                
+        except Exception as e:
+            raise Exception(f"Error loading Excel file: {str(e)}")
+
+    def load_hdf5_file(self, file_path):
+        """
+        Load data from HDF5 file.
+        
+        Args:
+            file_path (str): Path to HDF5 file
+            
+        Returns:
+            pd.DataFrame: Loaded data
+        """
+        try:
+            # Try common HDF5 key names
+            with pd.HDFStore(file_path, 'r') as store:
+                keys = store.keys()
+                if not keys:
+                    raise ValueError("No datasets found in HDF5 file")
+                
+                # Use first key for now
+                # TODO: Add key selection dialog for multiple datasets
+                key = keys[0]
+                return store[key]
+                
+        except Exception as e:
+            raise Exception(f"Error loading HDF5 file: {str(e)}")
+
+    def load_netcdf_file(self, file_path):
+        """
+        Load data from NetCDF file.
+        
+        Args:
+            file_path (str): Path to NetCDF file
+            
+        Returns:
+            pd.DataFrame: Loaded data
+        """
+        try:
+            import xarray as xr
+            
+            # Load with xarray and convert to pandas
+            ds = xr.open_dataset(file_path)
+            
+            # Convert to DataFrame (this may need customization based on data structure)
+            df = ds.to_dataframe()
+            
+            # Reset index to make time a column if it's in the index
+            if df.index.names and 'time' in df.index.names:
+                df = df.reset_index()
+                df = df.set_index('time')
+            
+            return df
+            
+        except ImportError:
+            raise Exception("xarray library required for NetCDF support. Install with: pip install xarray")
+        except Exception as e:
+            raise Exception(f"Error loading NetCDF file: {str(e)}")
+
     def browse_file(self):
         """
         Browse and process a selected file.
@@ -585,27 +695,42 @@ class ClearView(qtw.QMainWindow):
         """
         file_dialog = qtw.QFileDialog(self)
         file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
-        file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)',
-            'OPT Files (*.opt)', 'Excel Files (*.xlsx *.xls)', 'SQLite Files (*.db)'])
+        file_dialog.setNameFilters([
+            'All Files (*.*)', 
+            'CSV Files (*.csv)', 
+            'NPT Files (*.npt)',
+            'OPT Files (*.opt)', 
+            'Excel Files (*.xlsx *.xls)', 
+            'SQLite Files (*.db *.sqlite)',
+            'HDF5 Files (*.h5 *.hdf5)',
+            'NetCDF Files (*.nc)'
+        ])
         if file_dialog.exec_():
             self.file_path = file_dialog.selectedFiles()[0]
             self.directory, self.filename = os.path.split(self.file_path)
             self.filename_input.setText(self.filename)
             basefilename, extension = os.path.splitext(self.filename)
 
+            # Determine file type and setup
             if extension.lower() in ['.npt', '.opt']:
                 self.data_columns = w2.get_data_columns_fixed_width(self.file_path)
                 FILE_TYPE = 'ASCII'
             elif extension.lower() == '.csv':
                 self.data_columns = w2.get_data_columns_csv(self.file_path)
                 FILE_TYPE = 'ASCII'
-            elif extension.lower() == '.db':
+            elif extension.lower() in ['.db', '.sqlite']:
                 FILE_TYPE = 'SQLITE'
-            elif extension.lower() == '.xlsx' or extension.lower() == '.xls':
+            elif extension.lower() in ['.xlsx', '.xls']:
                 FILE_TYPE = 'EXCEL'
+            elif extension.lower() in ['.h5', '.hdf5']:
+                FILE_TYPE = 'HDF5'
+            elif extension.lower() == '.nc':
+                FILE_TYPE = 'NETCDF'
             else:
-                file_dialog.close()
-                self.show_warning_dialog('Only *.csv, *.npt, *.opt, and *.db files are supported.')
+                self.show_warning_dialog(
+                    f'Unsupported file format: {extension}\n'
+                    'Supported formats: .csv, .npt, .opt, .db, .sqlite, .xlsx, .xls, .h5, .hdf5, .nc'
+                )
                 return
 
             self.get_model_year()
@@ -616,11 +741,13 @@ class ClearView(qtw.QMainWindow):
                 elif FILE_TYPE == 'SQLITE':
                     self.data = w2.read_sqlite(self.file_path)
                 elif FILE_TYPE == 'EXCEL':
-                    self.data = w2.read_excel(self.file_path)
-                    # first_column_name = self.data.columns[0]
-                    # self.data.rename(columns={f'{first_column_name}': 'Date'}, inplace=True)
-                    # self.data['Date'] = pd.to_datetime(self.data['Date'], format='%m/%d/%Y %H:%M')
-                    # self.data.set_index('Date', inplace=True)
+                    self.data = self.load_excel_file(self.file_path)
+                elif FILE_TYPE == 'HDF5':
+                    self.data = self.load_hdf5_file(self.file_path)
+                elif FILE_TYPE == 'NETCDF':
+                    self.data = self.load_netcdf_file(self.file_path)
+                else:
+                    raise ValueError(f"Unsupported file type: {FILE_TYPE}")
                     
                 # Validate that data was loaded successfully
                 if self.data is None or self.data.empty:
@@ -676,8 +803,7 @@ class ClearView(qtw.QMainWindow):
 
         # Create the figure and canvas
         self.clear_figure_and_canvas()
-        plot_scale_factor = 1.5
-        canvas_height = plot_scale_factor * self.default_fig_height
+        canvas_height = self.PLOT_SCALE_FACTOR * self.default_fig_height
         w2.plot(self.data, fig=self.figure, figsize=(self.default_fig_width, self.default_fig_height))
         self.resize_canvas(self.default_fig_width, canvas_height)
 
@@ -692,9 +818,8 @@ class ClearView(qtw.QMainWindow):
 
         # Create the figure and canvas
         self.clear_figure_and_canvas()
-        subplot_scale_factor = 2.0
         num_subplots = len(self.data.columns)
-        multi_plot_fig_height = max(num_subplots * subplot_scale_factor, self.default_fig_height)
+        multi_plot_fig_height = max(num_subplots * self.SUBPLOT_SCALE_FACTOR, self.default_fig_height)
         w2.multi_plot(self.data, fig=self.figure, figsize=(self.default_fig_width, multi_plot_fig_height))
         self.resize_canvas(self.default_fig_width, multi_plot_fig_height)
 
@@ -764,32 +889,81 @@ class ClearView(qtw.QMainWindow):
         df.to_sql(self.table_name, con, if_exists="replace", index=True)
         con.close()
 
+    def save_to_hdf5(self, df, file_path):
+        """Save dataframe to HDF5 format."""
+        key = self.table_name if hasattr(self, 'table_name') else 'data'
+        df.to_hdf(file_path, key=key, mode='w', complevel=9, complib='zlib')
+
+    def save_to_excel(self, df, file_path):
+        """Save dataframe to Excel format."""
+        with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Data', index=True)
+
+    def save_to_csv(self, df, file_path):
+        """Save dataframe to CSV format."""
+        df.to_csv(file_path, index=True)
+
+    def show_info_dialog(self, message):
+        """Display an information dialog."""
+        msg_box = qtw.QMessageBox()
+        msg_box.setIcon(qtw.QMessageBox.Information)
+        msg_box.setWindowTitle('Information')
+        msg_box.setText(message)
+        msg_box.exec_()
+
     def save_data(self):
         """
-        Saves the data to a selected file as an SQLite database.
+        Saves the data to a selected file in multiple formats.
 
-        This method allows the user to select a file path to save the data as an SQLite database.
-        If a valid file path is selected and the `data` attribute is not `None`, the following steps are performed:
-        1. The `data_database_path` attribute is set to the selected file path.
-        2. The `save_to_sqlite` method is called to save the data to the SQLite database file.
-        3. The statistics table is updated after saving the data.
-
-        Note:
-            - The `data` attribute must be set with the data before calling this method.
+        This method allows the user to select a file path and format to save the data.
+        Supported formats: SQLite, HDF5, Excel, CSV.
         """
-        default_filename = self.file_path + '.db'
+        if self.data is None:
+            self.show_warning_dialog("No data to save!")
+            return
+            
+        default_filename = os.path.splitext(self.file_path)[0] if self.file_path else "data"
         options = qtw.QFileDialog.Options()
-        # options |= qtw.QFileDialog.DontUseNativeDialog
-        returned_path, _ = qtw.QFileDialog.getSaveFileName(self, "Save As", default_filename,
-                                                           "SQLite Files (*.db);; All Files (*)", options=options)
+        
+        file_filters = [
+            "SQLite Files (*.db)",
+            "HDF5 Files (*.h5)",
+            "Excel Files (*.xlsx)",
+            "CSV Files (*.csv)",
+            "All Files (*)"
+        ]
+        
+        returned_path, selected_filter = qtw.QFileDialog.getSaveFileName(
+            self, "Save Data As", default_filename, ";;".join(file_filters), options=options
+        )
+        
         if not returned_path:
             return
 
-        self.data_database_path = returned_path
-
-        if self.data_database_path and self.data is not None:
-            self.save_to_sqlite(self.data, self.data_database_path)
+        try:
+            # Determine format from file extension or filter
+            _, ext = os.path.splitext(returned_path)
+            
+            if ext.lower() == '.db' or 'SQLite' in selected_filter:
+                self.save_to_sqlite(self.data, returned_path)
+            elif ext.lower() == '.h5' or 'HDF5' in selected_filter:
+                self.save_to_hdf5(self.data, returned_path)
+            elif ext.lower() == '.xlsx' or 'Excel' in selected_filter:
+                self.save_to_excel(self.data, returned_path)
+            elif ext.lower() == '.csv' or 'CSV' in selected_filter:
+                self.save_to_csv(self.data, returned_path)
+            else:
+                # Default to SQLite
+                if not ext:
+                    returned_path += '.db'
+                self.save_to_sqlite(self.data, returned_path)
+            
+            self.data_database_path = returned_path
+            self.show_info_dialog(f"Data saved successfully to {returned_path}")
             self.update_stats_table()
+            
+        except Exception as e:
+            self.show_warning_dialog(f"Error saving data: {str(e)}")
 
     def save_stats(self):
         """
