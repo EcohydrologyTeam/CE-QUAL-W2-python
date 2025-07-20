@@ -12,7 +12,8 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 import PyQt5.QtCore as qtc
 import PyQt5.QtWidgets as qtw
 import PyQt5.QtGui as qtg
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+from models import FilterOperator, DataFilter, ValidationResult
 
 
 class MyTableWidget(qtw.QTableWidget):
@@ -60,6 +61,10 @@ class ClearViewMainWindow(qtw.QMainWindow):
     save_stats_requested = qtc.pyqtSignal()
     copy_requested = qtc.pyqtSignal()
     paste_requested = qtc.pyqtSignal()
+    validation_requested = qtc.pyqtSignal()
+    filter_applied = qtc.pyqtSignal(list)  # List of DataFilter objects
+    duplicates_removal_requested = qtc.pyqtSignal()
+    missing_data_handling_requested = qtc.pyqtSignal(str)  # method name
     
     def __init__(self):
         super().__init__()
@@ -224,6 +229,12 @@ class ClearViewMainWindow(qtw.QMainWindow):
         
         # Plot tab
         self._create_plot_tab()
+        
+        # Validation tab
+        self._create_validation_tab()
+        
+        # Filtering tab
+        self._create_filtering_tab()
     
     def _create_input_controls(self, layout):
         """Create input controls for year and filename."""
@@ -274,6 +285,143 @@ class ClearViewMainWindow(qtw.QMainWindow):
         plot_layout.addWidget(self.canvas)
         
         self.tab_widget.addTab(plot_widget, 'Plot')
+    
+    def _create_validation_tab(self):
+        """Create the validation tab with validation controls and results."""
+        validation_widget = qtw.QWidget()
+        validation_layout = qtw.QVBoxLayout(validation_widget)
+        
+        # Validation controls
+        controls_group = qtw.QGroupBox("Data Validation")
+        controls_layout = qtw.QHBoxLayout(controls_group)
+        
+        validate_btn = qtw.QPushButton("Validate Data")
+        validate_btn.clicked.connect(lambda: self.validation_requested.emit())
+        controls_layout.addWidget(validate_btn)
+        
+        remove_duplicates_btn = qtw.QPushButton("Remove Duplicates")
+        remove_duplicates_btn.clicked.connect(lambda: self.duplicates_removal_requested.emit())
+        controls_layout.addWidget(remove_duplicates_btn)
+        
+        # Missing data handling
+        missing_data_combo = qtw.QComboBox()
+        missing_data_combo.addItems(["Drop Missing", "Fill Missing", "Interpolate"])
+        missing_data_combo.currentTextChanged.connect(
+            lambda text: self.missing_data_handling_requested.emit(text.lower().replace(" ", "_"))
+        )
+        controls_layout.addWidget(qtw.QLabel("Missing Data:"))
+        controls_layout.addWidget(missing_data_combo)
+        
+        controls_layout.addStretch()
+        validation_layout.addWidget(controls_group)
+        
+        # Validation results area
+        results_group = qtw.QGroupBox("Validation Results")
+        results_layout = qtw.QVBoxLayout(results_group)
+        
+        self.validation_results = qtw.QTextEdit()
+        self.validation_results.setReadOnly(True)
+        self.validation_results.setMaximumHeight(150)
+        results_layout.addWidget(self.validation_results)
+        
+        validation_layout.addWidget(results_group)
+        
+        # Column information table
+        column_info_group = qtw.QGroupBox("Column Information")
+        column_info_layout = qtw.QVBoxLayout(column_info_group)
+        
+        self.column_info_table = qtw.QTableWidget()
+        self.column_info_table.setColumnCount(7)
+        self.column_info_table.setHorizontalHeaderLabels([
+            'Column', 'Type', 'Non-Null', 'Null', 'Unique', 'Sample Values', 'Notes'
+        ])
+        column_info_layout.addWidget(self.column_info_table)
+        
+        validation_layout.addWidget(column_info_group)
+        
+        self.tab_widget.addTab(validation_widget, 'Validation')
+    
+    def _create_filtering_tab(self):
+        """Create the filtering tab with filter controls."""
+        filtering_widget = qtw.QWidget()
+        filtering_layout = qtw.QVBoxLayout(filtering_widget)
+        
+        # Filter controls
+        controls_group = qtw.QGroupBox("Data Filters")
+        controls_layout = qtw.QVBoxLayout(controls_group)
+        
+        # Filter creation area
+        filter_creation_layout = qtw.QGridLayout()
+        
+        filter_creation_layout.addWidget(qtw.QLabel("Column:"), 0, 0)
+        self.filter_column_combo = qtw.QComboBox()
+        filter_creation_layout.addWidget(self.filter_column_combo, 0, 1)
+        
+        filter_creation_layout.addWidget(qtw.QLabel("Operator:"), 0, 2)
+        self.filter_operator_combo = qtw.QComboBox()
+        self.filter_operator_combo.addItems([
+            "equals", "not_equals", "greater_than", "greater_equal",
+            "less_than", "less_equal", "contains", "starts_with",
+            "ends_with", "is_null", "not_null", "between"
+        ])
+        filter_creation_layout.addWidget(self.filter_operator_combo, 0, 3)
+        
+        filter_creation_layout.addWidget(qtw.QLabel("Value:"), 1, 0)
+        self.filter_value_edit = qtw.QLineEdit()
+        filter_creation_layout.addWidget(self.filter_value_edit, 1, 1)
+        
+        filter_creation_layout.addWidget(qtw.QLabel("Value 2:"), 1, 2)
+        self.filter_value2_edit = qtw.QLineEdit()
+        self.filter_value2_edit.setPlaceholderText("For 'between' operator")
+        filter_creation_layout.addWidget(self.filter_value2_edit, 1, 3)
+        
+        # Case sensitive checkbox
+        self.case_sensitive_cb = qtw.QCheckBox("Case Sensitive")
+        self.case_sensitive_cb.setChecked(True)
+        filter_creation_layout.addWidget(self.case_sensitive_cb, 2, 0)
+        
+        # Add and clear filter buttons
+        filter_buttons_layout = qtw.QHBoxLayout()
+        add_filter_btn = qtw.QPushButton("Add Filter")
+        add_filter_btn.clicked.connect(self._add_filter)
+        filter_buttons_layout.addWidget(add_filter_btn)
+        
+        clear_filters_btn = qtw.QPushButton("Clear All")
+        clear_filters_btn.clicked.connect(self._clear_filters)
+        filter_buttons_layout.addWidget(clear_filters_btn)
+        
+        apply_filters_btn = qtw.QPushButton("Apply Filters")
+        apply_filters_btn.clicked.connect(self._apply_filters)
+        filter_buttons_layout.addWidget(apply_filters_btn)
+        
+        filter_buttons_layout.addStretch()
+        filter_creation_layout.addLayout(filter_buttons_layout, 2, 1, 1, 3)
+        
+        controls_layout.addLayout(filter_creation_layout)
+        filtering_layout.addWidget(controls_group)
+        
+        # Active filters list
+        active_filters_group = qtw.QGroupBox("Active Filters")
+        active_filters_layout = qtw.QVBoxLayout(active_filters_group)
+        
+        self.active_filters_list = qtw.QListWidget()
+        active_filters_layout.addWidget(self.active_filters_list)
+        
+        filtering_layout.addWidget(active_filters_group)
+        
+        # Filtered data preview
+        preview_group = qtw.QGroupBox("Filtered Data Preview")
+        preview_layout = qtw.QVBoxLayout(preview_group)
+        
+        self.filtered_data_table = qtw.QTableWidget()
+        preview_layout.addWidget(self.filtered_data_table)
+        
+        filtering_layout.addWidget(preview_group)
+        
+        # Store active filters
+        self.active_filters = []
+        
+        self.tab_widget.addTab(filtering_widget, 'Filtering')
     
     def _create_status_bar(self):
         """Create the status bar."""
@@ -393,6 +541,179 @@ class ClearViewMainWindow(qtw.QMainWindow):
     def set_filename(self, filename: str):
         """Set the filename in the input field."""
         self.filename_edit.setText(filename)
+    
+    # Filtering helper methods
+    def _add_filter(self):
+        """Add a new filter to the active filters list."""
+        column = self.filter_column_combo.currentText()
+        operator_text = self.filter_operator_combo.currentText()
+        value = self.filter_value_edit.text()
+        value2 = self.filter_value2_edit.text()
+        case_sensitive = self.case_sensitive_cb.isChecked()
+        
+        if not column or not value:
+            return
+        
+        # Map operator text to enum
+        operator_map = {
+            "equals": FilterOperator.EQUALS,
+            "not_equals": FilterOperator.NOT_EQUALS,
+            "greater_than": FilterOperator.GREATER_THAN,
+            "greater_equal": FilterOperator.GREATER_EQUAL,
+            "less_than": FilterOperator.LESS_THAN,
+            "less_equal": FilterOperator.LESS_EQUAL,
+            "contains": FilterOperator.CONTAINS,
+            "starts_with": FilterOperator.STARTS_WITH,
+            "ends_with": FilterOperator.ENDS_WITH,
+            "is_null": FilterOperator.IS_NULL,
+            "not_null": FilterOperator.NOT_NULL,
+            "between": FilterOperator.BETWEEN
+        }
+        
+        operator = operator_map.get(operator_text, FilterOperator.EQUALS)
+        
+        # Create filter object
+        data_filter = DataFilter(
+            column=column,
+            operator=operator,
+            value=value,
+            value2=value2 if value2 else None,
+            case_sensitive=case_sensitive
+        )
+        
+        self.active_filters.append(data_filter)
+        
+        # Update UI
+        self._update_active_filters_list()
+        
+        # Clear input fields
+        self.filter_value_edit.clear()
+        self.filter_value2_edit.clear()
+    
+    def _clear_filters(self):
+        """Clear all active filters."""
+        self.active_filters.clear()
+        self._update_active_filters_list()
+        self.filtered_data_table.setRowCount(0)
+        self.filtered_data_table.setColumnCount(0)
+    
+    def _apply_filters(self):
+        """Apply active filters and emit signal."""
+        if self.active_filters:
+            self.filter_applied.emit(self.active_filters)
+    
+    def _update_active_filters_list(self):
+        """Update the active filters list widget."""
+        self.active_filters_list.clear()
+        
+        for i, filter_obj in enumerate(self.active_filters):
+            filter_text = f"{filter_obj.column} {filter_obj.operator.value}"
+            if filter_obj.value is not None:
+                filter_text += f" {filter_obj.value}"
+            if filter_obj.value2 is not None:
+                filter_text += f" AND {filter_obj.value2}"
+            
+            item = qtw.QListWidgetItem(filter_text)
+            item.setData(qtc.Qt.UserRole, i)  # Store filter index
+            self.active_filters_list.addItem(item)
+    
+    def update_filter_columns(self, columns: List[str]):
+        """Update the column options in the filter dropdown."""
+        self.filter_column_combo.clear()
+        self.filter_column_combo.addItems(columns)
+    
+    def update_validation_results(self, validation_result: ValidationResult):
+        """Update the validation results display."""
+        # Update text area
+        result_text = f"Data Validation Results:\n"
+        result_text += f"{'=' * 30}\n"
+        result_text += f"Status: {'VALID' if validation_result.is_valid else 'INVALID'}\n"
+        result_text += f"Rows: {validation_result.row_count}\n"
+        result_text += f"Columns: {validation_result.column_count}\n"
+        result_text += f"Missing Values: {validation_result.missing_data_count}\n"
+        result_text += f"Duplicate Rows: {validation_result.duplicate_count}\n\n"
+        
+        if validation_result.issues:
+            result_text += "ISSUES:\n"
+            for issue in validation_result.issues:
+                result_text += f"  • {issue}\n"
+            result_text += "\n"
+        
+        if validation_result.warnings:
+            result_text += "WARNINGS:\n"
+            for warning in validation_result.warnings:
+                result_text += f"  • {warning}\n"
+        
+        self.validation_results.setPlainText(result_text)
+    
+    def update_column_info_table(self, column_info: Dict[str, Dict[str, Any]]):
+        """Update the column information table."""
+        self.column_info_table.setRowCount(len(column_info))
+        
+        for row, (col_name, info) in enumerate(column_info.items()):
+            # Column name
+            self.column_info_table.setItem(row, 0, qtw.QTableWidgetItem(col_name))
+            
+            # Data type
+            self.column_info_table.setItem(row, 1, qtw.QTableWidgetItem(info.get('data_type', '')))
+            
+            # Non-null count
+            self.column_info_table.setItem(row, 2, qtw.QTableWidgetItem(str(info.get('non_null_count', ''))))
+            
+            # Null count
+            self.column_info_table.setItem(row, 3, qtw.QTableWidgetItem(str(info.get('null_count', ''))))
+            
+            # Unique count
+            self.column_info_table.setItem(row, 4, qtw.QTableWidgetItem(str(info.get('unique_count', ''))))
+            
+            # Sample values
+            sample_values = info.get('sample_values', [])
+            sample_text = ', '.join(str(v) for v in sample_values[:5])  # Show first 5
+            if len(sample_values) > 5:
+                sample_text += '...'
+            self.column_info_table.setItem(row, 5, qtw.QTableWidgetItem(sample_text))
+            
+            # Notes (for numeric columns, show min/max)
+            notes = ""
+            if 'min_value' in info and 'max_value' in info:
+                notes = f"Range: {info['min_value']:.2f} - {info['max_value']:.2f}"
+            elif 'max_length' in info:
+                notes = f"Max length: {info['max_length']}"
+            
+            self.column_info_table.setItem(row, 6, qtw.QTableWidgetItem(notes))
+        
+        # Resize columns to content
+        self.column_info_table.resizeColumnsToContents()
+    
+    def update_filtered_data_preview(self, filtered_df: pd.DataFrame):
+        """Update the filtered data preview table."""
+        if filtered_df.empty:
+            self.filtered_data_table.setRowCount(0)
+            self.filtered_data_table.setColumnCount(0)
+            return
+        
+        # Show only first 100 rows for performance
+        preview_df = filtered_df.head(100)
+        
+        # Set table dimensions
+        self.filtered_data_table.setRowCount(len(preview_df))
+        self.filtered_data_table.setColumnCount(len(preview_df.columns))
+        self.filtered_data_table.setHorizontalHeaderLabels(preview_df.columns.astype(str))
+        
+        # Populate table
+        for i, row in preview_df.iterrows():
+            for j, value in enumerate(row):
+                if pd.isna(value):
+                    item = qtw.QTableWidgetItem("")
+                else:
+                    item = qtw.QTableWidgetItem(str(value))
+                self.filtered_data_table.setItem(i, j, item)
+        
+        # Add info about truncation if needed
+        if len(filtered_df) > 100:
+            info_item = qtw.QTableWidgetItem(f"Showing first 100 of {len(filtered_df)} rows")
+            info_item.setBackground(qtg.QColor(255, 255, 200))  # Light yellow background
+            self.filtered_data_table.setItem(0, 0, info_item)
     
     def get_figure(self):
         """Get the matplotlib figure for plotting."""

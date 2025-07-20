@@ -45,6 +45,10 @@ class ClearViewController:
         self.view.save_stats_requested.connect(self.handle_save_stats_request)
         self.view.copy_requested.connect(self.handle_copy_request)
         self.view.paste_requested.connect(self.handle_paste_request)
+        self.view.validation_requested.connect(self.handle_validation_request)
+        self.view.filter_applied.connect(self.handle_filter_applied)
+        self.view.duplicates_removal_requested.connect(self.handle_duplicates_removal)
+        self.view.missing_data_handling_requested.connect(self.handle_missing_data_handling)
     
     def _load_recent_files(self):
         """Load recent files from settings."""
@@ -149,6 +153,113 @@ class ClearViewController:
         self._paste_clipboard_data(clipboard_text, current_cell.row(), current_cell.column())
         self.view.show_status_message("Data pasted from clipboard", 2000)
     
+    def handle_validation_request(self):
+        """Handle data validation request."""
+        if self.model.df is None or self.model.df.empty:
+            self.view.show_message("No data to validate", 'warning')
+            return
+        
+        # Perform validation
+        validation_result = self.model.validate_data()
+        
+        # Update UI with results
+        self.view.update_validation_results(validation_result)
+        
+        # Get and update column information
+        column_info = self.model.get_column_info()
+        self.view.update_column_info_table(column_info)
+        
+        # Show summary message
+        status = "VALID" if validation_result.is_valid else "INVALID"
+        issue_count = len(validation_result.issues)
+        warning_count = len(validation_result.warnings)
+        
+        summary = f"Validation complete: {status}"
+        if issue_count > 0:
+            summary += f" ({issue_count} issues"
+        if warning_count > 0:
+            summary += f", {warning_count} warnings" if issue_count > 0 else f" ({warning_count} warnings"
+        if issue_count > 0 or warning_count > 0:
+            summary += ")"
+        
+        self.view.show_status_message(summary, 5000)
+    
+    def handle_filter_applied(self, filters):
+        """Handle filter application request."""
+        if self.model.df is None or self.model.df.empty:
+            self.view.show_message("No data to filter", 'warning')
+            return
+        
+        try:
+            # Apply filters
+            filtered_df = self.model.apply_filters(filters)
+            
+            # Update filtered data preview
+            self.view.update_filtered_data_preview(filtered_df)
+            
+            # Show summary
+            original_count = len(self.model.df)
+            filtered_count = len(filtered_df)
+            self.view.show_status_message(
+                f"Filter applied: {filtered_count} of {original_count} rows match", 3000
+            )
+            
+        except Exception as e:
+            self.view.show_message(f"Error applying filters: {str(e)}", 'error')
+    
+    def handle_duplicates_removal(self):
+        """Handle duplicate removal request."""
+        if self.model.df is None or self.model.df.empty:
+            self.view.show_message("No data loaded", 'warning')
+            return
+        
+        initial_count = len(self.model.df)
+        success = self.model.remove_duplicates()
+        
+        if success:
+            final_count = len(self.model.df)
+            removed_count = initial_count - final_count
+            self.view.show_message(f"Removed {removed_count} duplicate rows")
+            
+            # Update UI
+            self.view.update_data_table(self.model.df)
+            self._update_statistics()
+        else:
+            self.view.show_message("No duplicate rows found")
+    
+    def handle_missing_data_handling(self, method_text: str):
+        """Handle missing data handling request."""
+        if self.model.df is None or self.model.df.empty:
+            self.view.show_message("No data loaded", 'warning')
+            return
+        
+        # Map method text to method names
+        method_map = {
+            "drop_missing": "drop",
+            "fill_missing": "fill", 
+            "interpolate": "interpolate"
+        }
+        
+        method = method_map.get(method_text, "drop")
+        
+        initial_missing = self.model.df.isnull().sum().sum()
+        if initial_missing == 0:
+            self.view.show_message("No missing data found")
+            return
+        
+        success = self.model.handle_missing_data(method)
+        
+        if success:
+            final_missing = self.model.df.isnull().sum().sum()
+            handled_count = initial_missing - final_missing
+            self.view.show_message(f"Handled {handled_count} missing values using {method} method")
+            
+            # Update UI
+            self.view.update_data_table(self.model.df)
+            self._update_statistics()
+        else:
+            self.view.show_message(f"Failed to handle missing data with {method} method", 'error')
+    
     # Model observer methods
     def on_data_changed(self, event_type: str, **kwargs):
         """Handle data model changes."""
@@ -187,6 +298,10 @@ class ClearViewController:
         
         # Update recent files menu
         self.view.update_recent_files_menu(self.model.recent_files)
+        
+        # Update filter columns
+        if self.model.df is not None:
+            self.view.update_filter_columns(list(self.model.df.columns))
     
     def _update_statistics(self):
         """Update statistics table."""
