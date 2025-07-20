@@ -442,20 +442,20 @@ class ClearView(qtw.QMainWindow):
         self.navigation_toolbar.setStyleSheet(f'background-color: {self.navigation_toolbar_background_color}; font-size: 14px; color: black;')
         
         # Add navigation actions with text labels (PyQt6 compatible)
-        home_action = qtw.QAction("🏠 Home", self.navigation_toolbar)
+        home_action = qtg.QAction("🏠 Home", self.navigation_toolbar)
         home_action.setToolTip("Reset view to fit all data")
         home_action.triggered.connect(self.reset_plot_view)
         self.navigation_toolbar.addAction(home_action)
         
         self.navigation_toolbar.addSeparator()
         
-        pan_action = qtw.QAction("✋ Pan", self.navigation_toolbar)
+        pan_action = qtg.QAction("✋ Pan", self.navigation_toolbar)
         pan_action.setToolTip("Pan the plot")
         pan_action.setCheckable(True)
         pan_action.triggered.connect(self.toggle_pan)
         self.navigation_toolbar.addAction(pan_action)
         
-        zoom_action = qtw.QAction("🔍 Zoom", self.navigation_toolbar)
+        zoom_action = qtg.QAction("🔍 Zoom", self.navigation_toolbar)
         zoom_action.setToolTip("Zoom to rectangle")
         zoom_action.setCheckable(True)
         zoom_action.triggered.connect(self.toggle_zoom)
@@ -463,7 +463,7 @@ class ClearView(qtw.QMainWindow):
         
         self.navigation_toolbar.addSeparator()
         
-        save_action = qtw.QAction("💾 Save", self.navigation_toolbar)
+        save_action = qtg.QAction("💾 Save", self.navigation_toolbar)
         save_action.setToolTip("Save the figure")
         save_action.triggered.connect(self.save_figure)
         self.navigation_toolbar.addAction(save_action)
