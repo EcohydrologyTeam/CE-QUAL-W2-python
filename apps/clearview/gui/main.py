@@ -486,7 +486,21 @@ class ClearView(qtw.QMainWindow):
                         item.setTextAlignment(qtc.Qt.AlignmentFlag.AlignCenter)
                     else:
                         value = array_data[row, column - 1]
-                        value_text = f'{value:.4f}'
+                        
+                        # Safe formatting for different data types
+                        try:
+                            # Try to format as float first
+                            if pd.isna(value):
+                                value_text = 'NaN'
+                            elif isinstance(value, (int, float)):
+                                value_text = f'{float(value):.4f}'
+                            else:
+                                # For strings or other types, convert to string
+                                value_text = str(value)
+                        except (ValueError, TypeError):
+                            # Fallback to string representation
+                            value_text = str(value)
+                        
                         item = qtw.QTableWidgetItem(value_text)
                         item.setTextAlignment(qtc.Qt.AlignmentFlag.AlignCenter)
                     self.data_table.setItem(row, column, item)
@@ -1076,13 +1090,27 @@ class ClearView(qtw.QMainWindow):
             print(f"Fallback loader: Successfully loaded CSV with shape {df.shape}")
             print(f"Columns found: {list(df.columns)}")
             
+            # Convert numeric columns properly (handles scientific notation)
+            for col in df.columns:
+                if col != df.columns[0]:  # Skip the first column for now
+                    try:
+                        df[col] = pd.to_numeric(df[col], errors='ignore')
+                    except Exception:
+                        pass  # Keep as string if conversion fails
+            
             # Try to set the first column as index if it looks like a time/date column
             if len(df.columns) > 1:
                 first_col = df.columns[0]
                 if any(keyword in first_col.lower() for keyword in ['time', 'date', 'jday', 'day']):
+                    # Convert first column to numeric if possible
+                    try:
+                        df[first_col] = pd.to_numeric(df[first_col], errors='ignore')
+                    except Exception:
+                        pass
                     df = df.set_index(first_col)
                     print(f"Set '{first_col}' as index")
             
+            print(f"Data types after processing: {df.dtypes.value_counts()}")
             return df
             
         except Exception as e:
