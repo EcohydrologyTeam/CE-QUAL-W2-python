@@ -388,7 +388,7 @@ class ClearView(qtw.QMainWindow):
         save_stats_action.triggered.connect(self.save_stats)
 
         # Add a plot button icon to the toolbar
-        plot_action = qtg.QAction(multi_plot_icon, 'Plot', self)
+        plot_action = qtg.QAction(plot_icon, 'Plot', self)
         plot_action.setShortcut('Ctrl+P')
         plot_action.triggered.connect(self.multi_plot)
 
