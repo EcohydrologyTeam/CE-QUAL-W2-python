@@ -436,10 +436,25 @@ class ClearView(qtw.QMainWindow):
         self.canvas = FigureCanvas(self.figure)
 
         # Create and customize the matplotlib navigation toolbar
-        self.navigation_toolbar = NavigationToolbar(self.canvas, self)
-        self.navigation_toolbar.setMaximumHeight(self.TOOLBAR_HEIGHT)
-        self.navigation_toolbar_background_color = '#eeffee'
-        self.navigation_toolbar.setStyleSheet(f'background-color: {self.navigation_toolbar_background_color}; font-size: 14px; color: black;')
+        try:
+            self.navigation_toolbar = NavigationToolbar(self.canvas, self)
+            self.navigation_toolbar.setMaximumHeight(self.TOOLBAR_HEIGHT)
+            self.navigation_toolbar_background_color = '#eeffee'
+            self.navigation_toolbar.setStyleSheet(f'background-color: {self.navigation_toolbar_background_color}; font-size: 14px; color: black;')
+        except Exception as e:
+            print(f"Warning: Could not create navigation toolbar: {e}")
+            # Create a simple toolbar with basic functionality
+            self.navigation_toolbar = qtw.QToolBar()
+            self.navigation_toolbar.setMaximumHeight(self.TOOLBAR_HEIGHT)
+            
+            # Add basic navigation actions
+            home_action = qtw.QAction("Home", self.navigation_toolbar)
+            home_action.triggered.connect(lambda: self.canvas.figure.subplots_adjust())
+            self.navigation_toolbar.addAction(home_action)
+            
+            save_action = qtw.QAction("Save", self.navigation_toolbar)
+            save_action.triggered.connect(self.save_figure)
+            self.navigation_toolbar.addAction(save_action)
 
         # Create tabs
         self.tab_widget = qtw.QTabWidget()
@@ -1052,8 +1067,13 @@ class ClearView(qtw.QMainWindow):
         if not selected_columns:
             return  # User cancelled or no columns selected
         
-        # Filter data to selected columns only
-        filtered_data = self.data[selected_columns]
+        # Filter data to selected columns only - preserve index
+        filtered_data = self.data[selected_columns].copy()
+        
+        # Ensure we have data to plot
+        if filtered_data.empty:
+            self.show_warning_dialog("No data to plot in selected columns.")
+            return
 
         # Create the figure and canvas
         self.clear_figure_and_canvas()
@@ -1064,12 +1084,42 @@ class ClearView(qtw.QMainWindow):
         multi_plot_fig_height = max(num_subplots * subplot_height, self.default_fig_height)
         
         # Create plots with filtered data
-        w2.multi_plot(filtered_data, fig=self.canvas.figure, figsize=(self.default_fig_width, multi_plot_fig_height))
+        try:
+            w2.multi_plot(filtered_data, fig=self.canvas.figure, figsize=(self.default_fig_width, multi_plot_fig_height))
+        except Exception as e:
+            # If w2.multi_plot fails, try a simple matplotlib approach
+            import matplotlib.pyplot as plt
+            
+            self.canvas.figure.clear()
+            
+            for i, col in enumerate(selected_columns):
+                ax = self.canvas.figure.add_subplot(num_subplots, 1, i+1)
+                ax.plot(filtered_data.index, filtered_data[col], label=col)
+                ax.set_ylabel(col)
+                ax.grid(True)
+                if i == len(selected_columns) - 1:  # Last subplot
+                    ax.set_xlabel('Index')
+            
+            self.canvas.figure.tight_layout()
         self.resize_canvas(self.default_fig_width, multi_plot_fig_height)
 
         # Draw the canvas and create or update the statistics table
         self.canvas.draw()
         self.update_stats_table()
+
+    def save_figure(self):
+        """Save the current figure to a file."""
+        try:
+            file_path, _ = qtw.QFileDialog.getSaveFileName(
+                self, 
+                "Save Figure", 
+                "", 
+                "PNG (*.png);;PDF (*.pdf);;SVG (*.svg)"
+            )
+            if file_path:
+                self.canvas.figure.savefig(file_path, dpi=150, bbox_inches='tight')
+        except Exception as e:
+            self.show_warning_dialog(f"Error saving figure: {e}")
 
     def show_warning_dialog(self, message):
         """
