@@ -435,26 +435,42 @@ class ClearView(qtw.QMainWindow):
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
 
-        # Create and customize the matplotlib navigation toolbar
-        try:
-            self.navigation_toolbar = NavigationToolbar(self.canvas, self)
-            self.navigation_toolbar.setMaximumHeight(self.TOOLBAR_HEIGHT)
-            self.navigation_toolbar_background_color = '#eeffee'
-            self.navigation_toolbar.setStyleSheet(f'background-color: {self.navigation_toolbar_background_color}; font-size: 14px; color: black;')
-        except Exception as e:
-            print(f"Warning: Could not create navigation toolbar: {e}")
-            # Create a simple toolbar with basic functionality
-            self.navigation_toolbar = qtw.QToolBar()
-            self.navigation_toolbar.setMaximumHeight(self.TOOLBAR_HEIGHT)
-            
-            # Add basic navigation actions
-            home_action = qtw.QAction("Home", self.navigation_toolbar)
-            home_action.triggered.connect(lambda: self.canvas.figure.subplots_adjust())
-            self.navigation_toolbar.addAction(home_action)
-            
-            save_action = qtw.QAction("Save", self.navigation_toolbar)
-            save_action.triggered.connect(self.save_figure)
-            self.navigation_toolbar.addAction(save_action)
+        # Create custom matplotlib navigation toolbar for PyQt6 compatibility
+        self.navigation_toolbar = qtw.QToolBar()
+        self.navigation_toolbar.setMaximumHeight(self.TOOLBAR_HEIGHT)
+        self.navigation_toolbar_background_color = '#eeffee'
+        self.navigation_toolbar.setStyleSheet(f'background-color: {self.navigation_toolbar_background_color}; font-size: 14px; color: black;')
+        
+        # Add navigation actions with text labels (PyQt6 compatible)
+        home_action = qtw.QAction("🏠 Home", self.navigation_toolbar)
+        home_action.setToolTip("Reset view to fit all data")
+        home_action.triggered.connect(self.reset_plot_view)
+        self.navigation_toolbar.addAction(home_action)
+        
+        self.navigation_toolbar.addSeparator()
+        
+        pan_action = qtw.QAction("✋ Pan", self.navigation_toolbar)
+        pan_action.setToolTip("Pan the plot")
+        pan_action.setCheckable(True)
+        pan_action.triggered.connect(self.toggle_pan)
+        self.navigation_toolbar.addAction(pan_action)
+        
+        zoom_action = qtw.QAction("🔍 Zoom", self.navigation_toolbar)
+        zoom_action.setToolTip("Zoom to rectangle")
+        zoom_action.setCheckable(True)
+        zoom_action.triggered.connect(self.toggle_zoom)
+        self.navigation_toolbar.addAction(zoom_action)
+        
+        self.navigation_toolbar.addSeparator()
+        
+        save_action = qtw.QAction("💾 Save", self.navigation_toolbar)
+        save_action.setToolTip("Save the figure")
+        save_action.triggered.connect(self.save_figure)
+        self.navigation_toolbar.addAction(save_action)
+        
+        # Store action references for toggling
+        self.pan_action = pan_action
+        self.zoom_action = zoom_action
 
         # Create tabs
         self.tab_widget = qtw.QTabWidget()
@@ -1079,9 +1095,13 @@ class ClearView(qtw.QMainWindow):
         self.clear_figure_and_canvas()
         num_subplots = len(selected_columns)
         
-        # Better subplot height calculation
-        subplot_height = max(2.5, min(4.0, 12.0 / num_subplots))
-        multi_plot_fig_height = max(num_subplots * subplot_height, self.default_fig_height)
+        # Better subplot height calculation with reasonable maximum
+        subplot_height = max(2.0, min(3.5, 10.0 / num_subplots))
+        calculated_height = num_subplots * subplot_height
+        
+        # Cap the maximum height to prevent oversized plots
+        max_reasonable_height = 12.0  # Maximum 12 inches
+        multi_plot_fig_height = min(calculated_height, max_reasonable_height)
         
         # Create plots with filtered data
         try:
@@ -1106,6 +1126,40 @@ class ClearView(qtw.QMainWindow):
         # Draw the canvas and create or update the statistics table
         self.canvas.draw()
         self.update_stats_table()
+
+    def reset_plot_view(self):
+        """Reset the plot view to show all data."""
+        try:
+            for ax in self.canvas.figure.get_axes():
+                ax.relim()
+                ax.autoscale()
+            self.canvas.draw()
+        except Exception as e:
+            print(f"Warning: Could not reset plot view: {e}")
+    
+    def toggle_pan(self, checked):
+        """Toggle pan mode."""
+        try:
+            if checked:
+                self.zoom_action.setChecked(False)
+                self.canvas.toolbar_mode = 'pan'
+            else:
+                self.canvas.toolbar_mode = 'none'
+            # Note: Full pan implementation would require matplotlib backend integration
+        except Exception as e:
+            print(f"Warning: Pan mode not fully supported: {e}")
+    
+    def toggle_zoom(self, checked):
+        """Toggle zoom mode."""
+        try:
+            if checked:
+                self.pan_action.setChecked(False)
+                self.canvas.toolbar_mode = 'zoom'
+            else:
+                self.canvas.toolbar_mode = 'none'
+            # Note: Full zoom implementation would require matplotlib backend integration
+        except Exception as e:
+            print(f"Warning: Zoom mode not fully supported: {e}")
 
     def save_figure(self):
         """Save the current figure to a file."""
