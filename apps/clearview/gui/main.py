@@ -78,7 +78,35 @@ class ClearView(qtw.QMainWindow):
         self.table_name = 'data'
         self.default_fig_width = 12
         self.default_fig_height = 4
+        
+        # Set up assets directory path
+        self.assets_dir = os.path.join(os.path.dirname(__file__), '..', 'assets')
+        
+        # Initialize UI
+        self.setup_ui()
 
+    def load_icon(self, icon_path, fallback_style=None):
+        """
+        Safely load an icon from the assets directory with fallback.
+        
+        Args:
+            icon_path (str): Relative path to icon from assets directory
+            fallback_style: QStyle standard icon to use if file not found
+            
+        Returns:
+            QIcon: The loaded icon or fallback
+        """
+        full_path = os.path.join(self.assets_dir, icon_path)
+        if os.path.exists(full_path):
+            return qtg.QIcon(full_path)
+        elif fallback_style:
+            return qtg.QIcon(self.style().standardIcon(fallback_style))
+        else:
+            # Use a generic file icon as ultimate fallback
+            return qtg.QIcon(self.style().standardIcon(qtw.QStyle.SP_FileIcon))
+
+    def setup_ui(self):
+        """Set up the user interface components."""
         # Create a menu bar
         menubar = self.menuBar()
 
@@ -94,18 +122,35 @@ class ClearView(qtw.QMainWindow):
         self.app_toolbar.setMovable(False)
         self.app_toolbar.setIconSize(qtc.QSize(24, 24))
 
-        # Create app toolbar icons
-        # open_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogOpenButton')))
-        # save_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_DialogSaveButton')))
-        # plot_icon = qtg.QIcon(self.style().standardIcon(getattr(qtw.QStyle, 'SP_ComputerIcon')))
-        # copy_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/notebook.png')
-        open_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/folder-horizontal-open.png')
-        save_data_icon  = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk-black.png')
-        save_stats_icon = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk.png')
-        copy_icon       = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-24/document-text-image.png')
-        paste_icon      = qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-24/photo-album.png')
-        plot_icon       = qtg.QIcon('icons/w2_veiwer_single_plot_icon.png')
-        multi_plot_icon = qtg.QIcon('icons/w2_veiwer_multi_plot_icon.png')
+        # Create app toolbar icons using safe loading
+        open_icon = self.load_icon(
+            'icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/folder-horizontal-open.png',
+            qtw.QStyle.SP_DialogOpenButton
+        )
+        save_data_icon = self.load_icon(
+            'icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk-black.png',
+            qtw.QStyle.SP_DialogSaveButton
+        )
+        save_stats_icon = self.load_icon(
+            'icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk.png',
+            qtw.QStyle.SP_DialogSaveButton
+        )
+        copy_icon = self.load_icon(
+            'icons/fugue-icons-3.5.6-src/bonus/icons-24/document-text-image.png',
+            qtw.QStyle.SP_DialogCancelButton
+        )
+        paste_icon = self.load_icon(
+            'icons/fugue-icons-3.5.6-src/bonus/icons-24/photo-album.png',
+            qtw.QStyle.SP_DialogApplyButton
+        )
+        plot_icon = self.load_icon(
+            'icons/w2_veiwer_single_plot_icon.png',
+            qtw.QStyle.SP_ComputerIcon
+        )
+        multi_plot_icon = self.load_icon(
+            'icons/w2_veiwer_multi_plot_icon.png',
+            qtw.QStyle.SP_ComputerIcon
+        )
 
         # Set open_icon alignment to top
         # open_icon.addPixmap(open_icon.pixmap(24, 24, qtg.QIcon.Active, qtg.QIcon.On))
@@ -238,8 +283,6 @@ class ClearView(qtw.QMainWindow):
         self.app_toolbar.addAction(open_action)
         self.app_toolbar.addAction(save_data_action)
         self.app_toolbar.addAction(save_stats_action)
-        self.app_toolbar.addAction(save_data_action)
-        self.app_toolbar.addAction(save_stats_action)
         self.app_toolbar.addAction(copy_action)
         self.app_toolbar.addAction(paste_action)
         self.app_toolbar.addAction(plot_action)
@@ -247,7 +290,11 @@ class ClearView(qtw.QMainWindow):
 
         # Add a system tray icon
         self.tray_icon = qtw.QSystemTrayIcon(self)
-        self.tray_icon.setIcon(qtg.QIcon('icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png'))
+        tray_icon = self.load_icon(
+            'icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png',
+            qtw.QStyle.SP_ComputerIcon
+        )
+        self.tray_icon.setIcon(tray_icon)
         self.tray_icon.setToolTip('ClearView')
         self.tray_icon.setVisible(True)
         self.tray_icon.show()
@@ -518,17 +565,6 @@ class ClearView(qtw.QMainWindow):
         """
         self.filename = text
 
-    def update_filename(self, text):
-        """
-        Updates the filename attribute with the provided text.
-
-        This method sets the filename attribute (`self.filename`) to the given text value.
-
-        Args:
-            text (str): The new filename.
-        """
-        self.filename = text
-
     def browse_file(self):
         """
         Browse and process a selected file.
@@ -585,9 +621,27 @@ class ClearView(qtw.QMainWindow):
                     # self.data.rename(columns={f'{first_column_name}': 'Date'}, inplace=True)
                     # self.data['Date'] = pd.to_datetime(self.data['Date'], format='%m/%d/%Y %H:%M')
                     # self.data.set_index('Date', inplace=True)
-            except IOError:
-                self.show_warning_dialog(f'An error occurred while opening {self.filename}')
-                file_dialog.close()
+                    
+                # Validate that data was loaded successfully
+                if self.data is None or self.data.empty:
+                    self.show_warning_dialog(f'No data found in {self.filename}')
+                    return
+                    
+            except FileNotFoundError:
+                self.show_warning_dialog(f'File not found: {self.filename}')
+                return
+            except PermissionError:
+                self.show_warning_dialog(f'Permission denied accessing: {self.filename}')
+                return
+            except pd.errors.EmptyDataError:
+                self.show_warning_dialog(f'The file {self.filename} appears to be empty')
+                return
+            except pd.errors.ParserError as e:
+                self.show_warning_dialog(f'Error parsing {self.filename}: {str(e)}')
+                return
+            except Exception as e:
+                self.show_warning_dialog(f'An unexpected error occurred while opening {self.filename}: {str(e)}')
+                return
 
         self.update_data_table()
         self.update_stats_table()
