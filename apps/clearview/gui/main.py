@@ -54,7 +54,7 @@ class MyTableWidget(qtw.QTableWidget):
         :type event: QKeyEvent
         """
 
-        if event.key() == qtc.Qt.Key_Enter or event.key() == qtc.Qt.Key_Return:
+        if event.key() == qtc.Qt.Key.Key_Enter or event.key() == qtc.Qt.Key.Key_Return:
             current_row = self.currentRow()
             current_column = self.currentColumn()
 
@@ -116,7 +116,8 @@ class ClearView(qtw.QMainWindow):
 
     def center_on_screen(self):
         """Center the window on the screen."""
-        screen = qtw.QApplication.desktop().screenGeometry()
+        # PyQt6 compatible way to get screen geometry
+        screen = qtw.QApplication.primaryScreen().geometry()
         window = self.geometry()
         x = (screen.width() - window.width()) // 2
         y = (screen.height() - window.height()) // 2
@@ -140,7 +141,7 @@ class ClearView(qtw.QMainWindow):
             return qtg.QIcon(self.style().standardIcon(fallback_style))
         else:
             # Use a generic file icon as ultimate fallback
-            return qtg.QIcon(self.style().standardIcon(qtw.QStyle.SP_FileIcon))
+            return qtg.QIcon(self.style().standardIcon(qtw.QStyle.StandardPixmap.SP_FileIcon))
 
     def setup_ui(self):
         """Set up the user interface components."""
@@ -155,75 +156,75 @@ class ClearView(qtw.QMainWindow):
 
         # Create an app toolbar
         self.app_toolbar = self.addToolBar('Toolbar')
-        self.app_toolbar.setToolButtonStyle(qtc.Qt.ToolButtonTextUnderIcon)
+        self.app_toolbar.setToolButtonStyle(qtc.Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         self.app_toolbar.setMovable(False)
         self.app_toolbar.setIconSize(qtc.QSize(self.ICON_SIZE, self.ICON_SIZE))
 
         # Create app toolbar icons using safe loading
         open_icon = self.load_icon(
             'icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/folder-horizontal-open.png',
-            qtw.QStyle.SP_DialogOpenButton
+            qtw.QStyle.StandardPixmap.SP_DialogOpenButton
         )
         save_data_icon = self.load_icon(
             'icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk-black.png',
-            qtw.QStyle.SP_DialogSaveButton
+            qtw.QStyle.StandardPixmap.SP_DialogSaveButton
         )
         save_stats_icon = self.load_icon(
             'icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/disk.png',
-            qtw.QStyle.SP_DialogSaveButton
+            qtw.QStyle.StandardPixmap.SP_DialogSaveButton
         )
         copy_icon = self.load_icon(
             'icons/fugue-icons-3.5.6-src/bonus/icons-24/document-text-image.png',
-            qtw.QStyle.SP_DialogCancelButton
+            qtw.QStyle.StandardPixmap.SP_DialogCancelButton
         )
         paste_icon = self.load_icon(
             'icons/fugue-icons-3.5.6-src/bonus/icons-24/photo-album.png',
-            qtw.QStyle.SP_DialogApplyButton
+            qtw.QStyle.StandardPixmap.SP_DialogApplyButton
         )
         plot_icon = self.load_icon(
             'icons/w2_veiwer_single_plot_icon.png',
-            qtw.QStyle.SP_ComputerIcon
+            qtw.QStyle.StandardPixmap.SP_ComputerIcon
         )
         multi_plot_icon = self.load_icon(
             'icons/w2_veiwer_multi_plot_icon.png',
-            qtw.QStyle.SP_ComputerIcon
+            qtw.QStyle.StandardPixmap.SP_ComputerIcon
         )
 
         # Set open_icon alignment to top
         # open_icon.addPixmap(open_icon.pixmap(24, 24, qtg.QIcon.Active, qtg.QIcon.On))
 
         # Create Open action
-        open_action = qtw.QAction(open_icon, 'Open File', self)
+        open_action = qtg.QAction(open_icon, 'Open File', self)
         open_action.setShortcut('Ctrl+O')
         open_action.triggered.connect(self.browse_file)
 
         # Create Copy action for the stats and data tables
-        copy_action = qtw.QAction(copy_icon, 'Copy Data', self)
+        copy_action = qtg.QAction(copy_icon, 'Copy Data', self)
         copy_action.setShortcut('Ctrl+C')
         copy_action.triggered.connect(self.copy_data)
 
         # Create Paste action for the stats and data tables
-        paste_action = qtw.QAction(paste_icon, 'Paste Data', self)
+        paste_action = qtg.QAction(paste_icon, 'Paste Data', self)
         paste_action.setShortcut('Ctrl+V')
         paste_action.triggered.connect(self.paste_data)
 
         # Add a save data button icon to the toolbar
-        save_data_action = qtw.QAction(save_data_icon, 'Save Data', self)
+        save_data_action = qtg.QAction(save_data_icon, 'Save Data', self)
         save_data_action.setShortcut('Ctrl+S')
         save_data_action.triggered.connect(self.save_data)
 
         # Add a save stats button icon to the toolbar
-        save_stats_action = qtw.QAction(save_stats_icon, 'Save Stats', self)
+        save_stats_action = qtg.QAction(save_stats_icon, 'Save Stats', self)
         save_stats_action.setShortcut('Ctrl+Shift+S')
         save_stats_action.triggered.connect(self.save_stats)
 
         # Add a plot button icon to the toolbar
-        plot_action = qtw.QAction(plot_icon, 'Single Plot', self)
+        plot_action = qtg.QAction(plot_icon, 'Single Plot', self)
         plot_action.setShortcut('Ctrl+P')
         plot_action.triggered.connect(self.plot)
 
         # Add a multi-plot button icon to the toolbar
-        multi_plot_action = qtw.QAction(multi_plot_icon, 'Multi-Plot', self)
+        multi_plot_action = qtg.QAction(multi_plot_icon, 'Multi-Plot', self)
         multi_plot_action.setShortcut('Ctrl+Shift+P')
         multi_plot_action.triggered.connect(self.multi_plot)
 
@@ -233,13 +234,13 @@ class ClearView(qtw.QMainWindow):
         # Create a scroll area to contain the plot
         self.plot_scroll_area = qtw.QScrollArea(self)
         self.plot_scroll_area.setWidgetResizable(False)
-        self.plot_scroll_area.setAlignment(qtc.Qt.AlignCenter)
+        self.plot_scroll_area.setAlignment(qtc.Qt.AlignmentFlag.AlignCenter)
 
         # Create the start year label and text input field
         self.start_year_label = qtw.QLabel('Start Year:', self)
         self.start_year_label.setFixedWidth(self.LABEL_WIDTH)
         self.start_year_input = qtw.QLineEdit(self)
-        self.start_year_input.setAlignment(qtc.Qt.AlignCenter)
+        self.start_year_input.setAlignment(qtc.Qt.AlignmentFlag.AlignCenter)
         self.start_year_input.setFixedWidth(self.YEAR_INPUT_WIDTH)
         self.start_year_input.setReadOnly(False)
         self.start_year_input.setText(str(self.DEFAULT_YEAR))
@@ -255,7 +256,7 @@ class ClearView(qtw.QMainWindow):
 
         # Create a layout for the start year and filename widgets
         self.start_year_and_filename_layout = qtw.QHBoxLayout()
-        self.start_year_and_filename_layout.setAlignment(qtc.Qt.AlignLeft)
+        self.start_year_and_filename_layout.setAlignment(qtc.Qt.AlignmentFlag.AlignLeft)
         self.start_year_and_filename_layout.addWidget(self.start_year_label)
         self.start_year_and_filename_layout.addWidget(self.start_year_input)
         self.start_year_and_filename_layout.addWidget(self.filename_label)
@@ -263,7 +264,7 @@ class ClearView(qtw.QMainWindow):
 
         # Create the statistics table
         self.stats_table = MyTableWidget(self)
-        self.stats_table.setEditTriggers(qtw.QTableWidget.NoEditTriggers)
+        self.stats_table.setEditTriggers(qtw.QAbstractItemView.EditTrigger.NoEditTriggers)
         self.stats_table.setMinimumHeight(self.STATS_TABLE_MIN_HEIGHT)
 
         # Create empty canvas and add a matplotlib navigation toolbar
@@ -329,7 +330,7 @@ class ClearView(qtw.QMainWindow):
         self.tray_icon = qtw.QSystemTrayIcon(self)
         tray_icon = self.load_icon(
             'icons/fugue-icons-3.5.6-src/bonus/icons-shadowless-24/map.png',
-            qtw.QStyle.SP_ComputerIcon
+            qtw.QStyle.StandardPixmap.SP_ComputerIcon
         )
         self.tray_icon.setIcon(tray_icon)
         self.tray_icon.setToolTip('ClearView')

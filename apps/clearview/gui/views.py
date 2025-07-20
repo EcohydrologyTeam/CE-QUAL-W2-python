@@ -33,7 +33,7 @@ class MyTableWidget(qtw.QTableWidget):
     
     def keyPressEvent(self, event):
         """Handle Enter/Return key to move to next cell."""
-        if event.key() == qtc.Qt.Key_Enter or event.key() == qtc.Qt.Key_Return:
+        if event.key() == qtc.Qt.Key.Key_Enter or event.key() == qtc.Qt.Key.Key_Return:
             current_row = self.currentRow()
             current_column = self.currentColumn()
             total_rows = self.rowCount()
@@ -101,7 +101,8 @@ class ClearViewMainWindow(qtw.QMainWindow):
     
     def center_on_screen(self):
         """Center the window on the screen."""
-        screen = qtw.QApplication.desktop().screenGeometry()
+        # PyQt6 compatible way to get screen geometry
+        screen = qtw.QApplication.primaryScreen().geometry()
         window = self.geometry()
         x = (screen.width() - window.width()) // 2
         y = (screen.height() - window.height()) // 2
@@ -115,7 +116,7 @@ class ClearViewMainWindow(qtw.QMainWindow):
         elif fallback_style:
             return qtg.QIcon(self.style().standardIcon(fallback_style))
         else:
-            return qtg.QIcon(self.style().standardIcon(qtw.QStyle.SP_FileIcon))
+            return qtg.QIcon(self.style().standardIcon(qtw.QStyle.StandardPixmap.SP_FileIcon))
     
     def _setup_ui(self):
         """Set up the user interface components."""
@@ -146,74 +147,74 @@ class ClearViewMainWindow(qtw.QMainWindow):
     def _create_menu_actions(self):
         """Create menu actions."""
         # File actions
-        open_action = qtw.QAction('Open', self)
+        open_action = qtg.QAction('Open', self)
         open_action.setShortcut('Ctrl+O')
         open_action.triggered.connect(self._on_open_file)
         self.file_menu.addAction(open_action)
         
-        clear_recent_action = qtw.QAction('Clear Recent Files', self)
+        clear_recent_action = qtg.QAction('Clear Recent Files', self)
         clear_recent_action.triggered.connect(self._on_clear_recent_files)
         self.recent_files_menu.addAction(clear_recent_action)
         
         # Edit actions
-        copy_action = qtw.QAction('Copy', self)
+        copy_action = qtg.QAction('Copy', self)
         copy_action.setShortcut('Ctrl+C')
         copy_action.triggered.connect(lambda: self.copy_requested.emit())
         self.edit_menu.addAction(copy_action)
         
-        paste_action = qtw.QAction('Paste', self)
+        paste_action = qtg.QAction('Paste', self)
         paste_action.setShortcut('Ctrl+V')
         paste_action.triggered.connect(lambda: self.paste_requested.emit())
         self.edit_menu.addAction(paste_action)
         
         # Save actions
-        save_data_action = qtw.QAction('Save Data', self)
+        save_data_action = qtg.QAction('Save Data', self)
         save_data_action.triggered.connect(lambda: self.save_data_requested.emit())
         self.save_menu.addAction(save_data_action)
         
-        save_stats_action = qtw.QAction('Save Statistics', self)
+        save_stats_action = qtg.QAction('Save Statistics', self)
         save_stats_action.triggered.connect(lambda: self.save_stats_requested.emit())
         self.save_menu.addAction(save_stats_action)
         
         # Plot actions
-        plot_action = qtw.QAction('Plot', self)
+        plot_action = qtg.QAction('Plot', self)
         plot_action.triggered.connect(lambda: self.plot_requested.emit())
         self.plot_menu.addAction(plot_action)
         
-        multi_plot_action = qtw.QAction('Multi Plot', self)
+        multi_plot_action = qtg.QAction('Multi Plot', self)
         multi_plot_action.triggered.connect(lambda: self.multi_plot_requested.emit())
         self.plot_menu.addAction(multi_plot_action)
     
     def _create_toolbar(self):
         """Create the toolbar."""
         self.app_toolbar = self.addToolBar('Toolbar')
-        self.app_toolbar.setToolButtonStyle(qtc.Qt.ToolButtonTextUnderIcon)
+        self.app_toolbar.setToolButtonStyle(qtc.Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
         
         # Open file action
-        open_icon = self.load_icon('folder-open-24.png', qtw.QStyle.SP_DirOpenIcon)
-        open_action = qtw.QAction(open_icon, 'Open', self)
+        open_icon = self.load_icon('folder-open-24.png', qtw.QStyle.StandardPixmap.SP_DirOpenIcon)
+        open_action = qtg.QAction(open_icon, 'Open', self)
         open_action.triggered.connect(self._on_open_file)
         self.app_toolbar.addAction(open_action)
         
         self.app_toolbar.addSeparator()
         
         # Plot action
-        plot_icon = self.load_icon('bar-chart-2-24.png', qtw.QStyle.SP_ComputerIcon)
-        plot_action = qtw.QAction(plot_icon, 'Plot', self)
+        plot_icon = self.load_icon('bar-chart-2-24.png', qtw.QStyle.StandardPixmap.SP_ComputerIcon)
+        plot_action = qtg.QAction(plot_icon, 'Plot', self)
         plot_action.triggered.connect(lambda: self.plot_requested.emit())
         self.app_toolbar.addAction(plot_action)
         
         # Multi plot action
-        multi_plot_icon = self.load_icon('grid-24.png', qtw.QStyle.SP_ComputerIcon)
-        multi_plot_action = qtw.QAction(multi_plot_icon, 'Multi Plot', self)
+        multi_plot_icon = self.load_icon('grid-24.png', qtw.QStyle.StandardPixmap.SP_ComputerIcon)
+        multi_plot_action = qtg.QAction(multi_plot_icon, 'Multi Plot', self)
         multi_plot_action.triggered.connect(lambda: self.multi_plot_requested.emit())
         self.app_toolbar.addAction(multi_plot_action)
         
         self.app_toolbar.addSeparator()
         
         # Save actions
-        save_icon = self.load_icon('save-24.png', qtw.QStyle.SP_DialogSaveButton)
-        save_action = qtw.QAction(save_icon, 'Save', self)
+        save_icon = self.load_icon('save-24.png', qtw.QStyle.StandardPixmap.SP_DialogSaveButton)
+        save_action = qtg.QAction(save_icon, 'Save', self)
         save_action.triggered.connect(lambda: self.save_data_requested.emit())
         self.app_toolbar.addAction(save_action)
     
@@ -589,16 +590,16 @@ class ClearViewMainWindow(qtw.QMainWindow):
     def _create_tray_icon(self):
         """Create system tray icon."""
         self.tray_icon = qtw.QSystemTrayIcon(self)
-        tray_icon_image = self.load_icon('ClearView24.png', qtw.QStyle.SP_ComputerIcon)
+        tray_icon_image = self.load_icon('ClearView24.png', qtw.QStyle.StandardPixmap.SP_ComputerIcon)
         self.tray_icon.setIcon(tray_icon_image)
         
         # Create tray menu
         tray_menu = qtw.QMenu()
-        show_action = qtw.QAction('Show', self)
+        show_action = qtg.QAction('Show', self)
         show_action.triggered.connect(self.show)
         tray_menu.addAction(show_action)
         
-        quit_action = qtw.QAction('Quit', self)
+        quit_action = qtg.QAction('Quit', self)
         quit_action.triggered.connect(qtw.QApplication.quit)
         tray_menu.addAction(quit_action)
         
@@ -634,7 +635,7 @@ class ClearViewMainWindow(qtw.QMainWindow):
     def _on_clear_recent_files(self):
         """Handle clear recent files action."""
         self.recent_files_menu.clear()
-        clear_action = qtw.QAction('Clear Recent Files', self)
+        clear_action = qtg.QAction('Clear Recent Files', self)
         clear_action.triggered.connect(self._on_clear_recent_files)
         self.recent_files_menu.addAction(clear_action)
     
@@ -678,14 +679,14 @@ class ClearViewMainWindow(qtw.QMainWindow):
         
         for file_path in recent_files[:10]:  # Show only 10 recent files
             if os.path.exists(file_path):
-                action = qtw.QAction(os.path.basename(file_path), self)
+                action = qtg.QAction(os.path.basename(file_path), self)
                 action.triggered.connect(lambda checked, path=file_path: self.file_opened.emit(path))
                 self.recent_files_menu.addAction(action)
         
         if recent_files:
             self.recent_files_menu.addSeparator()
         
-        clear_action = qtw.QAction('Clear Recent Files', self)
+        clear_action = qtg.QAction('Clear Recent Files', self)
         clear_action.triggered.connect(self._on_clear_recent_files)
         self.recent_files_menu.addAction(clear_action)
     
@@ -772,7 +773,7 @@ class ClearViewMainWindow(qtw.QMainWindow):
                 filter_text += f" AND {filter_obj.value2}"
             
             item = qtw.QListWidgetItem(filter_text)
-            item.setData(qtc.Qt.UserRole, i)  # Store filter index
+            item.setData(qtc.Qt.ItemDataRole.UserRole, i)  # Store filter index
             self.active_filters_list.addItem(item)
     
     def update_filter_columns(self, columns: List[str]):
