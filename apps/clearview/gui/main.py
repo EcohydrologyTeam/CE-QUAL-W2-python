@@ -1345,6 +1345,17 @@ class ClearView(qtw.QMainWindow):
         # Create plots with filtered data
         try:
             w2.multi_plot(filtered_data, fig=self.canvas.figure, figsize=(self.default_fig_width, multi_plot_fig_height))
+            
+            # Apply proper layout with wider margins to accommodate Y-axis labels
+            self.canvas.figure.tight_layout(pad=2.0)  # Add padding for better spacing
+            self.canvas.figure.subplots_adjust(
+                left=0.15,    # Wider left margin for Y-axis labels
+                right=0.95,   # Wider right margin  
+                top=0.95,     # Top margin
+                bottom=0.1,   # Bottom margin
+                hspace=0.4    # More space between subplots
+            )
+            
         except Exception as e:
             # If w2.multi_plot fails, try a simple matplotlib approach
             import matplotlib.pyplot as plt
@@ -1359,7 +1370,15 @@ class ClearView(qtw.QMainWindow):
                 if i == len(selected_columns) - 1:  # Last subplot
                     ax.set_xlabel('Index')
             
-            self.canvas.figure.tight_layout()
+            # Apply improved layout with wider margins for fallback plotting
+            self.canvas.figure.tight_layout(pad=2.0)
+            self.canvas.figure.subplots_adjust(
+                left=0.15,    # Wider left margin for Y-axis labels
+                right=0.95,   # Wider right margin
+                top=0.95,     # Top margin  
+                bottom=0.1,   # Bottom margin
+                hspace=0.4    # More space between subplots
+            )
         self.resize_canvas(self.default_fig_width, multi_plot_fig_height)
 
         # Draw the canvas and create or update the statistics table
