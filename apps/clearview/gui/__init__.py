@@ -1,0 +1,1 @@
+"""ClearView PyQt5 GUI application."""

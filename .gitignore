@@ -127,4 +127,38 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be added to the global gitignore or merged into this project gitignore.  For a PyCharm
+#  project, it is advised to uncomment the following line:
+#  .idea/
+
+# VSCode
+.vscode/
+
+# macOS
 .DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# CE-QUAL-W2 specific
+*.db
+*.h5
+*.nc
+test/output/*
+!test/output/.gitkeep
+
+# Temporary files
+*.tmp
+*.temp
+output.png

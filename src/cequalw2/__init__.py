@@ -47,7 +47,9 @@ Please refer to the CE-QUAL-W2 model documentation and publications for detailed
 input data requirements, and model applications.
 """
 
-from .w2_datetime import *
-from .w2_io import *
-from .w2_reports import *
-from .w2_visualization import *
+from .utils import *
+from .io import *
+from .visualization import *
+from .analysis import *
+
+__version__ = "1.0.0"
