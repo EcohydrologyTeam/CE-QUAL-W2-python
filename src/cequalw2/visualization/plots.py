@@ -11,7 +11,14 @@ import holoviews as hv
 from bokeh.models import HoverTool, DatetimeTickFormatter
 warnings.filterwarnings("ignore")
 
-plt.style.use('seaborn')
+# Use available style or default
+try:
+    plt.style.use('seaborn-v0_8')
+except OSError:
+    try:
+        plt.style.use('seaborn')
+    except OSError:
+        pass  # Use default style
 plt.rcParams['figure.figsize'] = (15, 9)
 plt.rcParams['grid.color'] = '#E0E0E0'
 plt.rcParams['lines.linewidth'] = 1
