@@ -49,6 +49,8 @@ class ClearViewController:
         self.view.filter_applied.connect(self.handle_filter_applied)
         self.view.duplicates_removal_requested.connect(self.handle_duplicates_removal)
         self.view.missing_data_handling_requested.connect(self.handle_missing_data_handling)
+        self.view.custom_plot_requested.connect(self.handle_custom_plot_request)
+        self.view.plot_export_requested.connect(self.handle_plot_export_request)
     
     def _load_recent_files(self):
         """Load recent files from settings."""
@@ -260,6 +262,34 @@ class ClearViewController:
         else:
             self.view.show_message(f"Failed to handle missing data with {method} method", 'error')
     
+    def handle_custom_plot_request(self, config):
+        """Handle custom plot creation request."""
+        if self.model.df is None or self.model.df.empty:
+            self.view.show_message("No data to plot", 'warning')
+            return
+        
+        try:
+            # Create the plot using the model's plotting functionality
+            figure, ax = self.model.create_plot(config, self.view.get_figure())
+            
+            # Update the canvas
+            self.view.get_canvas().draw()
+            
+            # Show success message
+            plot_type_name = config.plot_type.value.replace('_', ' ').title()
+            columns_text = ', '.join(config.y_columns or [])
+            self.view.show_status_message(
+                f"Created {plot_type_name} for columns: {columns_text}", 3000
+            )
+            
+        except Exception as e:
+            self.view.show_message(f"Error creating plot: {str(e)}", 'error')
+    
+    def handle_plot_export_request(self, format_type: str):
+        """Handle plot export request."""
+        # This is handled directly in the view for now
+        pass
+    
     # Model observer methods
     def on_data_changed(self, event_type: str, **kwargs):
         """Handle data model changes."""
@@ -301,7 +331,15 @@ class ClearViewController:
         
         # Update filter columns
         if self.model.df is not None:
-            self.view.update_filter_columns(list(self.model.df.columns))
+            columns = list(self.model.df.columns)
+            self.view.update_filter_columns(columns)
+            
+            # Update plot columns
+            self.view.update_plot_columns(columns)
+            
+            # Get and set plot recommendations
+            recommendations = self.model.get_plot_recommendations()
+            self.view.set_plot_recommendations(recommendations)
     
     def _update_statistics(self):
         """Update statistics table."""
@@ -309,42 +347,36 @@ class ClearViewController:
         self.view.update_stats_table(stats)
     
     def _create_single_plot(self):
-        """Create a single plot of the data."""
-        fig = self.view.get_figure()
-        fig.clear()
-        
+        """Create a single plot of the data using enhanced plotting."""
         # Get numeric columns
-        numeric_cols = self.model.df.select_dtypes(include=[np.number]).columns
+        numeric_cols = list(self.model.df.select_dtypes(include=[np.number]).columns)
         
         if len(numeric_cols) == 0:
             self.view.show_message("No numeric data to plot", 'warning')
             return
         
-        # Create subplot
-        ax = fig.add_subplot(111)
+        # Create a basic line plot configuration
+        from models import PlotConfiguration, PlotType
+        config = PlotConfiguration(
+            plot_type=PlotType.LINE,
+            y_columns=[numeric_cols[0]],
+            title=f'{numeric_cols[0]} vs Index',
+            xlabel='Index',
+            ylabel=numeric_cols[0],
+            grid=True,
+            legend=False
+        )
         
-        # Plot first numeric column
-        col_name = numeric_cols[0]
-        data = self.model.df[col_name].dropna()
-        
-        if len(data) > 0:
-            ax.plot(data.values, label=col_name)
-            ax.set_title(f'{col_name} vs Index')
-            ax.set_xlabel('Index')
-            ax.set_ylabel(col_name)
-            ax.legend()
-            ax.grid(True, alpha=0.3)
-        
-        fig.tight_layout()
-        self.view.get_canvas().draw()
+        try:
+            self.model.create_plot(config, self.view.get_figure())
+            self.view.get_canvas().draw()
+        except Exception as e:
+            self.view.show_message(f"Error creating plot: {str(e)}", 'error')
     
     def _create_multi_plot(self):
-        """Create multiple subplots of the data."""
-        fig = self.view.get_figure()
-        fig.clear()
-        
+        """Create multiple subplots of the data using enhanced plotting."""
         # Get numeric columns
-        numeric_cols = self.model.df.select_dtypes(include=[np.number]).columns
+        numeric_cols = list(self.model.df.select_dtypes(include=[np.number]).columns)
         
         if len(numeric_cols) == 0:
             self.view.show_message("No numeric data to plot", 'warning')
@@ -354,20 +386,24 @@ class ClearViewController:
         n_cols = min(len(numeric_cols), 2)
         n_rows = (len(numeric_cols) + n_cols - 1) // n_cols
         
-        # Create subplots
-        for i, col_name in enumerate(numeric_cols[:6]):  # Limit to 6 plots
-            ax = fig.add_subplot(n_rows, n_cols, i + 1)
-            data = self.model.df[col_name].dropna()
-            
-            if len(data) > 0:
-                ax.plot(data.values)
-                ax.set_title(col_name)
-                ax.set_xlabel('Index')
-                ax.set_ylabel(col_name)
-                ax.grid(True, alpha=0.3)
+        # Create multiple line plots
+        from models import PlotConfiguration, PlotType
+        config = PlotConfiguration(
+            plot_type=PlotType.LINE,
+            y_columns=numeric_cols[:6],  # Limit to 6 columns
+            title='Multi-Column Plot',
+            xlabel='Index',
+            ylabel='Values',
+            grid=True,
+            legend=True,
+            subplot_layout=(n_rows, n_cols)
+        )
         
-        fig.tight_layout()
-        self.view.get_canvas().draw()
+        try:
+            self.model.create_plot(config, self.view.get_figure())
+            self.view.get_canvas().draw()
+        except Exception as e:
+            self.view.show_message(f"Error creating multi-plot: {str(e)}", 'error')
     
     def _save_data_dialog(self):
         """Show save data dialog."""

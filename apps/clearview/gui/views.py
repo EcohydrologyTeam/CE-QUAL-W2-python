@@ -13,7 +13,7 @@ import PyQt5.QtCore as qtc
 import PyQt5.QtWidgets as qtw
 import PyQt5.QtGui as qtg
 from typing import Optional, Dict, Any, List
-from models import FilterOperator, DataFilter, ValidationResult
+from models import FilterOperator, DataFilter, ValidationResult, PlotType, PlotStyle, PlotConfiguration
 
 
 class MyTableWidget(qtw.QTableWidget):
@@ -65,6 +65,8 @@ class ClearViewMainWindow(qtw.QMainWindow):
     filter_applied = qtc.pyqtSignal(list)  # List of DataFilter objects
     duplicates_removal_requested = qtc.pyqtSignal()
     missing_data_handling_requested = qtc.pyqtSignal(str)  # method name
+    custom_plot_requested = qtc.pyqtSignal(object)  # PlotConfiguration object
+    plot_export_requested = qtc.pyqtSignal(str)  # export format
     
     def __init__(self):
         super().__init__()
@@ -272,19 +274,166 @@ class ClearViewMainWindow(qtw.QMainWindow):
         self.tab_widget.addTab(self.stats_table, 'Statistics')
     
     def _create_plot_tab(self):
-        """Create the plot tab with matplotlib canvas."""
+        """Create the enhanced plot tab with customization controls."""
         plot_widget = qtw.QWidget()
-        plot_layout = qtw.QVBoxLayout(plot_widget)
+        plot_layout = qtw.QHBoxLayout(plot_widget)
+        
+        # Left panel: Plot controls
+        controls_panel = qtw.QWidget()
+        controls_panel.setMaximumWidth(350)
+        controls_layout = qtw.QVBoxLayout(controls_panel)
+        
+        # Plot type selection
+        plot_type_group = qtw.QGroupBox("Plot Type")
+        plot_type_layout = qtw.QVBoxLayout(plot_type_group)
+        
+        self.plot_type_combo = qtw.QComboBox()
+        self.plot_type_combo.addItems([
+            "Line Plot", "Scatter Plot", "Bar Plot", "Histogram", 
+            "Box Plot", "Violin Plot", "Area Plot", "Step Plot",
+            "Stem Plot", "Pie Chart", "Heatmap", "Correlation Matrix"
+        ])
+        plot_type_layout.addWidget(self.plot_type_combo)
+        controls_layout.addWidget(plot_type_group)
+        
+        # Column selection
+        columns_group = qtw.QGroupBox("Data Columns")
+        columns_layout = qtw.QFormLayout(columns_group)
+        
+        self.x_column_combo = qtw.QComboBox()
+        self.x_column_combo.addItem("Index (default)")
+        columns_layout.addRow("X-axis:", self.x_column_combo)
+        
+        self.y_columns_list = qtw.QListWidget()
+        self.y_columns_list.setMaximumHeight(120)
+        self.y_columns_list.setSelectionMode(qtw.QAbstractItemView.MultiSelection)
+        columns_layout.addRow("Y-axis:", self.y_columns_list)
+        
+        controls_layout.addWidget(columns_group)
+        
+        # Plot styling
+        styling_group = qtw.QGroupBox("Styling")
+        styling_layout = qtw.QFormLayout(styling_group)
+        
+        self.plot_style_combo = qtw.QComboBox()
+        self.plot_style_combo.addItems([
+            "Default", "Seaborn", "Classic", "GGPlot", 
+            "FiveThirtyEight", "BMH", "Dark Background"
+        ])
+        styling_layout.addRow("Style:", self.plot_style_combo)
+        
+        self.color_scheme_combo = qtw.QComboBox()
+        self.color_scheme_combo.addItems([
+            "tab10", "viridis", "plasma", "inferno", "magma",
+            "Set1", "Set2", "Set3", "Pastel1", "Pastel2"
+        ])
+        styling_layout.addRow("Colors:", self.color_scheme_combo)
+        
+        controls_layout.addWidget(styling_group)
+        
+        # Plot customization
+        customization_group = qtw.QGroupBox("Customization")
+        customization_layout = qtw.QFormLayout(customization_group)
+        
+        self.title_edit = qtw.QLineEdit()
+        self.title_edit.setPlaceholderText("Plot Title")
+        customization_layout.addRow("Title:", self.title_edit)
+        
+        self.xlabel_edit = qtw.QLineEdit()
+        self.xlabel_edit.setPlaceholderText("X-axis Label")
+        customization_layout.addRow("X Label:", self.xlabel_edit)
+        
+        self.ylabel_edit = qtw.QLineEdit()
+        self.ylabel_edit.setPlaceholderText("Y-axis Label")
+        customization_layout.addRow("Y Label:", self.ylabel_edit)
+        
+        # Figure size
+        size_layout = qtw.QHBoxLayout()
+        self.width_spin = qtw.QSpinBox()
+        self.width_spin.setRange(4, 20)
+        self.width_spin.setValue(12)
+        self.height_spin = qtw.QSpinBox()
+        self.height_spin.setRange(3, 15)
+        self.height_spin.setValue(6)
+        size_layout.addWidget(self.width_spin)
+        size_layout.addWidget(qtw.QLabel("x"))
+        size_layout.addWidget(self.height_spin)
+        customization_layout.addRow("Size (in):", size_layout)
+        
+        controls_layout.addWidget(customization_group)
+        
+        # Plot options
+        options_group = qtw.QGroupBox("Options")
+        options_layout = qtw.QVBoxLayout(options_group)
+        
+        self.grid_cb = qtw.QCheckBox("Show Grid")
+        self.grid_cb.setChecked(True)
+        options_layout.addWidget(self.grid_cb)
+        
+        self.legend_cb = qtw.QCheckBox("Show Legend")
+        self.legend_cb.setChecked(True)
+        options_layout.addWidget(self.legend_cb)
+        
+        self.statistics_cb = qtw.QCheckBox("Show Statistics")
+        options_layout.addWidget(self.statistics_cb)
+        
+        self.log_x_cb = qtw.QCheckBox("Log Scale X")
+        options_layout.addWidget(self.log_x_cb)
+        
+        self.log_y_cb = qtw.QCheckBox("Log Scale Y")
+        options_layout.addWidget(self.log_y_cb)
+        
+        controls_layout.addWidget(options_group)
+        
+        # Buttons
+        buttons_layout = qtw.QVBoxLayout()
+        
+        create_plot_btn = qtw.QPushButton("Create Plot")
+        create_plot_btn.clicked.connect(self._create_custom_plot)
+        buttons_layout.addWidget(create_plot_btn)
+        
+        export_plot_btn = qtw.QPushButton("Export Plot")
+        export_plot_btn.clicked.connect(self._export_plot)
+        buttons_layout.addWidget(export_plot_btn)
+        
+        # Quick plot buttons
+        quick_group = qtw.QGroupBox("Quick Plots")
+        quick_layout = qtw.QVBoxLayout(quick_group)
+        
+        quick_line_btn = qtw.QPushButton("Quick Line Plot")
+        quick_line_btn.clicked.connect(lambda: self._quick_plot("line"))
+        quick_layout.addWidget(quick_line_btn)
+        
+        quick_scatter_btn = qtw.QPushButton("Quick Scatter")
+        quick_scatter_btn.clicked.connect(lambda: self._quick_plot("scatter"))
+        quick_layout.addWidget(quick_scatter_btn)
+        
+        quick_hist_btn = qtw.QPushButton("Quick Histogram")
+        quick_hist_btn.clicked.connect(lambda: self._quick_plot("histogram"))
+        quick_layout.addWidget(quick_hist_btn)
+        
+        buttons_layout.addWidget(quick_group)
+        
+        controls_layout.addLayout(buttons_layout)
+        controls_layout.addStretch()
+        
+        # Right panel: Plot canvas
+        canvas_panel = qtw.QWidget()
+        canvas_layout = qtw.QVBoxLayout(canvas_panel)
         
         # Create matplotlib figure and canvas
         self.fig = plt.figure(figsize=(self.default_fig_width, self.default_fig_height))
         self.canvas = FigureCanvas(self.fig)
-        self.toolbar = NavigationToolbar(self.canvas, plot_widget)
+        self.toolbar = NavigationToolbar(self.canvas, canvas_panel)
         
-        plot_layout.addWidget(self.toolbar)
-        plot_layout.addWidget(self.canvas)
+        canvas_layout.addWidget(self.toolbar)
+        canvas_layout.addWidget(self.canvas)
         
-        self.tab_widget.addTab(plot_widget, 'Plot')
+        # Add panels to main layout
+        plot_layout.addWidget(controls_panel)
+        plot_layout.addWidget(canvas_panel, stretch=1)
+        
+        self.tab_widget.addTab(plot_widget, 'Advanced Plotting')
     
     def _create_validation_tab(self):
         """Create the validation tab with validation controls and results."""
@@ -740,3 +889,161 @@ class ClearViewMainWindow(qtw.QMainWindow):
     def show_status_message(self, message: str, timeout: int = 0):
         """Show a message in the status bar."""
         self.status_bar.showMessage(message, timeout)
+    
+    # Advanced Plotting helper methods
+    def _create_custom_plot(self):
+        """Create a custom plot based on user configuration."""
+        config = self._get_plot_configuration()
+        if config:
+            self.custom_plot_requested.emit(config)
+    
+    def _quick_plot(self, plot_type: str):
+        """Create a quick plot with default settings."""
+        # Get selected columns for Y-axis
+        selected_items = self.y_columns_list.selectedItems()
+        if not selected_items:
+            self.show_message("Please select at least one column for plotting", "warning")
+            return
+        
+        y_columns = [item.text() for item in selected_items]
+        
+        # Create basic configuration
+        plot_type_map = {
+            "line": PlotType.LINE,
+            "scatter": PlotType.SCATTER,
+            "histogram": PlotType.HISTOGRAM
+        }
+        
+        config = PlotConfiguration(
+            plot_type=plot_type_map.get(plot_type, PlotType.LINE),
+            y_columns=y_columns,
+            title=f"{plot_type.title()} Plot",
+            grid=True,
+            legend=len(y_columns) > 1
+        )
+        
+        self.custom_plot_requested.emit(config)
+    
+    def _export_plot(self):
+        """Export the current plot."""
+        file_path, selected_filter = qtw.QFileDialog.getSaveFileName(
+            self,
+            "Export Plot",
+            "plot",
+            "PNG (*.png);;PDF (*.pdf);;SVG (*.svg);;EPS (*.eps)"
+        )
+        
+        if file_path:
+            # Determine format from filter or extension
+            if 'PNG' in selected_filter:
+                format_type = 'png'
+            elif 'PDF' in selected_filter:
+                format_type = 'pdf'
+            elif 'SVG' in selected_filter:
+                format_type = 'svg'
+            elif 'EPS' in selected_filter:
+                format_type = 'eps'
+            else:
+                # Determine from extension
+                ext = os.path.splitext(file_path)[1].lower()
+                format_map = {'.png': 'png', '.pdf': 'pdf', '.svg': 'svg', '.eps': 'eps'}
+                format_type = format_map.get(ext, 'png')
+            
+            try:
+                self.fig.savefig(file_path, format=format_type, dpi=300, bbox_inches='tight')
+                self.show_message(f"Plot exported to {os.path.basename(file_path)}")
+            except Exception as e:
+                self.show_message(f"Error exporting plot: {str(e)}", 'error')
+    
+    def _get_plot_configuration(self) -> Optional[PlotConfiguration]:
+        """Get plot configuration from UI controls."""
+        # Get selected Y columns
+        selected_items = self.y_columns_list.selectedItems()
+        if not selected_items:
+            self.show_message("Please select at least one column for Y-axis", "warning")
+            return None
+        
+        y_columns = [item.text() for item in selected_items]
+        
+        # Get X column
+        x_column = None
+        if self.x_column_combo.currentText() != "Index (default)":
+            x_column = self.x_column_combo.currentText()
+        
+        # Map plot type
+        plot_type_map = {
+            "Line Plot": PlotType.LINE,
+            "Scatter Plot": PlotType.SCATTER,
+            "Bar Plot": PlotType.BAR,
+            "Histogram": PlotType.HISTOGRAM,
+            "Box Plot": PlotType.BOX,
+            "Violin Plot": PlotType.VIOLIN,
+            "Area Plot": PlotType.AREA,
+            "Step Plot": PlotType.STEP,
+            "Stem Plot": PlotType.STEM,
+            "Pie Chart": PlotType.PIE,
+            "Heatmap": PlotType.HEATMAP,
+            "Correlation Matrix": PlotType.CORRELATION
+        }
+        
+        plot_type = plot_type_map.get(self.plot_type_combo.currentText(), PlotType.LINE)
+        
+        # Map plot style
+        style_map = {
+            "Default": PlotStyle.DEFAULT,
+            "Seaborn": PlotStyle.SEABORN,
+            "Classic": PlotStyle.CLASSIC,
+            "GGPlot": PlotStyle.GGPLOT,
+            "FiveThirtyEight": PlotStyle.FIVETHIRTYEIGHT,
+            "BMH": PlotStyle.BMHPLOT,
+            "Dark Background": PlotStyle.DARK_BACKGROUND
+        }
+        
+        style = style_map.get(self.plot_style_combo.currentText(), PlotStyle.DEFAULT)
+        
+        # Create configuration
+        config = PlotConfiguration(
+            plot_type=plot_type,
+            x_column=x_column,
+            y_columns=y_columns,
+            title=self.title_edit.text(),
+            xlabel=self.xlabel_edit.text(),
+            ylabel=self.ylabel_edit.text(),
+            style=style,
+            color_scheme=self.color_scheme_combo.currentText(),
+            figure_size=(self.width_spin.value(), self.height_spin.value()),
+            grid=self.grid_cb.isChecked(),
+            legend=self.legend_cb.isChecked(),
+            show_statistics=self.statistics_cb.isChecked(),
+            log_scale_x=self.log_x_cb.isChecked(),
+            log_scale_y=self.log_y_cb.isChecked()
+        )
+        
+        return config
+    
+    def update_plot_columns(self, columns: List[str]):
+        """Update the column options in the plot dropdowns."""
+        # Update X column combo
+        current_x = self.x_column_combo.currentText()
+        self.x_column_combo.clear()
+        self.x_column_combo.addItem("Index (default)")
+        self.x_column_combo.addItems(columns)
+        
+        # Restore selection if possible
+        index = self.x_column_combo.findText(current_x)
+        if index >= 0:
+            self.x_column_combo.setCurrentIndex(index)
+        
+        # Update Y columns list
+        self.y_columns_list.clear()
+        for col in columns:
+            item = qtw.QListWidgetItem(col)
+            self.y_columns_list.addItem(item)
+    
+    def set_plot_recommendations(self, recommendations: Dict[str, List[str]]):
+        """Set plot recommendations based on data characteristics."""
+        # This could be used to highlight recommended plot types
+        # For now, we'll just update the status with recommendations
+        if recommendations:
+            rec_text = "Recommended plots: " + ", ".join(recommendations.keys())
+            self.show_status_message(rec_text, 5000)
