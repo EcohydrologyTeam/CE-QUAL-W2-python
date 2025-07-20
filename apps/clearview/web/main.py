@@ -19,7 +19,7 @@ from bokeh.models import CheckboxGroup, TextInput
 from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
 from openpyxl import Workbook
 from openpyxl.styles import Border, Side
-import PyQt5.QtWidgets as qtw
+# PyQt6 not needed for web application
 # Add src to path for importing cequalw2
 import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
@@ -55,7 +55,7 @@ css = """
 }
 """
 
-pn.extension('tabulator', 'ipywidgets', raw_css=[css])
+pn.extension('tabulator', raw_css=[css])
 
 
 def write_dataframe_to_excel(df, filename, index=True, sheet_name='Sheet1'):
@@ -423,12 +423,14 @@ class ClearView:
 
 
     def open_file(self, event):
-        '''Open a file for viewing and analysis'''
-        file_dialog = qtw.QFileDialog(self.open_dialog_app.activeModalWidget())
-        file_dialog.setFileMode(qtw.QFileDialog.ExistingFile)
-        file_dialog.setNameFilters(['All Files (*.*)', 'CSV Files (*.csv)', 'NPT Files (*.npt)',
-                                    'OPT Files (*.opt)', 'Excel Files (*.xlsx *.xls)', 'SQLite Files (*.db)'])
-        if file_dialog.exec_():
+        '''Open a file for viewing and analysis - WEB VERSION PLACEHOLDER'''
+        # TODO: Replace with Panel FileInput widget
+        print("File upload functionality needs to be implemented with Panel FileInput")
+        print("This method currently disabled - requires web-native file upload")
+        return
+        
+        # PLACEHOLDER: This is where web file upload will be implemented
+        if False:  # Disabled until web upload implemented
             self.file_path = file_dialog.selectedFiles()[0]
             self.directory, self.filename = os.path.split(self.file_path)
             basefilename, extension = os.path.splitext(self.filename)
@@ -551,16 +553,10 @@ class ClearView:
     def save_data(self, event):
         """
         Saves the data to a selected file as an SQLite database.
-
-        This method allows the user to select a file path to save the data as an SQLite database.
-        If a valid file path is selected and the `data` attribute is not `None`, the following steps are performed:
-        1. The `original_data_path` attribute is set to the selected file path.
-        2. The `save_to_sqlite` method is called to save the data to the SQLite database file.
-        3. The statistics table is updated after saving the data.
-
-        Note:
-            - The `data` attribute must be set with the data before calling this method.
+        WEB VERSION: Currently disabled - needs web-native download implementation.
         """
+        print("Save data functionality temporarily disabled - requires web download implementation")
+        return
         default_filename = self.file_path + '.xlsx'
         options = qtw.QFileDialog.Options()
         # options |= qtw.QFileDialog.DontUseNativeDialog
@@ -580,6 +576,9 @@ class ClearView:
                 self.save_to_sqlite(self.df, self.original_data_path)
 
     def save_processed_data(self, event):
+        """WEB VERSION: Currently disabled - needs web-native download implementation."""
+        print("Save processed data functionality temporarily disabled")
+        return
         """
         Saves the processed data to a selected file as an SQLite database.
 
@@ -612,6 +611,9 @@ class ClearView:
                 self.save_to_sqlite(self.df_processed, self.processed_data_path)
 
     def save_stats(self, event):
+        """WEB VERSION: Currently disabled - needs web-native download implementation.""" 
+        print("Save stats functionality temporarily disabled")
+        return
         """
         Saves statistics to an SQLite database file.
 
@@ -642,12 +644,12 @@ class ClearView:
         empty_data = ''
         tab = pn.Column(
             empty_data,
-            background=self.background_color,
             sizing_mode='stretch_both',
             margin=(0, 0, 0, 0),
             css_classes=['panel-widget-box'],
             # height=self.app_height,
-            scroll=True
+            scroll=True,
+            styles={'background': self.background_color}  # Use styles dict instead of background param
         )
         return tab
 
@@ -788,12 +790,8 @@ class ClearView:
         # Create Main Layout
         self.main = pn.Row(self.sidebar, self.tabs)
 
-        # Create a PyQt5 application
-        self.open_dialog_app = qtw.QApplication([])
-        self.save_original_data_dialog_app = qtw.QApplication([])
-        self.save_stats_dialog_app = qtw.QApplication([])
-        self.save_processed_data_dialog_app = qtw.QApplication([])
-        self.app = qtw.QApplication([])
+        # TODO: Replace with web-native file upload/download
+        # PyQt6 applications removed - not compatible with web deployment
 
         # Serve the app
         self.main.show()
