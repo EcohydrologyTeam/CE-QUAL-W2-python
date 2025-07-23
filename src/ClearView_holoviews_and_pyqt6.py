@@ -18,7 +18,7 @@ from bokeh.models.widgets.tables import NumberFormatter, BooleanFormatter
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from openpyxl import Workbook
 from openpyxl.styles import Border, Side
-import PyQt5.QtWidgets as qtw
+import PyQt6.QtWidgets as qtw
 import cequalw2 as w2
 import datetime
 
@@ -791,7 +791,7 @@ class ClearView:
         # Create Main Layout
         self.main = pn.Row(self.sidebar, self.tabs)
 
-        # Create a PyQt5 application
+        # Create a PyQt6 application
         self.open_dialog_app = qtw.QApplication([])
         self.save_original_data_dialog_app = qtw.QApplication([])
         self.save_stats_dialog_app = qtw.QApplication([])

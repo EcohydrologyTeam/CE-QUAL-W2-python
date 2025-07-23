@@ -8,11 +8,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import PyQt5.QtCore as qtc
-import PyQt5.QtWidgets as qtw
-import PyQt5.QtGui as qtg
+from matplotlib.backends.backend_qt6agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt6agg import NavigationToolbar2QT as NavigationToolbar
+import PyQt6.QtCore as qtc
+import PyQt6.QtWidgets as qtw
+import PyQt6.QtGui as qtg
 
 sys.path.append('.')
 
@@ -841,4 +841,4 @@ if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
     window = CeQualW2Viewer()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

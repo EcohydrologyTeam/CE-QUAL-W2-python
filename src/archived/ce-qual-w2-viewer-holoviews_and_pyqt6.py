@@ -13,9 +13,9 @@ from tkinter import filedialog
 import threading
 import cequalw2 as w2
 
-# import PyQt5.QtCore as qtc
-import PyQt5.QtWidgets as qtw
-# import PyQt5.QtGui as qtg
+# import PyQt6.QtCore as qtc
+import PyQt6.QtWidgets as qtw
+# import PyQt6.QtGui as qtg
 
 hv.extension('bokeh')
 

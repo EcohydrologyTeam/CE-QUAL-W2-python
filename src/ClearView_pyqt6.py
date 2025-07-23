@@ -5,13 +5,22 @@ import glob
 import sqlite3
 import numpy as np
 import pandas as pd
+
+# Set Qt API before importing matplotlib to use PyQt6
+os.environ['QT_API'] = 'pyqt6'
+
+# Import PyQt6 first
+import PyQt6.QtCore as qtc
+import PyQt6.QtWidgets as qtw
+import PyQt6.QtGui as qtg
+
+# Now import matplotlib with proper backend
+import matplotlib
+matplotlib.use('qtagg')  # Use the generic Qt Agg backend
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import PyQt5.QtCore as qtc
-import PyQt5.QtWidgets as qtw
-import PyQt5.QtGui as qtg
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 sys.path.append('.')
 import cequalw2 as w2
 
@@ -842,4 +851,4 @@ if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
     window = ClearView()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

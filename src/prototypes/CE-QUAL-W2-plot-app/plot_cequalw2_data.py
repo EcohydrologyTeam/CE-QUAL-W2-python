@@ -2,10 +2,10 @@ import sys
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-import PyQt5.QtWidgets as qtw
-import PyQt5.QtCore as qtc
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+import PyQt6.QtWidgets as qtw
+import PyQt6.QtCore as qtc
+from matplotlib.backends.backend_qt6agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt6agg import NavigationToolbar2QT as NavigationToolbar
 import glob
 import csv
 
@@ -323,4 +323,4 @@ if __name__ == '__main__':
     app = qtw.QApplication(sys.argv)
     window = CSVPlotApp()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
